@@ -1296,45 +1296,44 @@ function generateOrderText() {
       codigoRegalo = codigosHoja[randomIndex];
     }
 
-    let text = "🔥 *NUEVO PEDIDO WEB* 🔥\n\n";
-    text += "━━━━━━━━━━━━━━━━━━━━━━\n";
-    text += `👤 *CLIENTE:* ${name}\n`;
-    text += `📱 *WHATSAPP:* ${phone}\n`;
-    text += `🚚 *ENTREGA:* ${delivery}\n`;
-    text += `📍 *DIRECCIÓN:* ${address}\n`;
-    text += `🪪 *DNI:* ${dni}\n`;
-    text += `💳 *PAGO:* ${payment}\n`;
-    text += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    text += "📦 *DETALLE DE LOS PRODUCTOS:*\n";
+    let text = "NUEVO PEDIDO DE LA WEB\n\n";
+    text += "NOMBRES Y APELLIDOS: " + name + "\n";
+    text += "CELULAR / WHATSAPP: " + phone + "\n";
+    text += "TIPO DE ENTREGA: " + delivery + "\n";
+    text += "DIRECCION Y DESTINO: " + address + "\n";
+    text += "DNI DE QUIEN RECIBE: " + dni + "\n";
+    text += "METODO DE PAGO: " + payment + "\n\n";
+    text += "-----------------------------------\n";
+    text += "DETALLE DE LOS POLOS:\n";
 
     let total = 0;
     cart.forEach((item, index) => {
       const subtotal = Number(item.price) * Number(item.qty);
       total += subtotal;
-      text += `\n*${index + 1}. ${item.nombre}*\n`;
-      text += `   ▫️ Talla: *${item.size}*\n`;
-      text += `   ▫️ Cantidad: *${item.qty}*\n`;
-      text += `   ▫️ Subtotal: *S/ ${subtotal.toFixed(2)}*\n`;
+      text += "\n" + (index + 1) + ". " + item.nombre + "\n";
+      text += "   - Talla: " + item.size + "\n";
+      text += "   - Cantidad: " + item.qty + "\n";
+      text += "   - Subtotal: S/ " + subtotal.toFixed(2) + "\n";
       if (item.imgUrl) {
-        text += `   🔗 Foto: ${item.imgUrl}\n`;
+        text += "   - Foto: " + item.imgUrl + "\n";
       }
     });
 
     const discountAmount = total * couponDiscount;
     let finalTotal = total - discountAmount;
 
-    text += "\n━━━━━━━━━━━━━━━━━━━━━━\n";
+    text += "\n-----------------------------------\n";
     if (couponDiscount > 0) {
       const porc = Math.round(couponDiscount * 100);
-      text += `🎟️ *Cupón (${appliedCoupon}):* -${porc}%\n`;
+      text += "CUPON APLICADO (" + appliedCoupon + "): " + porc + "% DE DESCUENTO\n";
+      text += "Subtotal: S/ " + total.toFixed(2) + "\n";
     }
     if (total >= 100) {
-      text += `🚚 *ENVÍO:* ¡GRATIS (Superó S/ 100)! 🎁\n`;
+      text += "ENVIO: ¡GRATIS (Supero S/ 100)!\n";
     }
-    text += `💰 *TOTAL A PAGAR: S/ ${finalTotal.toFixed(2)}*\n`;
-    text += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    text += "TOTAL A PAGAR: S/ " + finalTotal.toFixed(2) + "\n\n";
     
-    text += `🎁 *¡GRACIAS POR TU COMPRA!* Como agradecimiento, aquí tienes tu código exclusivo de 10% DE DESCUENTO para tu próxima compra: *${codigoRegalo}* ✨`;
+    text += "¡GRACIAS POR TU COMPRA! Tu codigo de descuento para tu proxima compra es: *" + codigoRegalo + "*.";
 
     closeCheckoutModal();
 
@@ -1353,7 +1352,7 @@ function generateOrderText() {
     if (finalOrderText) finalOrderText.value = text;
 
     const encodedText = encodeURIComponent(text);
-    const whatsappUrl = `https://wa.me/${MY_WHATSAPP_NUMBER}?text=${encodedText}`;
+    const whatsappUrl = "https://wa.me/" + MY_WHATSAPP_NUMBER + "?text=" + encodedText;
 
     const safeBtn = document.getElementById('safe-whatsapp-btn');
     if (safeBtn) safeBtn.href = whatsappUrl;
@@ -1365,31 +1364,6 @@ function generateOrderText() {
     }
 
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-  }
-
-  async function copyOrderText() {
-    const textarea = document.getElementById('final-order-text');
-    if (!textarea) return;
-
-    textarea.focus();
-    textarea.select();
-    textarea.setSelectionRange(0, textarea.value.length);
-
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(textarea.value);
-      } else {
-        document.execCommand('copy');
-      }
-      alert("¡Texto copiado al portapapeles!");
-    } catch (err) {
-      try {
-        document.execCommand('copy');
-        alert("¡Texto copiado!");
-      } catch (e) {
-        alert("No se pudo copiar automáticamente. Mantén presionado el texto y cópialo.");
-      }
-    }
   }
 </script>
 
