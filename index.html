@@ -1296,26 +1296,26 @@ function generateOrderText() {
       codigoRegalo = codigosHoja[randomIndex];
     }
 
-    let text = "\u{1F6CD}\u{FE0F} NUEVO PEDIDO DE LA WEB\n\n";
-    text += "\u{1F464} NOMBRES Y APELLIDOS: " + name + "\n";
-    text += "\u{1F4F1} CELULAR / WHATSAPP: " + phone + "\n";
-    text += "\u{1F69A} TIPO DE ENTREGA: " + delivery + "\n";
-    text += "\u{1F4CD} DIRECCIÓN Y DESTINO: " + address + "\n";
-    text += "\u{1FAAA} DNI DE QUIEN RECIBE: " + dni + "\n";
-    text += "\u{1F4B3} MÉTODO DE PAGO: " + payment + "\n\n";
+    let text = String.fromCodePoint(128717) + " NUEVO PEDIDO DE LA WEB\n\n";
+    text += String.fromCodePoint(128100) + " NOMBRES Y APELLIDOS: " + name + "\n";
+    text += String.fromCodePoint(128241) + " CELULAR / WHATSAPP: " + phone + "\n";
+    text += String.fromCodePoint(128666) + " TIPO DE ENTREGA: " + delivery + "\n";
+    text += String.fromCodePoint(128205) + " DIRECCIÓN Y DESTINO: " + address + "\n";
+    text += String.fromCodePoint(129642) + " DNI DE QUIEN RECIBE: " + dni + "\n";
+    text += String.fromCodePoint(128179) + " MÉTODO DE PAGO: " + payment + "\n\n";
     text += "-----------------------------------\n";
-    text += "\u{1F4E6} DETALLE DE LOS POLOS:\n";
+    text += String.fromCodePoint(128230) + " DETALLE DE LOS POLOS:\n";
 
     let total = 0;
     cart.forEach((item, index) => {
       const subtotal = Number(item.price) * Number(item.qty);
       total += subtotal;
       text += "\n" + (index + 1) + ". " + item.nombre + "\n";
-      text += "   \u{2022} Talla: " + item.size + "\n";
-      text += "   \u{2022} Cantidad: " + item.qty + "\n";
-      text += "   \u{2022} Subtotal: S/ " + subtotal.toFixed(2) + "\n";
+      text += "   - Talla: " + item.size + "\n";
+      text += "   - Cantidad: " + item.qty + "\n";
+      text += "   - Subtotal: S/ " + subtotal.toFixed(2) + "\n";
       if (item.imgUrl) {
-        text += "   \u{2022} \u{1F5BC}\u{FE0F} Foto: " + item.imgUrl + "\n";
+        text += "   - " + String.fromCodePoint(128248) + " Foto: " + item.imgUrl + "\n";
       }
     });
 
@@ -1325,15 +1325,15 @@ function generateOrderText() {
     text += "\n-----------------------------------\n";
     if (couponDiscount > 0) {
       const porc = Math.round(couponDiscount * 100);
-      text += "\u{1F3AB} CUPÓN APLICADO (" + appliedCoupon + "): " + porc + "% DE DESCUENTO\n";
+      text += String.fromCodePoint(127911) + " CUPÓN APLICADO (" + appliedCoupon + "): " + porc + "% DE DESCUENTO\n";
       text += "Subtotal: S/ " + total.toFixed(2) + "\n";
     }
     if (total >= 100) {
-      text += "\u{1F69A} ENVÍO: ¡GRATIS (Superó S/ 100)!\n";
+      text += String.fromCodePoint(128666) + " ENVÍO: ¡GRATIS (Superó S/ 100)!\n";
     }
-    text += "\u{1F4B0} TOTAL A PAGAR: S/ " + finalTotal.toFixed(2) + "\n\n";
+    text += String.fromCodePoint(128181) + " TOTAL A PAGAR: S/ " + finalTotal.toFixed(2) + "\n\n";
     
-    text += "\u{1F381} ¡GRACIAS POR TU COMPRA! Tu código de descuento para tu próxima compra es: *" + codigoRegalo + "*.";
+    text += String.fromCodePoint(127873) + " ¡GRACIAS POR TU COMPRA! Tu código de descuento para tu próxima compra es: *" + codigoRegalo + "*.";
 
     closeCheckoutModal();
 
