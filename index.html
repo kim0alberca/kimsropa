@@ -1257,7 +1257,7 @@
     if (event.target === this) closeSuccessModal();
   });
 
-  function generateOrderText() {
+function generateOrderText() {
     const name = document.getElementById('client-name').value.trim();
     const phone = document.getElementById('client-phone').value.trim();
     const delivery = document.getElementById('client-delivery').value;
@@ -1289,7 +1289,6 @@
       return;
     }
 
-    // EXTRAER UN CÓDIGO DE REGALO ALEATORIO DIRECTAMENTE DE LA HOJA 2
     let codigosHoja = Object.keys(listadoCuponesHoja);
     let codigoRegalo = "XPONLg";
     if (codigosHoja.length > 0) {
@@ -1297,53 +1296,51 @@
       codigoRegalo = codigosHoja[randomIndex];
     }
 
-    let text = "🛍️ NUEVO PEDIDO DE LA WEB\n\n";
-    text += `👤 NOMBRES Y APELLIDOS: ${name}\n`;
-    text += `📱 CELULAR / WHATSAPP: ${phone}\n`;
-    text += `🚚 TIPO DE ENTREGA: ${delivery}\n`;
-    text += `📍 DIRECCIÓN Y DESTINO: ${address}\n`;
-    text += `🪪 DNI DE QUIEN RECIBE: ${dni}\n`;
-    text += `💳 MÉTODO DE PAGO: ${payment}\n\n`;
-    text += `-----------------------------------\n`;
-    text += `📦 DETALLE DE LOS POLOS:\n`;
+    let text = "🔥 *NUEVO PEDIDO WEB* 🔥\n\n";
+    text += "━━━━━━━━━━━━━━━━━━━━━━\n";
+    text += `👤 *CLIENTE:* ${name}\n`;
+    text += `📱 *WHATSAPP:* ${phone}\n`;
+    text += `🚚 *ENTREGA:* ${delivery}\n`;
+    text += `📍 *DIRECCIÓN:* ${address}\n`;
+    text += `🪪 *DNI:* ${dni}\n`;
+    text += `💳 *PAGO:* ${payment}\n`;
+    text += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    text += "📦 *DETALLE DE LOS PRODUCTOS:*\n";
 
     let total = 0;
     cart.forEach((item, index) => {
       const subtotal = Number(item.price) * Number(item.qty);
       total += subtotal;
-      text += `\n${index + 1}. ${item.nombre}\n`;
-      text += `   • Talla: ${item.size}\n`;
-      text += `   • Cantidad: ${item.qty}\n`;
-      text += `   • Subtotal: S/ ${subtotal.toFixed(2)}\n`;
+      text += `\n*${index + 1}. ${item.nombre}*\n`;
+      text += `   ▫️ Talla: *${item.size}*\n`;
+      text += `   ▫️ Cantidad: *${item.qty}*\n`;
+      text += `   ▫️ Subtotal: *S/ ${subtotal.toFixed(2)}*\n`;
       if (item.imgUrl) {
-        text += `   • 🖼️ Foto: ${item.imgUrl}\n`;
+        text += `   🔗 Foto: ${item.imgUrl}\n`;
       }
     });
 
     const discountAmount = total * couponDiscount;
     let finalTotal = total - discountAmount;
 
-    text += `\n-----------------------------------\n`;
+    text += "\n━━━━━━━━━━━━━━━━━━━━━━\n";
     if (couponDiscount > 0) {
       const porc = Math.round(couponDiscount * 100);
-      text += `🎟️ CUPÓN APLICADO (${appliedCoupon}): ${porc}% DE DESCUENTO\n`;
-      text += `Subtotal: S/ ${total.toFixed(2)}\n`;
+      text += `🎟️ *Cupón (${appliedCoupon}):* -${porc}%\n`;
     }
     if (total >= 100) {
-      text += `🚚 ENVÍO: ¡GRATIS (Superó S/ 100)!\n`;
+      text += `🚚 *ENVÍO:* ¡GRATIS (Superó S/ 100)! 🎁\n`;
     }
-    text += `💰 TOTAL A PAGAR: S/ ${finalTotal.toFixed(2)}\n\n`;
+    text += `💰 *TOTAL A PAGAR: S/ ${finalTotal.toFixed(2)}*\n`;
+    text += "━━━━━━━━━━━━━━━━━━━━━━\n\n";
     
-    // MENSAJE DE WHATSAPP INCLUYENDO EL CÓDIGO JALADO DE LA HOJA 2
-    text += `🎁 ¡GRACIAS POR TU COMPRA! Tu código de descuento para tu próxima compra es: *${codigoRegalo}*.`;
+    text += `🎁 *¡GRACIAS POR TU COMPRA!* Como agradecimiento, aquí tienes tu código exclusivo de 10% OFF para tu próxima compra: *${codigoRegalo}* ✨`;
 
     closeCheckoutModal();
 
-    // Mostrar el código en la pantalla emergente de éxito
     const promoCodeBox = document.getElementById('assigned-promo-code');
     if (promoCodeBox) promoCodeBox.innerText = codigoRegalo;
 
-    // Limpiar carrito y cupones al finalizar
     cart = [];
     couponDiscount = 0;
     appliedCoupon = null;
