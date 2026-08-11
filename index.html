@@ -706,8 +706,8 @@
       </select>
     </div>
 
-    <!-- SELECTOR DE DISTRITO / PROVINCIA -->
-    <div class="form-group">
+    <!-- SELECTOR DE DISTRITO / PROVINCIA (Solo para Domicilio) -->
+    <div class="form-group" id="district-group">
       <label>Destino / Distrito:</label>
       <select id="client-district" class="size-select" onchange="checkOtherProvince()">
         <option value="Piura">Piura Centro</option>
@@ -726,8 +726,8 @@
 
     <!-- CAMPO CONDICIONAL PARA AGENCIA SHALOM / OLVA ESPECÍFICA -->
     <div class="form-group" id="agency-detail-group" style="display: none;">
-      <label>Agencia exacta y Ciudad (Shalom / Olva):</label>
-      <input type="text" id="client-agency-detail" placeholder="Ej. Shalom Óvalo Puno, Trujillo Centro, etc.">
+      <label>Provincia y Agencia exacta (Shalom / Olva):</label>
+      <input type="text" id="client-agency-detail" placeholder="Ej. Sullana - Shalom Terminal / Talara - Olva">
     </div>
 
     <div class="form-group" id="address-group">
@@ -816,14 +816,20 @@
 
   function checkDeliveryType() {
     const deliverySelect = document.getElementById('client-delivery');
+    const districtGroup = document.getElementById('district-group');
+    const otherProvinceGroup = document.getElementById('other-province-group');
     const agencyGroup = document.getElementById('agency-detail-group');
     const addressLabel = document.getElementById('address-label');
     
-    if (deliverySelect && agencyGroup) {
+    if (deliverySelect && agencyGroup && districtGroup) {
       if (deliverySelect.value === 'Agencia Shalom / Olva') {
+        districtGroup.style.display = 'none';
+        otherProvinceGroup.style.display = 'none';
         agencyGroup.style.display = 'flex';
-        if (addressLabel) addressLabel.innerText = "Referencia adicional o DNI de recojo (Opcional):";
+        if (addressLabel) addressLabel.innerText = "Referencia adicional (Opcional):";
       } else {
+        districtGroup.style.display = 'flex';
+        checkOtherProvince(); // Restaura si estaba en Otra Provincia
         agencyGroup.style.display = 'none';
         const agencyInput = document.getElementById('client-agency-detail');
         if (agencyInput) agencyInput.value = '';
@@ -1320,27 +1326,27 @@
     const phone = document.getElementById('client-phone').value.trim();
     const delivery = document.getElementById('client-delivery').value;
     
-    // Captura de distrito y validación de provincia obligatoria si aplica
-    const districtSelect = document.getElementById('client-district');
-    let selectedDistrict = districtSelect ? districtSelect.value : "Piura";
-    if (selectedDistrict === 'Otra Provincia') {
-      const otherProvInput = document.getElementById('client-other-province').value.trim();
-      if (!otherProvInput) {
-        alert("Por favor especifica el nombre de tu provincia.");
-        return;
-      }
-      selectedDistrict = "Otra Provincia: " + otherProvInput;
-    }
-
-    // Validación y captura de agencia exacta si elige Shalom / Olva
+    let selectedDistrict = "";
     let agencyDetails = "";
+
     if (delivery === 'Agencia Shalom / Olva') {
       const agencyInput = document.getElementById('client-agency-detail').value.trim();
       if (!agencyInput) {
-        alert("Por favor especifica la agencia exacta y la ciudad (Ej. Shalom Óvalo Puno).");
+        alert("Por favor especifica la provincia y agencia exacta (Shalom / Olva).");
         return;
       }
       agencyDetails = agencyInput;
+    } else {
+      const districtSelect = document.getElementById('client-district');
+      selectedDistrict = districtSelect ? districtSelect.value : "Piura";
+      if (selectedDistrict === 'Otra Provincia') {
+        const otherProvInput = document.getElementById('client-other-province').value.trim();
+        if (!otherProvInput) {
+          alert("Por favor especifica el nombre de tu provincia.");
+          return;
+        }
+        selectedDistrict = "Otra Provincia: " + otherProvInput;
+      }
     }
 
     const address = document.getElementById('client-address').value.trim();
@@ -1382,15 +1388,17 @@
     text += "NOMBRES Y APELLIDOS: " + name + "\n";
     text += "CELULAR / WHATSAPP: " + phone + "\n";
     text += "TIPO DE ENTREGA: " + delivery + "\n";
+    
     if (delivery === 'Agencia Shalom / Olva') {
       text += "AGENCIA DESTINO: " + agencyDetails + "\n";
-    }
-    text += "DISTRITO / DESTINO: " + selectedDistrict + "\n";
-    if (delivery === 'Entrega a Domicilio') {
+      if (address) {
+        text += "REFERENCIA ADICIONAL: " + address + "\n";
+      }
+    } else {
+      text += "DISTRITO / DESTINO: " + selectedDistrict + "\n";
       text += "DIRECCION: " + address + "\n";
-    } else if (address) {
-      text += "REFERENCIA / DNI RECOJO: " + address + "\n";
     }
+
     text += "DNI DE QUIEN RECIBE: " + dni + "\n";
     text += "METODO DE PAGO: " + payment + "\n\n";
     text += "-----------------------------------\n";
