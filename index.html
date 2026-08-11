@@ -726,8 +726,8 @@
 
     <!-- CAMPO CONDICIONAL PARA AGENCIA SHALOM / OLVA ESPECÍFICA -->
     <div class="form-group" id="agency-detail-group" style="display: none;">
-      <label>Provincia y Agencia exacta (Shalom / Olva):</label>
-      <input type="text" id="client-agency-detail" placeholder="Ej. Sullana - Shalom Terminal / Talara - Olva">
+      <label>Agencia exacta y Ciudad (Shalom / Olva):</label>
+      <input type="text" id="client-agency-detail" placeholder="Ej. Shalom Óvalo Puno, Trujillo Centro, etc.">
     </div>
 
     <div class="form-group" id="address-group">
@@ -826,7 +826,7 @@
         districtGroup.style.display = 'none';
         otherProvinceGroup.style.display = 'none';
         agencyGroup.style.display = 'flex';
-        if (addressLabel) addressLabel.innerText = "Referencia adicional (Opcional):";
+        if (addressLabel) addressLabel.innerText = "Referencia adicional:";
       } else {
         districtGroup.style.display = 'flex';
         checkOtherProvince(); // Restaura si estaba en Otra Provincia
