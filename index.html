@@ -213,8 +213,8 @@
 </div>
 
 <script>
-  // Usamos el servicio CORS Proxy alternativo (corsproxy.io) que es mucho más estable
-  const SHEET_CSV_URL = "https://corsproxy.io/?" + encodeURIComponent("https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=0&single=true&output=csv");
+  // Enlace CSV oficial de Google Sheets
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=0&single=true&output=csv";
   const MY_WHATSAPP_NUMBER = "51968495402";
 
   let allProducts = [];
@@ -242,86 +242,111 @@
     });
   }
 
-  fetch(SHEET_CSV_URL)
-    .then(response => response.text())
-    .then(data => {
-      const lines = data.split(/\r\n|\n/);
-      const categoriesSet = new Set();
-      allProducts = [];
+  // Usamos múltiples pasarelas en cascada para evitar bloqueos por completo
+  async function loadSheetData() {
+    const proxies = [
+      url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+      url => "https://corsproxy.io/?" + encodeURIComponent(url),
+      url => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url)
+    ];
 
-      for(let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        if(!line || !line.trim()) continue;
-
-        const cols = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            cols.push(current.trim());
-            current = '';
-          } else {
-            current += char;
-          }
+    let data = null;
+    for (let proxyFn of proxies) {
+      try {
+        const response = await fetch(proxyFn(SHEET_CSV_URL));
+        if (response.ok) {
+          data = await response.text();
+          if (data && data.length > 50) break;
         }
-        cols.push(current.trim());
-        const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
+      } catch (e) {
+        continue;
+      }
+    }
 
-        if(cleanCols.length >= 10 && cleanCols[0] !== '') {
-          const catClean = (cleanCols[2] || 'VARIOS').toUpperCase();
-          if(catClean !== "CATEGORIA" && catClean !== "") {
-            categoriesSet.add(catClean);
-          }
+    if (!data) {
+      document.getElementById('catalog-grid').innerHTML = '<div class="no-results">No se pudo cargar la base de datos. Verifica tu conexión o reintenta en unos segundos.</div>';
+      return;
+    }
 
-          let rawImg = cleanCols[9] || '';
-          let imgUrl = rawImg;
-          if(rawImg.includes("drive.google.com")) {
-            const match = rawImg.match(/\/d\/([^\/]+/) || rawImg.match(/id=([^&]+)/);
-            if(match && match[1]) {
-              imgUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
-            }
-          }
+    processCSVData(data);
+  }
 
-          allProducts.push({
-            id: i,
-            nombre: cleanCols[0],
-            caracteristicas: cleanCols[1] || '',
-            categoria: catClean,
-            prices: {
-              'XS': parseFloat(cleanCols[3]) || 0,
-              'S': parseFloat(cleanCols[4]) || 0,
-              'M': parseFloat(cleanCols[5]) || 0,
-              'L': parseFloat(cleanCols[6]) || 0,
-              'XL': parseFloat(cleanCols[7]) || 0,
-              'XXL': parseFloat(cleanCols[8]) || 0
-            },
-            imgUrl: imgUrl
-          });
+  loadSheetData();
+
+  function processCSVData(data) {
+    const lines = data.split(/\r\n|\n/);
+    const categoriesSet = new Set();
+    allProducts = [];
+
+    for(let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if(!line || !line.trim()) continue;
+
+      const cols = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          cols.push(current.trim());
+          current = '';
+        } else {
+          current += char;
         }
       }
+      cols.push(current.trim());
+      const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
 
-      const filterBar = document.getElementById('filter-bar');
-      filterBar.innerHTML = '<button class="filter-btn active" type="button" onclick="setCategory(\'TODOS\', this)">TODOS</button>';
+      if(cleanCols.length >= 10 && cleanCols[0] !== '') {
+        const catClean = (cleanCols[2] || 'VARIOS').toUpperCase();
+        if(catClean !== "CATEGORIA" && catClean !== "") {
+          categoriesSet.add(catClean);
+        }
 
-      categoriesSet.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn';
-        btn.type = 'button';
-        btn.innerText = cat;
-        btn.onclick = function() { setCategory(cat, this); };
-        filterBar.appendChild(btn);
-      });
+        let rawImg = cleanCols[9] || '';
+        let imgUrl = rawImg;
+        if(rawImg.includes("drive.google.com")) {
+          const match = rawImg.match(/\/d\/([^\/]+/) || rawImg.match(/id=([^&]+)/);
+          if(match && match[1]) {
+            imgUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+          }
+        }
 
-      applyFilters();
-    })
-    .catch(err => {
-      console.error(err);
-      document.getElementById('catalog-grid').innerHTML = '<div class="no-results">Error al conectar con la base de datos. Verifica tu enlace publicado.</div>';
+        allProducts.push({
+          id: i,
+          nombre: cleanCols[0],
+          caracteristicas: cleanCols[1] || '',
+          categoria: catClean,
+          prices: {
+            'XS': parseFloat(cleanCols[3]) || 0,
+            'S': parseFloat(cleanCols[4]) || 0,
+            'M': parseFloat(cleanCols[5]) || 0,
+            'L': parseFloat(cleanCols[6]) || 0,
+            'XL': parseFloat(cleanCols[7]) || 0,
+            'XXL': parseFloat(cleanCols[8]) || 0
+          },
+          imgUrl: imgUrl
+        });
+      }
+    }
+
+    const filterBar = document.getElementById('filter-bar');
+    filterBar.innerHTML = '<button class="filter-btn active" type="button" onclick="setCategory(\'TODOS\', this)">TODOS</button>';
+
+    categoriesSet.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn';
+      btn.type = 'button';
+      btn.innerText = cat;
+      btn.onclick = function() { setCategory(cat, this); };
+      filterBar.appendChild(btn);
     });
+
+    applyFilters();
+  }
 
   function setCategory(category, btnElement) {
     currentCategory = category;
