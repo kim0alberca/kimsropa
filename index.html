@@ -173,6 +173,41 @@
       font-size: 0.9rem;
     }
 
+    /* CONTROLES DE PAGINACIÓN */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding: 10px;
+    }
+
+    .page-btn {
+      background: #222;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .page-btn:disabled {
+      background: #111;
+      border-color: #222;
+      color: #555;
+      cursor: not-allowed;
+    }
+
+    .page-info {
+      font-size: 0.85rem;
+      color: #aaa;
+      font-weight: bold;
+    }
+
     .selector-group {
       background: #222;
       padding: 8px;
@@ -579,6 +614,12 @@
   <!-- CATÁLOGO DE PRODUCTOS -->
   <div id="catalog-container">
     <div id="catalog-grid" class="catalog-grid">Cargando productos...</div>
+    <!-- Controles de Paginación -->
+    <div id="pagination-controls" class="pagination-container" style="display: none;">
+      <button class="page-btn" id="prev-page-btn" onclick="changePage(-1)">← Anterior</button>
+      <span class="page-info" id="page-info">Página 1 de 1</span>
+      <button class="page-btn" id="next-page-btn" onclick="changePage(1)">Siguiente →</button>
+    </div>
   </div>
 
   <!-- VISTA DE PEDIDO -->
@@ -686,8 +727,13 @@
   const MY_WHATSAPP_NUMBER = "51968495402";
 
   let allProducts = [];
+  let filteredProducts = [];
   let currentCategory = 'TODOS';
   let cart = [];
+
+  // Variables de Paginación
+  let currentPage = 1;
+  const itemsPerPage = 12; // Cantidad de productos por página (dentro de tu rango de 10 a 15)
 
   // ==========================================
   // CARGA SEGURA INICIAL (BLOQUE CRÍTICO)
@@ -705,10 +751,8 @@
     cart = [];
   }
 
-  // Actualizar la interfaz de inmediato antes de que carguen los productos de la red
   updateCartUI();
 
-  // Mostrar el banner de aviso si el carrito tiene productos al recargar la página
   if (cart.length > 0) {
     window.addEventListener('DOMContentLoaded', () => {
       const banner = document.getElementById('restore-banner');
@@ -776,23 +820,34 @@
         filterBar.appendChild(btn);
       });
 
-      renderProducts(allProducts);
+      applyFilters();
     })
     .catch(err => {
       console.error("Error:", err);
       document.getElementById('catalog-grid').innerHTML = '<div class="no-results">Error al cargar productos.</div>';
     });
 
-  function renderProducts(products) {
+  function renderProducts() {
     const grid = document.getElementById('catalog-grid');
+    const paginationContainer = document.getElementById('pagination-controls');
     grid.innerHTML = '';
 
-    if(products.length === 0) {
+    if(filteredProducts.length === 0) {
       grid.innerHTML = '<div class="no-results">No se encontraron productos en esta categoría.</div>';
+      paginationContainer.style.display = 'none';
       return;
     }
 
-    products.forEach(p => {
+    // Calcular índices de la página actual
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const productsToDisplay = filteredProducts.slice(startIndex, endIndex);
+
+    productsToDisplay.forEach(p => {
       const card = document.createElement('div');
       card.className = 'product-card';
 
@@ -829,6 +884,22 @@
       `;
       grid.appendChild(card);
     });
+
+    // Actualizar controles de paginación
+    if (totalPages > 1) {
+      paginationContainer.style.display = 'flex';
+      document.getElementById('page-info').innerText = `Página ${currentPage} de ${totalPages}`;
+      document.getElementById('prev-page-btn').disabled = (currentPage === 1);
+      document.getElementById('next-page-btn').disabled = (currentPage === totalPages);
+    } else {
+      paginationContainer.style.display = 'none';
+    }
+  }
+
+  function changePage(direction) {
+    currentPage += direction;
+    renderProducts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function setCategory(category, btnElement) {
@@ -836,6 +907,7 @@
     const buttons = document.querySelectorAll('.filter-btn');
     buttons.forEach(b => b.classList.remove('active'));
     btnElement.classList.add('active');
+    currentPage = 1; // Reiniciar a la primera página al cambiar categoría
     applyFilters();
   }
 
@@ -843,13 +915,14 @@
     const searchInput = document.getElementById('search-input');
     const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
-    const filtered = allProducts.filter(p => {
+    filteredProducts = allProducts.filter(p => {
       const matchesCategory = (currentCategory === 'TODOS' || p.categoria === currentCategory);
       const matchesSearch = p.nombre.toLowerCase().includes(searchTerm) || p.caracteristicas.toLowerCase().includes(searchTerm);
       return matchesCategory && matchesSearch;
     });
 
-    renderProducts(filtered);
+    currentPage = 1; // Reiniciar a la primera página al buscar
+    renderProducts();
   }
 
   function updateCardPrice(prodId) {
@@ -1138,7 +1211,6 @@
 
     closeCheckoutModal();
 
-    // Vaciado seguro del carrito únicamente al terminar con éxito el pedido
     cart = [];
     try {
       localStorage.removeItem('cart_virtual');
