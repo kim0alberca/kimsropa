@@ -706,9 +706,27 @@
       </select>
     </div>
 
+    <!-- SELECTOR DE DISTRITO / PROVINCIA -->
     <div class="form-group">
-      <label>Dirección y Destino / Agencia:</label>
-      <input type="text" id="client-address" placeholder="Calle, Mz, Lote o Ciudad">
+      <label>Destino / Distrito:</label>
+      <select id="client-district" class="size-select" onchange="checkOtherProvince()">
+        <option value="Piura">Piura Centro</option>
+        <option value="Castilla">Castilla</option>
+        <option value="Veintiséis de Octubre">Veintiséis de Octubre</option>
+        <option value="Catacaos">Catacaos</option>
+        <option value="Otra Provincia">Otra Provincia (Fuera de Piura)</option>
+      </select>
+    </div>
+
+    <!-- CAMPO CONDICIONAL PARA OTRA PROVINCIA -->
+    <div class="form-group" id="other-province-group" style="display: none;">
+      <label>Escribe tu Provincia / Departamento:</label>
+      <input type="text" id="client-other-province" placeholder="Ej. Sullana, Talara, Chiclayo, Lima...">
+    </div>
+
+    <div class="form-group">
+      <label>Dirección exacta / Urbanización / Mz y Lote:</label>
+      <input type="text" id="client-address" placeholder="Calle, número o referencia">
     </div>
 
     <div class="form-group">
@@ -757,7 +775,6 @@
 <script>
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=0&single=true&output=csv";
   
-  // ⚠️ ASEGÚRATE DE QUE ESTE ENLACE CORRESPONDA A TU HOJA 2 PUBLICADA COMO CSV
   const COUPONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=2024203765&single=true&output=csv"; 
   const MY_WHATSAPP_NUMBER = "51968495402";
 
@@ -772,6 +789,24 @@
 
   let couponDiscount = 0; 
   let appliedCoupon = null; 
+
+  // ==========================================
+  // CONTROL DE PROVINCIA CONDICIONAL
+  // ==========================================
+  function checkOtherProvince() {
+    const districtSelect = document.getElementById('client-district');
+    const otherGroup = document.getElementById('other-province-group');
+    
+    if (districtSelect && otherGroup) {
+      if (districtSelect.value === 'Otra Provincia') {
+        otherGroup.style.display = 'flex';
+      } else {
+        otherGroup.style.display = 'none';
+        const otherInput = document.getElementById('client-other-province');
+        if (otherInput) otherInput.value = '';
+      }
+    }
+  }
 
   // ==========================================
   // CARGAR CUPONES DESDE LA HOJA 2 (GOOGLE SHEETS)
@@ -802,7 +837,6 @@
       });
   }
 
-  // Ejecutar carga de cupones al iniciar
   cargarCuponesDesdeHoja();
 
   // ==========================================
@@ -1257,10 +1291,23 @@
     if (event.target === this) closeSuccessModal();
   });
 
-function generateOrderText() {
+  function generateOrderText() {
     const name = document.getElementById('client-name').value.trim();
     const phone = document.getElementById('client-phone').value.trim();
     const delivery = document.getElementById('client-delivery').value;
+    
+    // Captura de distrito y validación de provincia obligatoria si aplica
+    const districtSelect = document.getElementById('client-district');
+    let selectedDistrict = districtSelect ? districtSelect.value : "Piura";
+    if (selectedDistrict === 'Otra Provincia') {
+      const otherProvInput = document.getElementById('client-other-province').value.trim();
+      if (!otherProvInput) {
+        alert("Por favor especifica el nombre de tu provincia.");
+        return;
+      }
+      selectedDistrict = "Otra Provincia: " + otherProvInput;
+    }
+
     const address = document.getElementById('client-address').value.trim();
     const dni = document.getElementById('client-dni').value.trim();
     const payment = document.getElementById('client-payment').value;
@@ -1300,6 +1347,7 @@ function generateOrderText() {
     text += "NOMBRES Y APELLIDOS: " + name + "\n";
     text += "CELULAR / WHATSAPP: " + phone + "\n";
     text += "TIPO DE ENTREGA: " + delivery + "\n";
+    text += "DISTRITO / DESTINO: " + selectedDistrict + "\n";
     text += "DIRECCION Y DESTINO: " + address + "\n";
     text += "DNI DE QUIEN RECIBE: " + dni + "\n";
     text += "METODO DE PAGO: " + payment + "\n\n";
