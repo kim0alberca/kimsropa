@@ -754,16 +754,46 @@
     cart = [];
   }
 
-  updateCartUI();
+  function updateCartUI() {
+  let totalItems = 0;
+  let totalPrice = 0;
 
-  if (cart.length > 0) {
-    window.addEventListener('DOMContentLoaded', () => {
-      const banner = document.getElementById('restore-banner');
-      if (banner) {
-        banner.style.display = 'flex';
+  cart.forEach(item => {
+    totalItems += item.qty;
+    totalPrice += item.price * item.qty;
+  });
+
+  const countElem = document.getElementById('cart-count');
+  const totalElem = document.getElementById('cart-total');
+  const shippingBanner = document.getElementById('shipping-banner');
+  
+  if(countElem) countElem.innerText = totalItems;
+  if(totalElem) totalElem.innerText = totalPrice.toFixed(2);
+  
+  // Lógica del banner de envío
+  if (shippingBanner) {
+    if (totalPrice > 0) {
+      shippingBanner.style.display = 'block';
+      if (totalPrice >= 100) {
+        shippingBanner.style.background = '#00ff88'; // Color éxito
+        shippingBanner.style.color = '#000';
+        shippingBanner.innerText = '🎉 ¡Felicidades! Tienes ENVÍO GRATIS';
+      } else {
+        const falta = (100 - totalPrice).toFixed(2);
+        shippingBanner.style.background = '#004400';
+        shippingBanner.style.color = '#ccff00';
+        shippingBanner.innerText = `🚚 Te faltan S/ ${falta} para el ENVÍO GRATIS`;
       }
-    });
+    } else {
+      shippingBanner.style.display = 'none';
+    }
   }
+  
+  const orderViewTotal = document.getElementById('order-view-total-price');
+  if(orderViewTotal) {
+    orderViewTotal.innerText = totalPrice.toFixed(2);
+  }
+}
 
   fetch(SHEET_CSV_URL)
     .then(response => response.text())
