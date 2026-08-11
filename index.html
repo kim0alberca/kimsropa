@@ -213,8 +213,8 @@
 </div>
 
 <script>
-  // Tu enlace exacto protegido con puente anti-bloqueo CORS
-  const SHEET_CSV_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=0&single=true&output=csv");
+  // Usamos el servicio CORS Proxy alternativo (corsproxy.io) que es mucho más estable
+  const SHEET_CSV_URL = "https://corsproxy.io/?" + encodeURIComponent("https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=0&single=true&output=csv");
   const MY_WHATSAPP_NUMBER = "51968495402";
 
   let allProducts = [];
@@ -253,7 +253,6 @@
         const line = lines[i];
         if(!line || !line.trim()) continue;
 
-        // Parseador inteligente de CSV que maneja comillas y enlaces de Drive sin romper columnas
         const cols = [];
         let current = '';
         let inQuotes = false;
