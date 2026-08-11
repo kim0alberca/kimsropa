@@ -28,7 +28,7 @@
       padding-bottom: 50px;
     }
 
-    /* PANEL SUPERIOR FIJO E INAMOVIBLE */
+    /* PANEL SUPERIOR FIJO */
     .header-fixed-panel {
       position: -webkit-sticky;
       position: sticky;
@@ -43,7 +43,6 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.9);
     }
 
-    /* Búsqueda */
     .search-input {
       width: 100%;
       background: #161616;
@@ -59,7 +58,6 @@
       border-color: #ccff00;
     }
 
-    /* Categorías */
     .filter-container {
       display: flex;
       gap: 6px;
@@ -92,7 +90,19 @@
       border-color: #ccff00;
     }
 
-    /* Resumen y Acciones */
+    /* Botones de filtro de tallas */
+    .size-filter-btn {
+      background: #181818;
+      border-color: #444;
+      color: #aaa;
+    }
+
+    .size-filter-btn.active {
+      background: #00ff88;
+      color: #000;
+      border-color: #00ff88;
+    }
+
     .cart-summary-bar {
       background: #161616;
       border: 1px solid #333;
@@ -256,6 +266,38 @@
       background: #00ff88 !important;
     }
 
+    /* CONTROLES DE PAGINACIÓN */
+    .pagination-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 25px;
+      padding: 10px;
+    }
+
+    .page-btn {
+      background: #222;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .page-info {
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
     /* VISTA DE PEDIDO */
     #order-view-container {
       display: none;
@@ -393,7 +435,7 @@
       color: #000;
     }
 
-    /* BANNER DE AVISO DE RECUPERACIÓN */
+    /* BANNER DE RECUPERACIÓN */
     #restore-banner {
       display: none;
       position: fixed;
@@ -423,7 +465,7 @@
       color: #ccc;
     }
 
-    /* MODAL DE DATOS DEL CLIENTE */
+    /* MODAL DE DATOS */
     #checkout-modal {
       display: none;
       position: fixed;
@@ -488,7 +530,7 @@
       margin-top: 10px;
     }
 
-    /* PANTALLA DE ÉXITO */
+    /* MODAL DE ÉXITO */
     #success-modal {
       display: none;
       position: fixed;
@@ -546,7 +588,7 @@
 
 <div class="app-viewport">
 
-  <!-- PANEL SUPERIOR FIJO E INAMOVIBLE -->
+  <!-- PANEL SUPERIOR FIJO -->
   <div class="header-fixed-panel" id="top-panel">
     <!-- BÚSQUEDA -->
     <input 
@@ -560,6 +602,17 @@
     <!-- CATEGORÍAS -->
     <div class="filter-container" id="filter-bar">
       <button class="filter-btn active" type="button" onclick="setCategory('TODOS', this)">TODOS</button>
+    </div>
+
+    <!-- FILTRO RÁPIDO DE TALLAS -->
+    <div class="filter-container" id="size-filter-bar">
+      <button class="filter-btn size-filter-btn active" type="button" onclick="setSizeFilter('TODOS', this)">TALLAS: TODAS</button>
+      <button class="filter-btn size-filter-btn" type="button" onclick="setSizeFilter('XS', this)">XS</button>
+      <button class="filter-btn size-filter-btn" type="button" onclick="setSizeFilter('S', this)">S</button>
+      <button class="filter-btn size-filter-btn" type="button" onclick="setSizeFilter('M', this)">M</button>
+      <button class="filter-btn size-filter-btn" type="button" onclick="setSizeFilter('L', this)">L</button>
+      <button class="filter-btn size-filter-btn" type="button" onclick="setSizeFilter('XL', this)">XL</button>
+      <button class="filter-btn size-filter-btn" type="button" onclick="setSizeFilter('XXL', this)">XXL</button>
     </div>
 
     <!-- CARRITO -->
@@ -576,9 +629,16 @@
     </div>
   </div>
 
-  <!-- CATÁLOGO DE PRODUCTOS -->
+  <!-- CATÁLOGO -->
   <div id="catalog-container">
     <div id="catalog-grid" class="catalog-grid">Cargando productos...</div>
+    
+    <!-- PAGINACIÓN (10 POR PÁGINA) -->
+    <div class="pagination-bar" id="pagination-controls" style="display: none;">
+      <button class="page-btn" id="prev-page-btn" type="button" onclick="changePage(-1)">← Anterior</button>
+      <span class="page-info" id="page-info-text">Página 1 de 1</span>
+      <button class="page-btn" id="next-page-btn" type="button" onclick="changePage(1)">Siguiente →</button>
+    </div>
   </div>
 
   <!-- VISTA DE PEDIDO -->
@@ -588,11 +648,8 @@
       <button type="button" class="back-catalog-btn" onclick="closeOrderSummary()">← Volver</button>
     </div>
 
-    <div id="order-view-items" class="order-view-items">
-      <!-- Aquí se cargan los productos -->
-    </div>
+    <div id="order-view-items" class="order-view-items"></div>
 
-    <!-- BLOQUE DE SUMATORIA Y BOTONES -->
     <div class="order-view-footer">
       <div class="order-view-total">
         <span>SUMATORIA TOTAL:</span>
@@ -608,14 +665,14 @@
 
 </div>
 
-<!-- BANNER DE AVISO DE RECUPERACIÓN DE CARRITO -->
+<!-- BANNER DE RECUPERACIÓN -->
 <div id="restore-banner">
   <h4>🛡️ ¡TUS PRODUCTOS ESTÁN SEGUROS!</h4>
   <p>Detectamos artículos guardados de tu sesión anterior para que no pierdas nada de lo que ibas a comprar.</p>
   <button type="button" class="action-btn-main btn-checkout" onclick="dismissRestoreBanner()">CONSERVAR Y VER CARRITO</button>
 </div>
 
-<!-- VENTANA FLOTANTE PARA DATOS DEL CLIENTE -->
+<!-- MODAL DE DATOS -->
 <div id="checkout-modal">
   <div class="modal-content">
     <h3>📝 TUS DATOS DE ENVÍO</h3>
@@ -686,35 +743,29 @@
   const MY_WHATSAPP_NUMBER = "51968495402";
 
   let allProducts = [];
+  let filteredProducts = [];
   let currentCategory = 'TODOS';
+  let currentSizeFilter = 'TODOS';
+  let currentPage = 1;
+  const itemsPerPage = 10; // Exactamente 10 productos por página
   let cart = [];
 
-  // ==========================================
-  // CARGA SEGURA INICIAL (BLOQUE CRÍTICO)
-  // ==========================================
   try {
     const rawData = localStorage.getItem('cart_virtual');
     if (rawData) {
       const parsed = JSON.parse(rawData);
-      if (Array.isArray(parsed)) {
-        cart = parsed;
-      }
+      if (Array.isArray(parsed)) cart = parsed;
     }
   } catch (e) {
-    console.error("Error al leer localStorage:", e);
     cart = [];
   }
 
-  // Actualizar la interfaz de inmediato antes de que carguen los productos de la red
   updateCartUI();
 
-  // Mostrar el banner de aviso si el carrito tiene productos al recargar la página
   if (cart.length > 0) {
     window.addEventListener('DOMContentLoaded', () => {
       const banner = document.getElementById('restore-banner');
-      if (banner) {
-        banner.style.display = 'flex';
-      }
+      if (banner) banner.style.display = 'flex';
     });
   }
 
@@ -740,7 +791,7 @@
           let rawImg = cleanCols[9] || '';
           let imgUrl = rawImg;
           if(rawImg.includes("drive.google.com")) {
-            const match = rawImg.match(/\/d\/([^\/]+)/) || rawImg.match(/id=([^&]+)/);
+            const match = rawImg.match(/\/d\/([^\/]+/) || rawImg.match(/id=([^&]+)/);
             if(match && match[1]) {
               imgUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
             }
@@ -776,28 +827,73 @@
         filterBar.appendChild(btn);
       });
 
-      renderProducts(allProducts);
+      applyFilters();
     })
     .catch(err => {
-      console.error("Error:", err);
       document.getElementById('catalog-grid').innerHTML = '<div class="no-results">Error al cargar productos.</div>';
     });
 
-  function renderProducts(products) {
+  function setCategory(category, btnElement) {
+    currentCategory = category;
+    document.querySelectorAll('#filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
+    btnElement.classList.add('active');
+    currentPage = 1;
+    applyFilters();
+  }
+
+  function setSizeFilter(size, btnElement) {
+    currentSizeFilter = size;
+    document.querySelectorAll('#size-filter-bar .size-filter-btn').forEach(b => b.classList.remove('active'));
+    btnElement.classList.add('active');
+    currentPage = 1;
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const searchInput = document.getElementById('search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    filteredProducts = allProducts.filter(p => {
+      const matchesCategory = (currentCategory === 'TODOS' || p.categoria === currentCategory);
+      const matchesSearch = p.nombre.toLowerCase().includes(searchTerm) || p.caracteristicas.toLowerCase().includes(searchTerm);
+      
+      let matchesSize = true;
+      if (currentSizeFilter !== 'TODOS') {
+        const priceInSize = p.prices[currentSizeFilter] || 0;
+        matchesSize = (priceInSize > 0);
+      }
+
+      return matchesCategory && matchesSearch && matchesSize;
+    });
+
+    renderCurrentPage();
+  }
+
+  function renderCurrentPage() {
     const grid = document.getElementById('catalog-grid');
+    const paginationBar = document.getElementById('pagination-controls');
     grid.innerHTML = '';
 
-    if(products.length === 0) {
-      grid.innerHTML = '<div class="no-results">No se encontraron productos en esta categoría.</div>';
+    if(filteredProducts.length === 0) {
+      grid.innerHTML = '<div class="no-results">No se encontraron productos con estos filtros.</div>';
+      paginationBar.style.display = 'none';
       return;
     }
 
-    products.forEach(p => {
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paginatedItems = filteredProducts.slice(start, end);
+
+    paginatedItems.forEach(p => {
       const card = document.createElement('div');
       card.className = 'product-card';
 
       const availableSizes = Object.keys(p.prices).filter(s => p.prices[s] > 0);
-      const defaultSize = availableSizes[0] || 'M';
+      const defaultSize = (currentSizeFilter !== 'TODOS' && availableSizes.includes(currentSizeFilter)) ? currentSizeFilter : (availableSizes[0] || 'M');
       const defaultPrice = p.prices[defaultSize] || 0;
 
       card.innerHTML = `
@@ -809,9 +905,12 @@
           <div class="selector-group">
             <label>Talla:</label>
             <select class="size-select" id="size-${p.id}" onchange="updateCardPrice(${p.id})">
-              ${Object.keys(p.prices).map(size => `
-                <option value="${size}" ${size === defaultSize ? 'selected' : ''}>Talla ${size}</option>
-              `).join('')}
+              ${Object.keys(p.prices).map(size => {
+                if(p.prices[size] > 0) {
+                  return `<option value="${size}" ${size === defaultSize ? 'selected' : ''}>Talla ${size}</option>`;
+                }
+                return '';
+              }).join('')}
             </select>
 
             <div class="price-tag" id="price-${p.id}">S/ ${defaultPrice.toFixed(2)}</div>
@@ -829,27 +928,21 @@
       `;
       grid.appendChild(card);
     });
+
+    if (totalPages > 1) {
+      paginationBar.style.display = 'flex';
+      document.getElementById('page-info-text').innerText = `Página ${currentPage} de ${totalPages}`;
+      document.getElementById('prev-page-btn').disabled = (currentPage === 1);
+      document.getElementById('next-page-btn').disabled = (currentPage === totalPages);
+    } else {
+      paginationBar.style.display = 'none';
+    }
   }
 
-  function setCategory(category, btnElement) {
-    currentCategory = category;
-    const buttons = document.querySelectorAll('.filter-btn');
-    buttons.forEach(b => b.classList.remove('active'));
-    btnElement.classList.add('active');
-    applyFilters();
-  }
-
-  function applyFilters() {
-    const searchInput = document.getElementById('search-input');
-    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-
-    const filtered = allProducts.filter(p => {
-      const matchesCategory = (currentCategory === 'TODOS' || p.categoria === currentCategory);
-      const matchesSearch = p.nombre.toLowerCase().includes(searchTerm) || p.caracteristicas.toLowerCase().includes(searchTerm);
-      return matchesCategory && matchesSearch;
-    });
-
-    renderProducts(filtered);
+  function changePage(direction) {
+    currentPage += direction;
+    renderCurrentPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function updateCardPrice(prodId) {
@@ -911,9 +1004,7 @@
   function saveAndSyncCart() {
     try {
       localStorage.setItem('cart_virtual', JSON.stringify(cart));
-    } catch (e) {
-      console.error("Error al guardar en localStorage:", e);
-    }
+    } catch (e) {}
     updateCartUI();
   }
 
@@ -933,16 +1024,12 @@
     if(totalElem) totalElem.innerText = totalPrice.toFixed(2);
     
     const orderViewTotal = document.getElementById('order-view-total-price');
-    if(orderViewTotal) {
-      orderViewTotal.innerText = totalPrice.toFixed(2);
-    }
+    if(orderViewTotal) orderViewTotal.innerText = totalPrice.toFixed(2);
   }
 
   function dismissRestoreBanner() {
     const banner = document.getElementById('restore-banner');
-    if (banner) {
-      banner.style.display = 'none';
-    }
+    if (banner) banner.style.display = 'none';
     openOrderSummary();
   }
 
@@ -1004,7 +1091,6 @@
   function updateCartItemQty(index, delta) {
     if(cart[index]) {
       cart[index].qty += delta;
-      
       if(cart[index].qty < 1) {
         if(confirm("¿Deseas eliminar este producto del carrito?")) {
           cart.splice(index, 1);
@@ -1012,7 +1098,6 @@
           cart[index].qty = 1;
         }
       }
-      
       saveAndSyncCart();
       openOrderSummary();
     }
@@ -1027,7 +1112,6 @@
   function closeOrderSummary() {
     const catalogContainer = document.getElementById('catalog-container');
     const orderView = document.getElementById('order-view-container');
-
     orderView.classList.remove('show');
     catalogContainer.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1038,17 +1122,11 @@
       alert("Tu carrito está vacío. Agrega un producto primero.");
       return;
     }
-
     const modal = document.getElementById('checkout-modal');
     if (!modal) return;
-
     modal.style.display = 'flex';
     document.body.classList.add('modal-open');
-
-    const firstInput = document.getElementById('client-name');
-    if (firstInput) {
-      setTimeout(() => firstInput.focus(), 100);
-    }
+    setTimeout(() => document.getElementById('client-name').focus(), 100);
   }
 
   function closeCheckoutModal() {
@@ -1070,14 +1148,6 @@
     }
   });
 
-  document.getElementById('checkout-modal').addEventListener('click', function(event) {
-    if (event.target === this) closeCheckoutModal();
-  });
-
-  document.getElementById('success-modal').addEventListener('click', function(event) {
-    if (event.target === this) closeSuccessModal();
-  });
-
   function generateOrderText() {
     const name = document.getElementById('client-name').value.trim();
     const phone = document.getElementById('client-phone').value.trim();
@@ -1086,27 +1156,18 @@
     const dni = document.getElementById('client-dni').value.trim();
     const payment = document.getElementById('client-payment').value;
 
-    if (!cart.length) {
-      alert("Tu carrito está vacío. Agrega un producto primero.");
-      closeCheckoutModal();
-      return;
-    }
-
     if (!name || !phone || !address || !dni) {
       alert("Por favor completa todos los campos del formulario.");
       return;
     }
 
-    const phoneRegex = /^9\d{8}$/;
-    const dniRegex = /^\d{8}$/;
-
-    if (!phoneRegex.test(phone)) {
-      alert("El número de celular/WhatsApp debe tener exactamente 9 dígitos y empezar con 9.");
+    if (!/^9\d{8}$/.test(phone)) {
+      alert("El celular debe tener 9 dígitos y empezar con 9.");
       return;
     }
 
-    if (!dniRegex.test(dni)) {
-      alert("El DNI debe contener exactamente 8 dígitos numéricos.");
+    if (!/^\d{8}$/.test(dni)) {
+      alert("El DNI debe tener exactamente 8 dígitos.");
       return;
     }
 
@@ -1115,7 +1176,7 @@
     text += `📱 CELULAR / WHATSAPP: ${phone}\n`;
     text += `🚚 TIPO DE ENTREGA: ${delivery}\n`;
     text += `📍 DIRECCIÓN Y DESTINO: ${address}\n`;
-    text += `🪪 DNI DE QUIEN RECIBE: ${dni}\n`;
+    text += `🪪 DNI: ${dni}\n`;
     text += `💳 MÉTODO DE PAGO: ${payment}\n\n`;
     text += `-----------------------------------\n`;
     text += `📦 DETALLE DE LOS POLOS:\n`;
@@ -1128,77 +1189,36 @@
       text += `   • Talla: ${item.size}\n`;
       text += `   • Cantidad: ${item.qty}\n`;
       text += `   • Subtotal: S/ ${subtotal.toFixed(2)}\n`;
-      if (item.imgUrl) {
-        text += `   • 🖼️ Foto: ${item.imgUrl}\n`;
-      }
     });
 
     text += `\n-----------------------------------\n`;
     text += `💰 TOTAL A PAGAR: S/ ${total.toFixed(2)}`;
 
     closeCheckoutModal();
-
-    // Vaciado seguro del carrito únicamente al terminar con éxito el pedido
     cart = [];
-    try {
-      localStorage.removeItem('cart_virtual');
-    } catch(e) {}
+    try { localStorage.removeItem('cart_virtual'); } catch(e) {}
     updateCartUI();
 
-    const finalOrderText = document.getElementById('final-order-text');
-    if (finalOrderText) finalOrderText.value = text;
-
-    const encodedText = encodeURIComponent(text);
-    const whatsappUrl = `https://wa.me/${MY_WHATSAPP_NUMBER}?text=${encodedText}`;
-
-    const safeBtn = document.getElementById('safe-whatsapp-btn');
-    if (safeBtn) safeBtn.href = whatsappUrl;
+    document.getElementById('final-order-text').value = text;
+    const whatsappUrl = `https://wa.me/${MY_WHATSAPP_NUMBER}?text=` + encodeURIComponent(text);
+    document.getElementById('safe-whatsapp-btn').href = whatsappUrl;
 
     const whatsappWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-
     if (!whatsappWindow) {
-      const modal = document.getElementById('success-modal');
-      const successText = document.getElementById('final-order-text');
-      const successDescription = document.querySelector('#success-modal .success-content p');
-
-      if (successDescription) {
-        successDescription.innerHTML =
-          'WhatsApp fue bloqueado por el navegador. <strong>Toca el botón verde de abajo</strong> para abrirlo.';
-      }
-
-      if (successText) {
-        successText.value = text;
-      }
-
-      if (modal) {
-        modal.style.display = 'flex';
-        document.body.classList.add('modal-open');
-      }
+      document.getElementById('success-modal').style.display = 'flex';
+      document.body.classList.add('modal-open');
     }
   }
 
   async function copyOrderText() {
     const textarea = document.getElementById('final-order-text');
-    if (!textarea) return;
-
-    textarea.focus();
     textarea.select();
-    textarea.setSelectionRange(0, textarea.value.length);
-
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(textarea.value);
-      } else {
-        document.execCommand('copy');
-      }
+      await navigator.clipboard.writeText(textarea.value);
       alert("¡Texto copiado al portapapeles!");
     } catch (err) {
-      try {
-        document.execCommand('copy');
-        alert("¡Texto copiado!");
-      } catch (e) {
-        alert("No se pudo copiar automáticamente. Mantén presionado el texto y cópialo.");
-      }
+      document.execCommand('copy');
+      alert("¡Texto copiado!");
     }
   }
 </script>
