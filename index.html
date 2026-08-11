@@ -29,33 +29,32 @@
     }
 
     /* AVISO DINÁMICO DE ENVÍO GRATIS */
-#shipping-banner {
-    position: sticky; /* O puedes usar fixed */
-    top: 0;
-    z-index: 1000; /* Asegura que esté por encima de otros elementos */
-    background: #004400;
-    color: #ccff00;
-    padding: 8px;
-    text-align: center;
-    font-size: 0.8rem;
-    font-weight: bold;
-    display: block; /* Cambiado de 'none' para que sea visible */
-}
+    #shipping-banner {
+      background: #004400;
+      color: #ccff00;
+      padding: 6px 8px;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      display: none;
+      margin: 0;
+      border: none;
+    }
 
-/* PANEL SUPERIOR FIJO E INAMOVIBLE */
-.header-fixed-panel {
-    position: -webkit-sticky;
-    position: sticky;
-    /* Ajusta este valor según la altura aproximada de tu banner de envío para que se coloque justo debajo */
-    top: 35px; /* O el valor exacto en pixeles que mida tu banner con el padding */
-    z-index: 999;
-    background: #121212;
-    border-bottom: 2px solid #222;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
+    /* PANEL SUPERIOR FIJO E INAMOVIBLE */
+    .header-fixed-panel {
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      background: #121212;
+      border-bottom: 2px solid #222;
+      padding: 8px 10px 10px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 999;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.9);
+    }
 
     /* Búsqueda */
     .search-input {
