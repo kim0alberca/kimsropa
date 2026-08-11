@@ -736,10 +736,10 @@
   <div class="success-content">
     <h3>🎉 ¡PEDIDO GENERADO CON ÉXITO!</h3>
     
-    <!-- CAJA DONDE APARECE EL CÓDIGO DE REGALO PARA LA PRÓXIMA COMPRA -->
+    <!-- CAJA DONDE APARECE EL CÓDIGO DE REGALO JALADO DE LA HOJA 2 -->
     <div style="background: #111; border: 1px dashed #ccff00; padding: 10px; border-radius: 6px; text-align: center;">
-      <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 4px 0;">🎟️ TU CÓDIGO DE 10% OFF PARA TU PRÓXIMA COMPRA:</p>
-      <strong id="assigned-promo-code" style="font-size: 1.2rem; color: #ccff00; letter-spacing: 2px;">-------</strong>
+      <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 4px 0;">🎟️ TU CÓDIGO DE DESCUENTO PARA TU PRÓXIMA COMPRA:</p>
+      <strong id="assigned-promo-code" style="font-size: 1.2rem; color: #ccff00; letter-spacing: 2px;">Cargando...</strong>
     </div>
 
     <textarea id="final-order-text" class="order-textarea" readonly></textarea>
@@ -755,7 +755,7 @@
 <script>
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=0&single=true&output=csv";
   
-  // URL DE TU HOJA 2 (CUPONES) - Asegúrate de que esta URL corresponda a tu Hoja 2 publicada como CSV
+  // ⚠️ ASEGÚRATE DE QUE ESTE ENLACE CORRESPONDA A TU HOJA 2 PUBLICADA COMO CSV
   const COUPONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=1543828373&single=true&output=csv"; 
   const MY_WHATSAPP_NUMBER = "51968495402";
 
@@ -763,9 +763,8 @@
   let filteredProducts = [];
   let currentCategory = 'TODOS';
   let cart = [];
-  let listadoCuponesHoja = {}; // Almacenará los cupones extraídos de la Hoja 2
+  let listadoCuponesHoja = {}; 
 
-  // Variables de Paginación
   let currentPage = 1;
   const itemsPerPage = 12;
 
@@ -775,30 +774,34 @@
   // ==========================================
   // CARGAR CUPONES DESDE LA HOJA 2 (GOOGLE SHEETS)
   // ==========================================
-  fetch(COUPONS_CSV_URL)
-    .then(response => response.text())
-    .then(data => {
-      const lines = data.split(/\r\n|\n/);
-      listadoCuponesHoja = {};
-      for(let i = 1; i < lines.length; i++) {
-        if(!lines[i].trim()) continue;
-        const cols = lines[i].match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g) || [];
-        const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
-        if(cleanCols.length >= 2 && cleanCols[0] !== '') {
-          const codigo = cleanCols[0].toUpperCase();
-          const descuento = parseFloat(cleanCols[1]) || 0.10;
-          listadoCuponesHoja[codigo] = descuento;
+  function cargarCuponesDesdeHoja() {
+    fetch(COUPONS_CSV_URL)
+      .then(response => response.text())
+      .then(data => {
+        const lines = data.split(/\r\n|\n/);
+        listadoCuponesHoja = {};
+        for(let i = 1; i < lines.length; i++) {
+          if(!lines[i].trim()) continue;
+          const cols = lines[i].match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g) || [];
+          const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
+          if(cleanCols.length >= 2 && cleanCols[0] !== '') {
+            const codigo = cleanCols[0].toUpperCase();
+            const descuento = parseFloat(cleanCols[1]) || 0.10;
+            listadoCuponesHoja[codigo] = descuento;
+          }
         }
-      }
-      // Si por alguna razón la hoja estuviera vacía, ponemos un respaldo
-      if(Object.keys(listadoCuponesHoja).length === 0) {
-        listadoCuponesHoja["CLIENTE10"] = 0.10;
-      }
-    })
-    .catch(err => {
-      console.error("Error al cargar cupones de la hoja 2:", err);
-      listadoCuponesHoja["CLIENTE10"] = 0.10;
-    });
+        if(Object.keys(listadoCuponesHoja).length === 0) {
+          listadoCuponesHoja["XPONLg"] = 0.10;
+        }
+      })
+      .catch(err => {
+        console.error("Error al cargar cupones de la hoja 2:", err);
+        listadoCuponesHoja["XPONLg"] = 0.10;
+      });
+  }
+
+  // Ejecutar carga de cupones al iniciar
+  cargarCuponesDesdeHoja();
 
   // ==========================================
   // CARGA SEGURA INICIAL (BLOQUE CRÍTICO)
@@ -1234,7 +1237,7 @@
     const modal = document.getElementById('success-modal');
     if (modal) modal.style.display = 'none';
     document.body.classList.remove('modal-open');
-    location.reload(); // Recarga la página para limpiar y dejar listo para otro pedido
+    location.reload(); 
   }
 
   document.addEventListener('keydown', function(event) {
@@ -1284,12 +1287,12 @@
       return;
     }
 
-    // SELECCIONAR UN CÓDIGO DE REGALO ALEATORIO DE LA HOJA 2
-    let codigosDisponibles = Object.keys(listadoCuponesHoja);
-    let codigoRegalo = "CLIENTE10";
-    if (codigosDisponibles.length > 0) {
-      let randomIndex = Math.floor(Math.random() * codigosDisponibles.length);
-      codigoRegalo = codigosDisponibles[randomIndex];
+    // EXTRAER UN CÓDIGO DE REGALO ALEATORIO DIRECTAMENTE DE LA HOJA 2
+    let codigosHoja = Object.keys(listadoCuponesHoja);
+    let codigoRegalo = "XPONLg";
+    if (codigosHoja.length > 0) {
+      let randomIndex = Math.floor(Math.random() * codigosHoja.length);
+      codigoRegalo = codigosHoja[randomIndex];
     }
 
     let text = "🛍️ NUEVO PEDIDO DE LA WEB\n\n";
@@ -1329,16 +1332,16 @@
     }
     text += `💰 TOTAL A PAGAR: S/ ${finalTotal.toFixed(2)}\n\n`;
     
-    // MENSAJE AUTOMÁTICO PARA EL CLIENTE EN WHATSAPP CON SU CÓDIGO DE REGALO
-    text += `🎁 ¡GRACIAS POR TU COMPRA! Tu código de regalo para tu próxima compra es: *${codigoRegalo}* (10% OFF).`;
+    // MENSAJE DE WHATSAPP INCLUYENDO EL CÓDIGO JALADO DE LA HOJA 2
+    text += `🎁 ¡GRACIAS POR TU COMPRA! Tu código de descuento para tu próxima compra es: *${codigoRegalo}*.`;
 
     closeCheckoutModal();
 
-    // Mostrar el código en la pantalla de éxito flotante
+    // Mostrar el código en la pantalla emergente de éxito
     const promoCodeBox = document.getElementById('assigned-promo-code');
     if (promoCodeBox) promoCodeBox.innerText = codigoRegalo;
 
-    // Limpiar carrito y cupones al finalizar con éxito
+    // Limpiar carrito y cupones al finalizar
     cart = [];
     couponDiscount = 0;
     appliedCoupon = null;
