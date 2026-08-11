@@ -28,6 +28,17 @@
       padding-bottom: 50px;
     }
 
+    /* AVISO DINÁMICO DE ENVÍO GRATIS */
+    #shipping-banner {
+      background: #004400;
+      color: #ccff00;
+      padding: 8px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: none;
+    }
+
     /* PANEL SUPERIOR FIJO E INAMOVIBLE */
     .header-fixed-panel {
       position: -webkit-sticky;
@@ -580,10 +591,12 @@
 <body>
 
 <div class="app-viewport">
-<!-- AVISO DINÁMICO DE ENVÍO GRATIS -->
-<div id="shipping-banner" style="background: #004400; color: #ccff00; padding: 8px; text-align: center; font-size: 0.8rem; font-weight: bold; display: none;">
-  🚚 ¡Envío GRATIS en pedidos mayores a S/ 100!
-</div>
+
+  <!-- AVISO DINÁMICO DE ENVÍO GRATIS -->
+  <div id="shipping-banner">
+    🚚 ¡Envío GRATIS en pedidos mayores a S/ 100!
+  </div>
+
   <!-- PANEL SUPERIOR FIJO E INAMOVIBLE -->
   <div class="header-fixed-panel" id="top-panel">
     <!-- BÚSQUEDA -->
@@ -636,11 +649,20 @@
       <!-- Aquí se cargan los productos -->
     </div>
 
+    <!-- BLOQUE DE CUPÓN DE DESCUENTO -->
+    <div class="order-view-footer" style="margin-bottom: 10px; padding: 10px;">
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="coupon-input" placeholder="¿Tienes un código?" style="flex:1; background:#111; color:#fff; border:1px solid #333; padding:8px; border-radius:4px; text-transform:uppercase; font-size: 0.8rem;">
+        <button type="button" onclick="applyCoupon()" style="background:#444; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-size: 0.75rem; font-weight:bold;">Aplicar</button>
+      </div>
+      <div id="coupon-message" style="font-size: 0.75rem; color: #ccff00; margin-top: 5px;"></div>
+    </div>
+
     <!-- BLOQUE DE SUMATORIA Y BOTONES -->
     <div class="order-view-footer">
       <div class="order-view-total">
         <span>SUMATORIA TOTAL:</span>
-        <strong>S/ <span id="order-view-total-price">0.00</span></strong>
+        <strong id="order-view-total-price">S/ 0.00</strong>
       </div>
 
       <div class="order-view-actions">
@@ -736,7 +758,17 @@
 
   // Variables de Paginación
   let currentPage = 1;
-  const itemsPerPage = 12; // Cantidad de productos por página (dentro de tu rango de 10 a 15)
+  const itemsPerPage = 12;
+
+  // Lista de Códigos de Descuento (Puedes agregar o cambiar los códigos y porcentajes aquí)
+  const cuponesValidos = {
+    "CLIENTE10": 0.10, // 10% de descuento
+    "VERANO20":  0.20, // 20% de descuento
+    "VIP5":      0.05  // 5% de descuento
+  };
+
+  let couponDiscount = 0; 
+  let appliedCoupon = null; 
 
   // ==========================================
   // CARGA SEGURA INICIAL (BLOQUE CRÍTICO)
@@ -754,46 +786,16 @@
     cart = [];
   }
 
-  function updateCartUI() {
-  let totalItems = 0;
-  let totalPrice = 0;
+  updateCartUI();
 
-  cart.forEach(item => {
-    totalItems += item.qty;
-    totalPrice += item.price * item.qty;
-  });
-
-  const countElem = document.getElementById('cart-count');
-  const totalElem = document.getElementById('cart-total');
-  const shippingBanner = document.getElementById('shipping-banner');
-  
-  if(countElem) countElem.innerText = totalItems;
-  if(totalElem) totalElem.innerText = totalPrice.toFixed(2);
-  
-  // Lógica del banner de envío
-  if (shippingBanner) {
-    if (totalPrice > 0) {
-      shippingBanner.style.display = 'block';
-      if (totalPrice >= 100) {
-        shippingBanner.style.background = '#00ff88'; // Color éxito
-        shippingBanner.style.color = '#000';
-        shippingBanner.innerText = '🎉 ¡Felicidades! Tienes ENVÍO GRATIS';
-      } else {
-        const falta = (100 - totalPrice).toFixed(2);
-        shippingBanner.style.background = '#004400';
-        shippingBanner.style.color = '#ccff00';
-        shippingBanner.innerText = `🚚 Te faltan S/ ${falta} para el ENVÍO GRATIS`;
+  if (cart.length > 0) {
+    window.addEventListener('DOMContentLoaded', () => {
+      const banner = document.getElementById('restore-banner');
+      if (banner) {
+        banner.style.display = 'flex';
       }
-    } else {
-      shippingBanner.style.display = 'none';
-    }
+    });
   }
-  
-  const orderViewTotal = document.getElementById('order-view-total-price');
-  if(orderViewTotal) {
-    orderViewTotal.innerText = totalPrice.toFixed(2);
-  }
-}
 
   fetch(SHEET_CSV_URL)
     .then(response => response.text())
@@ -871,7 +873,6 @@
       return;
     }
 
-    // Calcular índices de la página actual
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
@@ -918,7 +919,6 @@
       grid.appendChild(card);
     });
 
-    // Actualizar controles de paginación
     if (totalPages > 1) {
       paginationContainer.style.display = 'flex';
       document.getElementById('page-info').innerText = `Página ${currentPage} de ${totalPages}`;
@@ -940,7 +940,7 @@
     const buttons = document.querySelectorAll('.filter-btn');
     buttons.forEach(b => b.classList.remove('active'));
     btnElement.classList.add('active');
-    currentPage = 1; // Reiniciar a la primera página al cambiar categoría
+    currentPage = 1; 
     applyFilters();
   }
 
@@ -954,7 +954,7 @@
       return matchesCategory && matchesSearch;
     });
 
-    currentPage = 1; // Reiniciar a la primera página al buscar
+    currentPage = 1; 
     renderProducts();
   }
 
@@ -1023,6 +1023,21 @@
     updateCartUI();
   }
 
+  function applyCoupon() {
+    const input = document.getElementById('coupon-input').value.trim().toUpperCase();
+    const message = document.getElementById('coupon-message');
+
+    if (cuponesValidos.hasOwnProperty(input)) {
+      couponDiscount = cuponesValidos[input]; 
+      appliedCoupon = input;
+      const porcentaje = couponDiscount * 100;
+      message.innerText = `✅ ¡Cupón aplicado! ${porcentaje}% de descuento.`;
+      updateCartUI();
+    } else {
+      message.innerText = "❌ Código inválido o expirado.";
+    }
+  }
+
   function updateCartUI() {
     let totalItems = 0;
     let totalPrice = 0;
@@ -1032,15 +1047,43 @@
       totalPrice += item.price * item.qty;
     });
 
+    // Calcular descuento del cupón
+    const discountAmount = totalPrice * couponDiscount;
+    const finalTotal = totalPrice - discountAmount;
+
     const countElem = document.getElementById('cart-count');
     const totalElem = document.getElementById('cart-total');
+    const shippingBanner = document.getElementById('shipping-banner');
     
     if(countElem) countElem.innerText = totalItems;
-    if(totalElem) totalElem.innerText = totalPrice.toFixed(2);
+    if(totalElem) totalElem.innerText = finalTotal.toFixed(2);
+    
+    // Lógica del banner de envío gratis (sobre el total real de productos)
+    if (shippingBanner) {
+      if (totalPrice > 0) {
+        shippingBanner.style.display = 'block';
+        if (totalPrice >= 100) {
+          shippingBanner.style.background = '#00ff88';
+          shippingBanner.style.color = '#000';
+          shippingBanner.innerText = '🎉 ¡Felicidades! Tienes ENVÍO GRATIS';
+        } else {
+          const falta = (100 - totalPrice).toFixed(2);
+          shippingBanner.style.background = '#004400';
+          shippingBanner.style.color = '#ccff00';
+          shippingBanner.innerText = `🚚 Te faltan S/ ${falta} para el ENVÍO GRATIS`;
+        }
+      } else {
+        shippingBanner.style.display = 'none';
+      }
+    }
     
     const orderViewTotal = document.getElementById('order-view-total-price');
     if(orderViewTotal) {
-      orderViewTotal.innerText = totalPrice.toFixed(2);
+      if (couponDiscount > 0) {
+        orderViewTotal.innerHTML = `<s style="color:#888; font-size:0.9rem;">S/ ${totalPrice.toFixed(2)}</s> <strong>S/ ${finalTotal.toFixed(2)}</strong>`;
+      } else {
+        orderViewTotal.innerHTML = `<strong>S/ ${finalTotal.toFixed(2)}</strong>`;
+      }
     }
   }
 
@@ -1056,13 +1099,10 @@
     const catalogContainer = document.getElementById('catalog-container');
     const orderView = document.getElementById('order-view-container');
     const itemsContainer = document.getElementById('order-view-items');
-    const totalElement = document.getElementById('order-view-total-price');
     const banner = document.getElementById('restore-banner');
 
     if(banner) banner.style.display = 'none';
     itemsContainer.innerHTML = '';
-
-    let total = 0;
 
     if(cart.length === 0) {
       itemsContainer.innerHTML = `
@@ -1075,7 +1115,6 @@
     } else {
       cart.forEach((item, index) => {
         const subtotal = Number(item.price) * Number(item.qty);
-        total += subtotal;
 
         const card = document.createElement('div');
         card.className = 'order-item-card';
@@ -1101,7 +1140,7 @@
       });
     }
 
-    totalElement.innerText = total.toFixed(2);
+    updateCartUI();
     catalogContainer.style.display = 'none';
     orderView.classList.add('show');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1239,12 +1278,27 @@
       }
     });
 
+    // Calcular total aplicando cupón y verificar envío gratis
+    const discountAmount = total * couponDiscount;
+    let finalTotal = total - discountAmount;
+
     text += `\n-----------------------------------\n`;
-    text += `💰 TOTAL A PAGAR: S/ ${total.toFixed(2)}`;
+    if (couponDiscount > 0) {
+      const porc = couponDiscount * 100;
+      text += `🎟️ CUPÓN APLICADO (${appliedCoupon}): ${porc}% DE DESCUENTO\n`;
+      text += `Subtotal: S/ ${total.toFixed(2)}\n`;
+    }
+    if (total >= 100) {
+      text += `🚚 ENVÍO: ¡GRATIS (Superó S/ 100)!\n`;
+    }
+    text += `💰 TOTAL A PAGAR: S/ ${finalTotal.toFixed(2)}`;
 
     closeCheckoutModal();
 
+    // Limpiar carrito y cupones al finalizar con éxito
     cart = [];
+    couponDiscount = 0;
+    appliedCoupon = null;
     try {
       localStorage.removeItem('cart_virtual');
     } catch(e) {}
