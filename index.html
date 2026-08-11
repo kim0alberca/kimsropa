@@ -555,7 +555,7 @@
       max-width: 420px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       text-align: center;
     }
 
@@ -566,11 +566,11 @@
 
     .order-textarea {
       width: 100%;
-      height: 120px;
+      height: 100px;
       background: #0b0b0b;
       color: #00ff88;
       border: 1px solid #333;
-      padding: 10px;
+      padding: 8px;
       border-radius: 6px;
       font-family: monospace;
       font-size: 0.75rem;
@@ -735,13 +735,18 @@
 <div id="success-modal">
   <div class="success-content">
     <h3>🎉 ¡PEDIDO GENERADO CON ÉXITO!</h3>
-    <p style="font-size:0.75rem; color:#ccc; margin:0;">Tu pedido está listo. Si WhatsApp no se abrió automáticamente, toca el botón verde:</p>
     
+    <!-- CAJA DONDE APARECE EL CÓDIGO DE REGALO PARA LA PRÓXIMA COMPRA -->
+    <div style="background: #111; border: 1px dashed #ccff00; padding: 10px; border-radius: 6px; text-align: center;">
+      <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 4px 0;">🎟️ TU CÓDIGO DE 10% OFF PARA TU PRÓXIMA COMPRA:</p>
+      <strong id="assigned-promo-code" style="font-size: 1.2rem; color: #ccff00; letter-spacing: 2px;">-------</strong>
+    </div>
+
     <textarea id="final-order-text" class="order-textarea" readonly></textarea>
     
     <button type="button" class="action-btn-main" style="background:#00ff88; color:#000; padding:10px;" onclick="copyOrderText()">📋 COPIAR TEXTO DEL PEDIDO</button>
     
-    <a id="safe-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer" class="action-btn-main btn-checkout" style="padding: 12px; font-size: 0.85rem; text-align: center;">💬 ABRIR EN WHATSAPP</a>
+    <a id="safe-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer" class="action-btn-main btn-checkout" style="padding: 10px; font-size: 0.8rem; text-align: center;">💬 ABRIR EN WHATSAPP</a>
     
     <button type="button" class="action-btn-main btn-keep-buying" onclick="closeSuccessModal()">Cerrar / Volver</button>
   </div>
@@ -749,26 +754,51 @@
 
 <script>
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=0&single=true&output=csv";
+  
+  // URL DE TU HOJA 2 (CUPONES) - Asegúrate de que esta URL corresponda a tu Hoja 2 publicada como CSV
+  const COUPONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=1543828373&single=true&output=csv"; 
   const MY_WHATSAPP_NUMBER = "51968495402";
 
   let allProducts = [];
   let filteredProducts = [];
   let currentCategory = 'TODOS';
   let cart = [];
+  let listadoCuponesHoja = {}; // Almacenará los cupones extraídos de la Hoja 2
 
   // Variables de Paginación
   let currentPage = 1;
   const itemsPerPage = 12;
 
-  // Lista de Códigos de Descuento (Puedes agregar o cambiar los códigos y porcentajes aquí)
-  const cuponesValidos = {
-    "CLIENTE10": 0.10, // 10% de descuento
-    "VERANO20":  0.20, // 20% de descuento
-    "VIP5":      0.05  // 5% de descuento
-  };
-
   let couponDiscount = 0; 
   let appliedCoupon = null; 
+
+  // ==========================================
+  // CARGAR CUPONES DESDE LA HOJA 2 (GOOGLE SHEETS)
+  // ==========================================
+  fetch(COUPONS_CSV_URL)
+    .then(response => response.text())
+    .then(data => {
+      const lines = data.split(/\r\n|\n/);
+      listadoCuponesHoja = {};
+      for(let i = 1; i < lines.length; i++) {
+        if(!lines[i].trim()) continue;
+        const cols = lines[i].match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g) || [];
+        const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
+        if(cleanCols.length >= 2 && cleanCols[0] !== '') {
+          const codigo = cleanCols[0].toUpperCase();
+          const descuento = parseFloat(cleanCols[1]) || 0.10;
+          listadoCuponesHoja[codigo] = descuento;
+        }
+      }
+      // Si por alguna razón la hoja estuviera vacía, ponemos un respaldo
+      if(Object.keys(listadoCuponesHoja).length === 0) {
+        listadoCuponesHoja["CLIENTE10"] = 0.10;
+      }
+    })
+    .catch(err => {
+      console.error("Error al cargar cupones de la hoja 2:", err);
+      listadoCuponesHoja["CLIENTE10"] = 0.10;
+    });
 
   // ==========================================
   // CARGA SEGURA INICIAL (BLOQUE CRÍTICO)
@@ -1027,10 +1057,10 @@
     const input = document.getElementById('coupon-input').value.trim().toUpperCase();
     const message = document.getElementById('coupon-message');
 
-    if (cuponesValidos.hasOwnProperty(input)) {
-      couponDiscount = cuponesValidos[input]; 
+    if (listadoCuponesHoja.hasOwnProperty(input)) {
+      couponDiscount = listadoCuponesHoja[input]; 
       appliedCoupon = input;
-      const porcentaje = couponDiscount * 100;
+      const porcentaje = Math.round(couponDiscount * 100);
       message.innerText = `✅ ¡Cupón aplicado! ${porcentaje}% de descuento.`;
       updateCartUI();
     } else {
@@ -1047,7 +1077,6 @@
       totalPrice += item.price * item.qty;
     });
 
-    // Calcular descuento del cupón
     const discountAmount = totalPrice * couponDiscount;
     const finalTotal = totalPrice - discountAmount;
 
@@ -1058,7 +1087,6 @@
     if(countElem) countElem.innerText = totalItems;
     if(totalElem) totalElem.innerText = finalTotal.toFixed(2);
     
-    // Lógica del banner de envío gratis (sobre el total real de productos)
     if (shippingBanner) {
       if (totalPrice > 0) {
         shippingBanner.style.display = 'block';
@@ -1206,6 +1234,7 @@
     const modal = document.getElementById('success-modal');
     if (modal) modal.style.display = 'none';
     document.body.classList.remove('modal-open');
+    location.reload(); // Recarga la página para limpiar y dejar listo para otro pedido
   }
 
   document.addEventListener('keydown', function(event) {
@@ -1255,6 +1284,14 @@
       return;
     }
 
+    // SELECCIONAR UN CÓDIGO DE REGALO ALEATORIO DE LA HOJA 2
+    let codigosDisponibles = Object.keys(listadoCuponesHoja);
+    let codigoRegalo = "CLIENTE10";
+    if (codigosDisponibles.length > 0) {
+      let randomIndex = Math.floor(Math.random() * codigosDisponibles.length);
+      codigoRegalo = codigosDisponibles[randomIndex];
+    }
+
     let text = "🛍️ NUEVO PEDIDO DE LA WEB\n\n";
     text += `👤 NOMBRES Y APELLIDOS: ${name}\n`;
     text += `📱 CELULAR / WHATSAPP: ${phone}\n`;
@@ -1278,22 +1315,28 @@
       }
     });
 
-    // Calcular total aplicando cupón y verificar envío gratis
     const discountAmount = total * couponDiscount;
     let finalTotal = total - discountAmount;
 
     text += `\n-----------------------------------\n`;
     if (couponDiscount > 0) {
-      const porc = couponDiscount * 100;
+      const porc = Math.round(couponDiscount * 100);
       text += `🎟️ CUPÓN APLICADO (${appliedCoupon}): ${porc}% DE DESCUENTO\n`;
       text += `Subtotal: S/ ${total.toFixed(2)}\n`;
     }
     if (total >= 100) {
       text += `🚚 ENVÍO: ¡GRATIS (Superó S/ 100)!\n`;
     }
-    text += `💰 TOTAL A PAGAR: S/ ${finalTotal.toFixed(2)}`;
+    text += `💰 TOTAL A PAGAR: S/ ${finalTotal.toFixed(2)}\n\n`;
+    
+    // MENSAJE AUTOMÁTICO PARA EL CLIENTE EN WHATSAPP CON SU CÓDIGO DE REGALO
+    text += `🎁 ¡GRACIAS POR TU COMPRA! Tu código de regalo para tu próxima compra es: *${codigoRegalo}* (10% OFF).`;
 
     closeCheckoutModal();
+
+    // Mostrar el código en la pantalla de éxito flotante
+    const promoCodeBox = document.getElementById('assigned-promo-code');
+    if (promoCodeBox) promoCodeBox.innerText = codigoRegalo;
 
     // Limpiar carrito y cupones al finalizar con éxito
     cart = [];
@@ -1313,27 +1356,13 @@
     const safeBtn = document.getElementById('safe-whatsapp-btn');
     if (safeBtn) safeBtn.href = whatsappUrl;
 
-    const whatsappWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-
-    if (!whatsappWindow) {
-      const modal = document.getElementById('success-modal');
-      const successText = document.getElementById('final-order-text');
-      const successDescription = document.querySelector('#success-modal .success-content p');
-
-      if (successDescription) {
-        successDescription.innerHTML =
-          'WhatsApp fue bloqueado por el navegador. <strong>Toca el botón verde de abajo</strong> para abrirlo.';
-      }
-
-      if (successText) {
-        successText.value = text;
-      }
-
-      if (modal) {
-        modal.style.display = 'flex';
-        document.body.classList.add('modal-open');
-      }
+    const modal = document.getElementById('success-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
     }
+
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }
 
   async function copyOrderText() {
