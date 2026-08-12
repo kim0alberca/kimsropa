@@ -701,30 +701,18 @@
     <div class="form-group">
       <label>Tipo de Entrega:</label>
       <select id="client-delivery" onchange="checkDeliveryType()">
-        <option value="Entrega a Domicilio">Entrega a Domicilio</option>
-        <option value="Agencia Shalom / Olva">Agencia Shalom / Olva</option>
+        <option value="Agencia Shalom">Envío por Agencia Shalom</option>
       </select>
     </div>
 
-    <!-- SELECTOR DE DISTRITO / PROVINCIA (Solo para Domicilio: hasta Catacaos) -->
-    <div class="form-group" id="district-group">
-      <label>Destino / Distrito:</label>
-      <select id="client-district" class="size-select">
-        <option value="Piura">Piura Centro</option>
-        <option value="Castilla">Castilla</option>
-        <option value="Veintiséis de Octubre">Veintiséis de Octubre</option>
-        <option value="Catacaos">Catacaos</option>
-      </select>
-    </div>
-
-    <!-- CAMPO CONDICIONAL PARA AGENCIA SHALOM / OLVA ESPECÍFICA -->
-    <div class="form-group" id="agency-detail-group" style="display: none;">
-      <label>Agencia exacta y Ciudad (Shalom / Olva):</label>
+    <!-- CAMPO CONDICIONAL PARA AGENCIA SHALOM ESPECÍFICA -->
+    <div class="form-group" id="agency-detail-group">
+      <label>Agencia exacta y Ciudad (Shalom):</label>
       <input type="text" id="client-agency-detail" placeholder="Ej. Shalom Óvalo Puno, Trujillo Centro, etc.">
     </div>
 
     <div class="form-group" id="address-group">
-      <label id="address-label">Dirección exacta / Urbanización / Mz y Lote:</label>
+      <label id="address-label">Referencia adicional:</label>
       <input type="text" id="client-address" placeholder="Calle, número o referencia">
     </div>
 
@@ -790,27 +778,10 @@
   let appliedCoupon = null; 
 
   // ==========================================
-  // CONTROL DE TIPO DE ENTREGA Y AGENCIA
+  // CONTROL DE TIPO DE ENTREGA (SOLO SHALOM)
   // ==========================================
   function checkDeliveryType() {
-    const deliverySelect = document.getElementById('client-delivery');
-    const districtGroup = document.getElementById('district-group');
-    const agencyGroup = document.getElementById('agency-detail-group');
-    const addressLabel = document.getElementById('address-label');
-    
-    if (deliverySelect && agencyGroup && districtGroup) {
-      if (deliverySelect.value === 'Agencia Shalom / Olva') {
-        districtGroup.style.display = 'none';
-        agencyGroup.style.display = 'flex';
-        if (addressLabel) addressLabel.innerText = "Referencia adicional:";
-      } else {
-        districtGroup.style.display = 'flex';
-        agencyGroup.style.display = 'none';
-        const agencyInput = document.getElementById('client-agency-detail');
-        if (agencyInput) agencyInput.value = '';
-        if (addressLabel) addressLabel.innerText = "Dirección exacta / Urbanización / Mz y Lote:";
-      }
-    }
+    // Al ser solo Shalom por defecto, se mantiene fijo
   }
 
   // ==========================================
@@ -1301,19 +1272,10 @@
     const phone = document.getElementById('client-phone').value.trim();
     const delivery = document.getElementById('client-delivery').value;
     
-    let selectedDistrict = "";
-    let agencyDetails = "";
-
-    if (delivery === 'Agencia Shalom / Olva') {
-      const agencyInput = document.getElementById('client-agency-detail').value.trim();
-      if (!agencyInput) {
-        alert("Por favor especifica la provincia y agencia exacta (Shalom / Olva).");
-        return;
-      }
-      agencyDetails = agencyInput;
-    } else {
-      const districtSelect = document.getElementById('client-district');
-      selectedDistrict = districtSelect ? districtSelect.value : "Piura";
+    const agencyInput = document.getElementById('client-agency-detail').value.trim();
+    if (!agencyInput) {
+      alert("Por favor especifica la provincia y agencia exacta de Shalom.");
+      return;
     }
 
     const address = document.getElementById('client-address').value.trim();
@@ -1326,7 +1288,7 @@
       return;
     }
 
-    if (!name || !phone || !dni || (delivery === 'Entrega a Domicilio' && !address)) {
+    if (!name || !phone || !dni) {
       alert("Por favor completa todos los campos obligatorios del formulario.");
       return;
     }
@@ -1355,15 +1317,9 @@
     text += "NOMBRES Y APELLIDOS: " + name + "\n";
     text += "CELULAR / WHATSAPP: " + phone + "\n";
     text += "TIPO DE ENTREGA: " + delivery + "\n";
-    
-    if (delivery === 'Agencia Shalom / Olva') {
-      text += "AGENCIA DESTINO: " + agencyDetails + "\n";
-      if (address) {
-        text += "REFERENCIA ADICIONAL: " + address + "\n";
-      }
-    } else {
-      text += "DISTRITO / DESTINO: " + selectedDistrict + "\n";
-      text += "DIRECCION: " + address + "\n";
+    text += "AGENCIA DESTINO: " + agencyInput + "\n";
+    if (address) {
+      text += "REFERENCIA ADICIONAL: " + address + "\n";
     }
 
     text += "DNI DE QUIEN RECIBE: " + dni + "\n";
