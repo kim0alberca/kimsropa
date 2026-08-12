@@ -676,7 +676,7 @@
 
 </div>
 
-<!-- BANNER DE AVISO DE RECUPERACIÓN DE CARRITO -->
+<!-- BANNER DE AVISO DE RECUPERACIÓN -->
 <div id="restore-banner">
   <h4>🛡️ ¡TUS PRODUCTOS ESTÁN SEGUROS!</h4>
   <p>Detectamos artículos guardados de tu sesión anterior para que no pierdas nada de lo que ibas a comprar.</p>
@@ -801,7 +801,6 @@
     }
   }
 
-  // Ejecutar al cargar para configurar estado inicial
   window.addEventListener('DOMContentLoaded', () => {
     checkDeliveryType();
   });
@@ -1094,6 +1093,23 @@
     const input = document.getElementById('coupon-input').value.trim().toUpperCase();
     const message = document.getElementById('coupon-message');
 
+    if (!input) {
+      message.innerText = "❌ Ingresa un código.";
+      return;
+    }
+
+    // Verificar si el cupón ya fue usado en este navegador/dispositivo
+    let cuponesUsados = [];
+    try {
+      const rawUsados = localStorage.getItem('used_coupons');
+      if (rawUsados) cuponesUsados = JSON.parse(rawUsados);
+    } catch(e) {}
+
+    if (cuponesUsados.includes(input)) {
+      message.innerText = "❌ Este código ya fue utilizado anteriormente.";
+      return;
+    }
+
     if (listadoCuponesHoja.hasOwnProperty(input)) {
       couponDiscount = listadoCuponesHoja[input]; 
       appliedCoupon = input;
@@ -1335,6 +1351,19 @@
     if (!dniRegex.test(dni)) {
       alert("El DNI debe contener exactamente 8 dígitos numéricos.");
       return;
+    }
+
+    // BLOQUEAR CUPÓN USADO AL FINALIZAR EL PEDIDO
+    if (appliedCoupon) {
+      try {
+        let cuponesUsados = [];
+        const rawUsados = localStorage.getItem('used_coupons');
+        if (rawUsados) cuponesUsados = JSON.parse(rawUsados);
+        if (!cuponesUsados.includes(appliedCoupon)) {
+          cuponesUsados.push(appliedCoupon);
+          localStorage.setItem('used_coupons', JSON.stringify(cuponesUsados));
+        }
+      } catch(e) {}
     }
 
     let codigosHoja = Object.keys(listadoCuponesHoja);
