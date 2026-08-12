@@ -701,12 +701,19 @@
     <div class="form-group">
       <label>Tipo de Entrega:</label>
       <select id="client-delivery" onchange="checkDeliveryType()">
-        <option value="Agencia Shalom">Envío por Agencia Shalom</option>
+        <option value="A domicilio">A domicilio</option>
+        <option value="Envío por Agencia Shalom">Envío por Agencia Shalom</option>
       </select>
     </div>
 
+    <!-- CAMPO CONDICIONAL PARA DOMICILIO -->
+    <div class="form-group" id="address-detail-group">
+      <label>Dirección exacta de domicilio:</label>
+      <input type="text" id="client-address-detail" placeholder="Ej. Av. Larco 123, dpto 402">
+    </div>
+
     <!-- CAMPO CONDICIONAL PARA AGENCIA SHALOM ESPECÍFICA -->
-    <div class="form-group" id="agency-detail-group">
+    <div class="form-group" id="agency-detail-group" style="display: none;">
       <label>Agencia exacta y Ciudad (Shalom):</label>
       <input type="text" id="client-agency-detail" placeholder="Ej. Shalom Óvalo Puno, Trujillo Centro, etc.">
     </div>
@@ -778,11 +785,26 @@
   let appliedCoupon = null; 
 
   // ==========================================
-  // CONTROL DE TIPO DE ENTREGA (SOLO SHALOM)
+  // CONTROL DE TIPO DE ENTREGA DINÁMICO
   // ==========================================
   function checkDeliveryType() {
-    // Al ser solo Shalom por defecto, se mantiene fijo
+    const deliveryType = document.getElementById('client-delivery').value;
+    const addressDetailGroup = document.getElementById('address-detail-group');
+    const agencyDetailGroup = document.getElementById('agency-detail-group');
+
+    if (deliveryType === 'A domicilio') {
+      addressDetailGroup.style.display = 'flex';
+      agencyDetailGroup.style.display = 'none';
+    } else if (deliveryType === 'Envío por Agencia Shalom') {
+      addressDetailGroup.style.display = 'none';
+      agencyDetailGroup.style.display = 'flex';
+    }
   }
+
+  // Ejecutar al cargar para configurar estado inicial
+  window.addEventListener('DOMContentLoaded', () => {
+    checkDeliveryType();
+  });
 
   // ==========================================
   // CARGAR CUPONES DESDE LA HOJA 2 (GOOGLE SHEETS)
@@ -1272,10 +1294,19 @@
     const phone = document.getElementById('client-phone').value.trim();
     const delivery = document.getElementById('client-delivery').value;
     
-    const agencyInput = document.getElementById('client-agency-detail').value.trim();
-    if (!agencyInput) {
-      alert("Por favor especifica la provincia y agencia exacta de Shalom.");
-      return;
+    let locationDetail = "";
+    if (delivery === 'A domicilio') {
+      locationDetail = document.getElementById('client-address-detail').value.trim();
+      if (!locationDetail) {
+        alert("Por favor ingresa la dirección exacta de domicilio.");
+        return;
+      }
+    } else if (delivery === 'Envío por Agencia Shalom') {
+      locationDetail = document.getElementById('client-agency-detail').value.trim();
+      if (!locationDetail) {
+        alert("Por favor especifica la agencia exacta y ciudad (Shalom).");
+        return;
+      }
     }
 
     const address = document.getElementById('client-address').value.trim();
@@ -1317,7 +1348,13 @@
     text += "NOMBRES Y APELLIDOS: " + name + "\n";
     text += "CELULAR / WHATSAPP: " + phone + "\n";
     text += "TIPO DE ENTREGA: " + delivery + "\n";
-    text += "AGENCIA DESTINO: " + agencyInput + "\n";
+    
+    if (delivery === 'A domicilio') {
+      text += "DIRECCIÓN EXACTA DE DOMICILIO: " + locationDetail + "\n";
+    } else {
+      text += "AGENCIA EXACTA Y CIUDAD (SHALOM): " + locationDetail + "\n";
+    }
+
     if (address) {
       text += "REFERENCIA ADICIONAL: " + address + "\n";
     }
