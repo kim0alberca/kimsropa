@@ -7,6 +7,18 @@
   <!-- FAVICON -->
   <link rel="icon" type="image/png" href="logo.png">
 
+  <!-- CONFIGURACIÓN PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d0d0d">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker registrado con éxito', reg))
+          .catch(err => console.log('Error al registrar Service Worker', err));
+      });
+    }
+
   <!-- OPEN GRAPH (Para compartir en WhatsApp, Facebook, etc.) -->
   <meta property="og:title" content="Kimsropa - Tienda Virtual de Polos">
   <meta property="og:description" content="Encuentra la mejor variedad de polos. ¡Pide el tuyo directamente al WhatsApp!">
