@@ -631,6 +631,11 @@
 
 <div class="app-viewport">
 
+  <!-- BANNER SUPERIOR DE BIENVENIDA -->
+  <div id="welcome-banner">
+    <img src="https://raw.githubusercontent.com/kim0alberca/kimsropa/main/banner-bienvenida.jpg" alt="Bienvenida a Kimsropa">
+  </div>
+
   <!-- AVISO DINÁMICO DE ENVÍO GRATIS -->
   <div id="shipping-banner">
     🚚 ¡Envío GRATIS en pedidos mayores a S/ 100!
@@ -1135,7 +1140,6 @@
       return;
     }
 
-    // Verificar si el cupón ya fue usado en este navegador/dispositivo
     let cuponesUsados = [];
     try {
       const rawUsados = localStorage.getItem('used_coupons');
@@ -1390,7 +1394,6 @@
       return;
     }
 
-    // BLOQUEAR CUPÓN USADO AL FINALIZAR EL PEDIDO
     if (appliedCoupon) {
       try {
         let cuponesUsados = [];
