@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+  <!-- FAVICON -->
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- OPEN GRAPH (Para compartir en WhatsApp, Facebook, etc.) -->
+  <meta property="og:title" content="Kimsropa - Tienda Virtual de Polos">
+  <meta property="og:description" content="Encuentra la mejor variedad de polos. ¡Pide el tuyo directamente al WhatsApp!">
+  <meta property="og:image" content="https://raw.githubusercontent.com/kim0alberca/kimsropa/main/logo.png">
+  <meta property="og:type" content="website">
+
   <style>
     * {
       box-sizing: border-box;
@@ -26,6 +35,23 @@
       background: #0d0d0d;
       position: relative;
       padding-bottom: 50px;
+    }
+
+    /* BANNER SUPERIOR DE BIENVENIDA (DINÁMICO AL SCROLL) */
+    #welcome-banner {
+      width: 100%;
+      background: #121212;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      max-height: 160px;
+      text-align: center;
+    }
+
+    #welcome-banner img {
+      width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      display: block;
     }
 
     /* AVISO DINÁMICO DE ENVÍO GRATIS */
@@ -54,6 +80,17 @@
       gap: 6px;
       z-index: 999;
       box-shadow: 0 4px 15px rgba(0,0,0,0.9);
+    }
+
+    /* LOGO EN EL PANEL */
+    .store-logo-container {
+      text-align: center;
+      padding-bottom: 2px;
+    }
+
+    .store-logo {
+      height: 32px;
+      object-fit: contain;
     }
 
     /* Búsqueda */
