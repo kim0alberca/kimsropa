@@ -1664,7 +1664,7 @@
   }
 
   function registrarVentaEnSheets(pedidoId, montoTotal, metodoPago, detallePedido) {
-  // Extraer nombre y celular de los campos de texto del formulario de la tienda
+  // Captura el nombre y celular de los inputs de tu tienda
   const inputNombre = document.getElementById('client-name');
   const inputCelular = document.getElementById('client-phone');
   
@@ -1680,7 +1680,7 @@
     textoCliente = celularCliente;
   }
 
-  // Desglosar los productos del carrito
+  // Desglosar los productos
   const listaItems = [];
   if (detallePedido && typeof detallePedido === 'string') {
     const partes = detallePedido.split(';');
@@ -1705,7 +1705,7 @@
     pedidoId: pedidoId,
     monto: montoTotal,
     metodo: metodoPago,
-    cliente: textoCliente, // <--- Envía el nombre y celular correcto
+    cliente: textoCliente, // <--- Aquí va el nombre real del cliente
     items: listaItems
   };
 
@@ -1715,8 +1715,8 @@
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datosVenta)
   })
-  .then(() => console.log("Venta registrada con datos de cliente"))
-  .catch(err => console.error("Error al registrar:", err));
+  .then(() => console.log("Venta enviada con nombre de cliente"))
+  .catch(err => console.error("Error:", err));
 }
   function generateOrderText() {
     const name = document.getElementById('client-name').value.trim();
