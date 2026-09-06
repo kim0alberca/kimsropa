@@ -135,23 +135,25 @@
 
   <script>
     // --- CONFIGURACIÓN DE SEGURIDAD ---
-    const MI_LLAVE_SECRETA = "MI_TOKEN_EXCLUSIVO_2026"; // Mantiene tu token actual
-    const MI_PIN = "6666"; // Tu PIN de seguridad personalizado
+    const MI_LLAVE_SECRETA = "MI_TOKEN_EXCLUSIVO_2026"; 
+    const MI_PIN = "6666"; 
 
-    let chartInstance = null; // Guardará la instancia del gráfico para actualizarlo al cambiar de fecha
+    // URL DE TU GOOGLE APPS SCRIPT
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzN2NhNoJU2Yj8ugL9lOZQVSE4q4vC3TQ9ADEQUokrYe6TsHTa3eJsOyMWyHyZjN-Qz/exec"; 
+
+    let chartInstance = null;
 
     // 1. Verificación Inicial de Dispositivo
     window.onload = function() {
       const tokenGuardado = localStorage.getItem("device_access_token");
 
       if (tokenGuardado !== MI_LLAVE_SECRETA) {
-        // Dispositivo NO AUTORIZADO -> Redirigir a la tienda principal
         document.body.innerHTML = "<h2 style='text-align:center; margin-top:100px;'>Acceso no autorizado</h2>";
         setTimeout(() => { window.location.href = "index.html"; }, 1500);
       }
     };
 
-    // 2. Validación de PIN y Carga Inicial de Fecha
+    // 2. Validación de PIN y Carga Inicial
     function validarPIN() {
       const pinIngresado = document.getElementById("pin-input").value;
       
@@ -159,7 +161,7 @@
         document.getElementById("lock-screen").style.display = "none";
         document.getElementById("dashboard-content").style.display = "block";
         
-        // Pone la fecha de HOY en el selector automáticamente
+        // Pone la fecha de HOY por defecto
         const hoy = new Date().toISOString().split('T')[0];
         document.getElementById("fecha-select").value = hoy;
 
@@ -170,34 +172,39 @@
       }
     }
 
-    // 3. Carga y renderizado de datos por fecha
+    // 3. Carga y lectura real de datos desde Google Sheets
     async function cargarDatosVentas() {
       const fechaSeleccionada = document.getElementById("fecha-select").value;
       
-      // Muestra en la consola de tu navegador la fecha consultada
-      console.log("Consultando fecha:", fechaSeleccionada);
+      try {
+        // Pide a Google Apps Script los datos filtrados por la fecha elegida
+        const response = await fetch(`${URL_APPS_SCRIPT}?fecha=${fechaSeleccionada}`);
+        const data = await response.json();
 
-      // AQUÍ IRÁ LA CONEXIÓN A TU GOOGLE APPS SCRIPT CON EL PARÁMETRO DE FECHA
-      // Ejemplo: const URL_API = `TU_URL_DE_APPS_SCRIPT?fecha=${fechaSeleccionada}`;
+        // Muestra los montos reales procesados por la pestaña "Ventas"
+        const totalMonto = data.total || 0;
+        const totalPedidos = data.pedidos || 0;
+        const ticketPromedio = totalPedidos > 0 ? (totalMonto / totalPedidos) : 0;
 
-      // Datos de prueba (Reemplazar cuando conectes tu base de datos):
-      const totalMonto = 185.00;
-      const totalPedidos = 4;
+        document.getElementById("kpi-total").innerText = `S/ ${totalMonto.toFixed(2)}`;
+        document.getElementById("kpi-pedidos").innerText = totalPedidos;
+        document.getElementById("kpi-promedio").innerText = `S/ ${ticketPromedio.toFixed(2)}`;
 
-      document.getElementById("kpi-total").innerText = `S/ ${totalMonto.toFixed(2)}`;
-      document.getElementById("kpi-pedidos").innerText = totalPedidos;
-      document.getElementById("kpi-promedio").innerText = `S/ ${(totalMonto / (totalPedidos || 1)).toFixed(2)}`;
+        // Actualiza las barras con los montos reales acumulados
+        renderizarGrafico([data.yape || 0, data.plin || 0, data.efectivo || 0]);
 
-      renderizarGrafico([120, 45, 20]); // Ejemplo Yape, Plin, Efectivo
+      } catch(error) {
+        console.error("Error al conectar con la base de datos:", error);
+        alert("No se pudieron cargar los datos de la fecha seleccionada.");
+      }
     }
 
-    // 4. Renderizado del Gráfico (Evita duplicados al cambiar de día)
+    // 4. Dibujar Gráfico
     function renderizarGrafico(datos) {
       const ctx = document.getElementById('salesChart').getContext('2d');
       
-      // Si ya hay un gráfico dibujado previamente, lo borra para crear el nuevo día
       if (chartInstance) {
-        chartInstance.destroy();
+        chartInstance.destroy(); // Limpia el gráfico anterior al cambiar de día
       }
 
       chartInstance = new Chart(ctx, {
