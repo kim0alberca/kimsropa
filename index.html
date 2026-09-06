@@ -47,7 +47,7 @@
       flex-direction: column;
       background: #0d0d0d;
       position: relative;
-      padding-bottom: 90px; /* Espacio extra para la barra flotante móvil */
+      padding-bottom: 90px; /* Espacio extra para que el carrito no tape los polos */
     }
 
     /* NOTIFICACIONES TOAST */
@@ -106,7 +106,7 @@
       border: none;
     }
 
-    /* PANEL SUPERIOR FIJO */
+    /* PANEL SUPERIOR FIJO (BÚSQUEDA Y CATEGORÍAS) */
     .header-fixed-panel {
       position: -webkit-sticky;
       position: sticky;
@@ -117,7 +117,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      z-index: 999;
+      z-index: 1000;
       box-shadow: 0 4px 15px rgba(0,0,0,0.9);
     }
 
@@ -169,37 +169,49 @@
       border-color: #ccff00;
     }
 
-    /* Resumen de cabecera en Desktop */
-    .cart-summary-bar {
-      background: #161616;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 8px 12px;
+    /* ESTILO DE LA BARRA FLOTANTE INFERIOR (CARRITO FIJO ABAJO) */
+    .bottom-floating-cart {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #0f0f0f;
+      border-top: 2px solid #222;
+      padding: 10px 16px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      z-index: 9999;
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.8);
     }
 
-    .cart-info {
-      font-size: 0.8rem;
-    }
-
-    .cart-info strong {
-      color: #ccff00;
-      font-size: 0.95rem;
-    }
-
-    .cart-actions {
+    .bottom-cart-info {
       display: flex;
-      gap: 6px;
+      flex-direction: column;
+    }
+
+    .cart-items-count {
+      font-size: 0.8rem;
+      color: #a0a0a0;
+    }
+
+    .cart-total-price {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #ccff00;
+    }
+
+    .bottom-cart-btns {
+      display: flex;
+      gap: 8px;
     }
 
     .btn-view-cart {
       background: transparent;
       border: 1px solid #555;
       color: #fff;
-      padding: 7px 10px;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border-radius: 6px;
       font-size: 0.75rem;
       font-weight: bold;
       cursor: pointer;
@@ -210,73 +222,13 @@
       background: #ccff00;
       border: none;
       color: #000;
-      padding: 7px 12px;
-      border-radius: 4px;
+      padding: 8px 14px;
+      border-radius: 6px;
       font-size: 0.75rem;
       font-weight: bold;
       cursor: pointer;
       text-transform: uppercase;
     }
-
-    /* Estilo del contenedor flotante inferior */
-.cart-floating-bottom {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: #0f0f0f;
-  border-top: 1px solid #222;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 999;
-}
-
-/* Detalle de ítems e incremento del precio */
-.cart-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.cart-items-count {
-  font-size: 0.85rem;
-  color: #a0a0a0;
-}
-
-/* Precio más grande y llamativo */
-.cart-total-price {
-  font-size: 1.4rem; /* Tamaño aumentado */
-  font-weight: 800;
-  color: #ccff00;   /* Tu verde neón */
-}
-
-/* Ajustes a los botones */
-.cart-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-secondary {
-  background: transparent;
-  border: 1px solid #444;
-  color: #fff;
-  padding: 10px 14px;
-  font-weight: 600;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-.btn-primary {
-  background-color: #ccff00;
-  color: #000;
-  border: none;
-  padding: 10px 18px;
-  font-weight: 800;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  text-transform: uppercase;
-}
 
     /* CATÁLOGO */
     #catalog-container {
@@ -802,7 +754,7 @@
     🚚 ¡Envío GRATIS en pedidos mayores a S/ 100!
   </div>
 
-  <!-- PANEL SUPERIOR FIJO -->
+  <!-- PANEL SUPERIOR FIJO (BÚSQUEDA Y CATEGORÍAS) -->
   <div class="header-fixed-panel" id="top-panel">
     <!-- BÚSQUEDA -->
     <input 
@@ -817,6 +769,7 @@
     <div class="filter-container" id="filter-bar">
       <button class="filter-btn active" type="button" onclick="setCategory('TODOS', this)">TODOS</button>
     </div>
+  </div>
 
   <!-- CATÁLOGO DE PRODUCTOS -->
   <div id="catalog-container">
@@ -868,18 +821,18 @@
     </div>
   </div>
 
-<!-- BARRA FLOTANTE INFERIOR FIJA PARA MÓVILES -->
-<div class="bottom-floating-cart">
-  <div class="bottom-cart-info">
-    <span class="cart-items-count">🛒 <span id="bottom-cart-count">0</span> ítems</span>
-    <span class="cart-total-price">S/ <span id="bottom-cart-total">0.00</span></span>
+  <!-- BARRA FLOTANTE INFERIOR FIJA PARA MÓVILES -->
+  <div class="bottom-floating-cart">
+    <div class="bottom-cart-info">
+      <span class="cart-items-count">🛒 <span id="bottom-cart-count">0</span> ítems</span>
+      <span class="cart-total-price">S/ <span id="bottom-cart-total">0.00</span></span>
+    </div>
+    
+    <div class="bottom-cart-btns">
+      <button type="button" class="btn-view-cart" onclick="openOrderSummary()">VER PEDIDO</button>
+      <button type="button" class="btn-finish-cart" onclick="openCheckoutModal()">FINALIZAR</button>
+    </div>
   </div>
-  
-  <div class="bottom-cart-btns">
-    <button type="button" class="btn-view-cart" onclick="openOrderSummary()">VER PEDIDO</button>
-    <button type="button" class="btn-finish-cart" onclick="openCheckoutModal()">FINALIZAR</button>
-  </div>
-</div>
 
 </div>
 
@@ -1452,13 +1405,7 @@
     const discountAmount = totalPrice * couponDiscount;
     const finalTotal = totalPrice - discountAmount;
 
-    // Actualiza la barra superior de escritorio
-    const countElem = document.getElementById('cart-count');
-    const totalElem = document.getElementById('cart-total');
-    if(countElem) countElem.innerText = totalItems;
-    if(totalElem) totalElem.innerText = finalTotal.toFixed(2);
-
-    // Actualiza la barra flotante inferior de móviles
+    // Actualiza la barra flotante inferior (Móvil y Escritorio)
     const bottomCountElem = document.getElementById('bottom-cart-count');
     const bottomTotalElem = document.getElementById('bottom-cart-total');
     if(bottomCountElem) bottomCountElem.innerText = totalItems;
