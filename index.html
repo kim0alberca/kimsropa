@@ -1663,34 +1663,46 @@
     }
   }
 
-  function registrarVentaEnSheets(pedidoId, montoTotal, metodoPago, detalleTexto) {
-  // 1. Extraer los items individuales directamente del carrito global (cart)
-  const itemsDesglosados = cart.map(item => ({
-    nombre: item.name || "Producto",
-    variante: `${item.size || ''}/${item.color || ''}`.trim(),
-    cantidad: parseInt(item.quantity) || 1,
-    subtotal: parseFloat(item.price * item.quantity) || 0
-  }));
+  function registrarVentaEnSheets(pedidoId, montoTotal, metodoPago, detallePedido) {
+  // Parsea el texto "1x Producto (TALLA/COLOR); 2x Otro..." en un arreglo
+  const listaItems = [];
+  if (detallePedido && typeof detallePedido === 'string') {
+    const partes = detallePedido.split(';');
+    partes.forEach(p => {
+      const limpio = p.trim();
+      if (limpio) {
+        // Extrae cantidad, nombre y variante usando expresiones regulares
+        const match = limpio.match(/^(\d+)x\s+(.+?)(?:\s*\((.+?)\))?$/);
+        if (match) {
+          listaItems.push({
+            cantidad: parseInt(match[1]) || 1,
+            nombre: match[2].trim(),
+            variante: match[3] ? match[3].trim() : '-'
+          });
+        } else {
+          listaItems.push({ cantidad: 1, nombre: limpio, variante: '-' });
+        }
+      }
+    });
+  }
 
   const datosVenta = {
     pedidoId: pedidoId,
     monto: montoTotal,
     metodo: metodoPago,
-    items: itemsDesglosados
+    items: listaItems,
+    detalleOriginal: detallePedido
   };
 
   fetch(URL_APPS_SCRIPT, {
     method: "POST",
     mode: "no-cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datosVenta)
   })
-  .then(() => console.log("Venta desglosada enviada a Sheets"))
-  .catch(err => console.error("Error al registrar venta:", err));
+  .then(() => console.log("Venta registrada exitosamente"))
+  .catch(err => console.error("Error al registrar:", err));
 }
-
   function generateOrderText() {
     const name = document.getElementById('client-name').value.trim();
     const phone = document.getElementById('client-phone').value.trim();
