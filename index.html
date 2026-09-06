@@ -1662,7 +1662,7 @@
     }
   }
 
-  function generateOrderText() {
+ function generateOrderText() {
     const name = document.getElementById('client-name').value.trim();
     const phone = document.getElementById('client-phone').value.trim();
     const delivery = document.getElementById('client-delivery').value;
@@ -1750,6 +1750,8 @@
     text += "DETALLE DE LOS POLOS:\n";
 
     let total = 0;
+    let resumenProductos = "";
+
     cart.forEach((item, index) => {
       const subtotal = Number(item.price) * Number(item.qty);
       total += subtotal;
@@ -1758,6 +1760,8 @@
       text += "   - Color: " + item.color + "\n";
       text += "   - Cantidad: " + item.qty + "\n";
       text += "   - Subtotal: S/ " + subtotal.toFixed(2) + "\n";
+
+      resumenProductos += `${item.qty}x ${item.nombre} (${item.size}/${item.color}); `;
 
       const fotoUrl = item.driveUrl || item.imgUrl;
       if (fotoUrl) {
@@ -1804,20 +1808,17 @@
     if (finalOrderText) finalOrderText.value = text;
 
     const encodedText = encodeURIComponent(text);
-    const whatsappUrl = "https://wa.me/" + MY_WHATSAPP_NUMBER + "?text=" + encodedText;
+    const whatsappUrl = "https://api.whatsapp.com/send?phone=" + MY_WHATSAPP_NUMBER + "&text=" + encodedText;
 
     const safeBtn = document.getElementById('safe-whatsapp-btn');
     if (safeBtn) safeBtn.href = whatsappUrl;
 
-    const modal = document.getElementById('success-modal');
-    if (modal) {
-      modal.style.display = 'flex';
-      document.body.classList.add('modal-open');
-    }
+    // 1. REGISTRAR VENTA EN GOOGLE SHEETS (Variables corregidas)
+    const pedidoId = "PED-" + Date.now().toString().slice(-4);
+    registrarVentaEnSheets(pedidoId, finalTotal, payment, resumenProductos);
 
-    registrarVentaEnSheets("PED-" + Date.now().toString().slice(-4), totalPagar, metodoSeleccionado, resumenProductos);
-
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    // 2. REDIRECCIÓN INMEDIATA A WHATSAPP
+    window.location.href = whatsappUrl;
   }
 
   function printAdminTicket() {
