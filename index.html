@@ -47,7 +47,7 @@
       flex-direction: column;
       background: #0d0d0d;
       position: relative;
-      padding-bottom: 90px; /* Espacio extra para que el carrito no tape los polos */
+      padding-bottom: 90px;
     }
 
     /* NOTIFICACIONES TOAST */
@@ -106,7 +106,7 @@
       border: none;
     }
 
-    /* PANEL SUPERIOR FIJO (BÚSQUEDA Y CATEGORÍAS) */
+    /* PANEL SUPERIOR FIJO */
     .header-fixed-panel {
       position: -webkit-sticky;
       position: sticky;
@@ -169,7 +169,7 @@
       border-color: #ccff00;
     }
 
-    /* ESTILO DE LA BARRA FLOTANTE INFERIOR (CARRITO FIJO ABAJO) */
+    /* BARRA FLOTANTE INFERIOR */
     .bottom-floating-cart {
       position: fixed;
       bottom: 0;
@@ -255,7 +255,6 @@
       position: relative;
     }
 
-    /* ETIQUETA DE ESCASEZ (FOMO) */
     .fomo-badge {
       position: absolute;
       top: 18px;
@@ -270,7 +269,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
 
-    /* CARRUSEL Y BOLITAS DE COLOR */
     .product-gallery {
       position: relative;
       width: 100%;
@@ -336,7 +334,6 @@
       font-size: 0.9rem;
     }
 
-    /* CONTROLES DE PAGINACIÓN */
     .pagination-container {
       display: flex;
       justify-content: center;
@@ -591,7 +588,7 @@
       color: #000;
     }
 
-    /* BANNER DE AVISO DE RECUPERACIÓN */
+    /* BANNER DE RECUPERACIÓN */
     #restore-banner {
       display: none;
       position: fixed;
@@ -621,7 +618,7 @@
       color: #ccc;
     }
 
-    /* MODAL DE DATOS DEL CLIENTE */
+    /* MODAL CLIENTE */
     #checkout-modal {
       display: none;
       position: fixed;
@@ -686,7 +683,7 @@
       margin-top: 10px;
     }
 
-    /* PANTALLA DE ÉXITO */
+    /* MODAL ÉXITO */
     #success-modal {
       display: none;
       position: fixed;
@@ -737,33 +734,31 @@
     body.modal-open {
       overflow: hidden;
     }
-    /* ESTILOS EXCLUSIVOS PARA LA IMPRESORA TÉRMICA */
-@media print {
-  /* Oculta toda la tienda virtual al imprimir */
-  body * {
-    visibility: hidden;
-  }
-  /* Muestra solo el ticket */
-  #printable-ticket, #printable-ticket * {
-    visibility: visible;
-  }
-  #printable-ticket {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 58mm; /* Ajusta a 80mm si tu impresora es más grande */
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    color: #000;
-    background: #fff;
-    padding: 2mm;
-  }
-}
 
-/* Oculto en la pantalla de la tienda */
-#printable-ticket {
-  display: none;
-}
+    /* ESTILOS DE IMPRESIÓN TÉRMICA */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-ticket, #printable-ticket * {
+        visibility: visible;
+      }
+      #printable-ticket {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 58mm;
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        color: #000;
+        background: #fff;
+        padding: 2mm;
+      }
+    }
+
+    #printable-ticket {
+      display: none;
+    }
   </style>
 </head>
 
@@ -781,9 +776,8 @@
     🚚 ¡Envío GRATIS en pedidos mayores a S/ 100!
   </div>
 
-  <!-- PANEL SUPERIOR FIJO (BÚSQUEDA Y CATEGORÍAS) -->
+  <!-- PANEL SUPERIOR FIJO -->
   <div class="header-fixed-panel" id="top-panel">
-    <!-- BÚSQUEDA -->
     <input 
       type="text" 
       id="search-input" 
@@ -792,16 +786,14 @@
       onkeyup="applyFilters()"
     >
 
-    <!-- CATEGORÍAS -->
     <div class="filter-container" id="filter-bar">
       <button class="filter-btn active" type="button" onclick="setCategory('TODOS', this)">TODOS</button>
     </div>
   </div>
 
-  <!-- CATÁLOGO DE PRODUCTOS -->
+  <!-- CATÁLOGO -->
   <div id="catalog-container">
     <div id="catalog-grid" class="catalog-grid">Cargando productos...</div>
-    <!-- Controles de Paginación -->
     <div id="pagination-controls" class="pagination-container" style="display: none;">
       <button class="page-btn" id="prev-page-btn" onclick="changePage(-1)">← Anterior</button>
       <span class="page-info" id="page-info">Página 1 de 1</span>
@@ -816,16 +808,12 @@
       <button type="button" class="back-catalog-btn" onclick="closeOrderSummary()">← Volver</button>
     </div>
 
-    <!-- SUGERENCIA DE CROSS-SELLING / UPSELLING EN RESUMEN -->
     <div id="upsell-container" style="background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 6px; margin-bottom: 12px; text-align: center; font-size: 0.8rem; display: none;">
       <span id="upsell-text" style="color: #ccff00; font-weight: bold;"></span>
     </div>
 
-    <div id="order-view-items" class="order-view-items">
-      <!-- Aquí se cargan los productos -->
-    </div>
+    <div id="order-view-items" class="order-view-items"></div>
 
-    <!-- BLOQUE DE CUPÓN DE DESCUENTO -->
     <div class="order-view-footer" style="margin-bottom: 10px; padding: 10px;">
       <div style="display: flex; gap: 8px;">
         <input type="text" id="coupon-input" placeholder="¿Tienes un código?" style="flex:1; background:#111; color:#fff; border:1px solid #333; padding:8px; border-radius:4px; text-transform:uppercase; font-size: 0.8rem;">
@@ -834,7 +822,6 @@
       <div id="coupon-message" style="font-size: 0.75rem; color: #ccff00; margin-top: 5px;"></div>
     </div>
 
-    <!-- BLOQUE DE SUMATORIA Y BOTONES -->
     <div class="order-view-footer">
       <div class="order-view-total">
         <span>SUMATORIA TOTAL:</span>
@@ -848,7 +835,7 @@
     </div>
   </div>
 
-  <!-- BARRA FLOTANTE INFERIOR FIJA PARA MÓVILES -->
+  <!-- BARRA FLOTANTE INFERIOR FIJA -->
   <div class="bottom-floating-cart">
     <div class="bottom-cart-info">
       <span class="cart-items-count">🛒 <span id="bottom-cart-count">0</span> ítems</span>
@@ -893,13 +880,11 @@
       </select>
     </div>
 
-    <!-- CAMPO CONDICIONAL PARA DOMICILIO -->
     <div class="form-group" id="address-detail-group">
       <label>Dirección exacta de domicilio:</label>
       <input type="text" id="client-address-detail" placeholder="Ej. Av. Larco 123, dpto 402">
     </div>
 
-    <!-- CAMPO CONDICIONAL PARA AGENCIA SHALOM -->
     <div class="form-group" id="agency-detail-group" style="display: none;">
       <label>Agencia exacta y Ciudad (Shalom):</label>
       <input type="text" id="client-agency-detail" placeholder="Ej. Shalom Óvalo Puno, Trujillo Centro, etc.">
@@ -949,11 +934,57 @@
     <a id="safe-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer" class="action-btn-main btn-checkout" style="padding: 10px; font-size: 0.8rem; text-align: center;">💬 ABRIR EN WHATSAPP</a>
 
     <!-- BOTÓN DE IMPRESIÓN SOLO PARA EL ADMINISTRADOR -->
-<button type="button" class="action-btn-main" style="background:#ccff00; color:#000; padding:10px; font-weight:bold;" onclick="printAdminTicket()">
-  🖨️ IMPRIMIR TICKET (SOLO ADMIN)
-</button>
+    <button type="button" class="action-btn-main" style="background:#ccff00; color:#000; padding:10px; font-weight:bold;" onclick="printAdminTicket()">
+      🖨️ IMPRIMIR TICKET (SOLO ADMIN)
+    </button>
     
     <button type="button" class="action-btn-main btn-keep-buying" onclick="closeSuccessModal()">Cerrar / Volver</button>
+  </div>
+</div>
+
+<!-- PLANTILLA DEL TICKET TÉRMICO -->
+<div id="printable-ticket">
+  <div style="text-align: center;">
+    <img src="logo.png" style="max-width: 40mm; filter: grayscale(100%); margin-bottom: 5px;" alt="Logo">
+    <h3 style="margin: 0; font-size: 14px;">KIM'S ROPA</h3>
+    <p style="margin: 2px 0;">Tienda Virtual en Línea</p>
+    <p style="margin: 2px 0; font-size: 9px;">https://kim0alberca.github.io/kimsropa/</p>
+    <p style="margin: 2px 0;">WhatsApp: +51 968 495 402</p>
+  </div>
+  
+  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+  
+  <p style="margin: 2px 0;"><strong>TICKET DE VENTA</strong></p>
+  <p style="margin: 2px 0;" id="ticket-date">Fecha: --/--/----</p>
+  <p style="margin: 2px 0;" id="ticket-client">Cliente: --</p>
+  <p style="margin: 2px 0;" id="ticket-phone">Teléfono: --</p>
+  <p style="margin: 2px 0;" id="ticket-delivery">Entrega: --</p>
+  
+  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+  
+  <table style="width: 100%; text-align: left; font-size: 10px; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th style="width: 20%;">Cant</th>
+        <th style="width: 50%;">Producto</th>
+        <th style="width: 30%; text-align: right;">Total</th>
+      </tr>
+    </thead>
+    <tbody id="ticket-items"></tbody>
+  </table>
+  
+  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+  
+  <div style="text-align: right; font-size: 12px;">
+    <p style="margin: 2px 0;" id="ticket-discount"></p>
+    <p style="margin: 2px 0;"><strong>TOTAL: S/ <span id="ticket-total">0.00</span></strong></p>
+  </div>
+  
+  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+  
+  <div style="text-align: center; font-size: 9px; margin-top: 8px;">
+    <p style="margin: 2px 0;">¡Gracias por tu compra!</p>
+    <p style="margin: 2px 0;">Visítanos de nuevo</p>
   </div>
 </div>
 
@@ -961,21 +992,8 @@
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?output=csv";
   const COUPONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=2024203765&single=true&output=csv"; 
   const MY_WHATSAPP_NUMBER = "51968495402";
+  const ADMIN_PIN = "6666";
 
-  // SISTEMA DE NOTIFICACIONES TOAST (En lugar de alert)
-  function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification';
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 100);
-    setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.remove(), 300);
-    }, 2500);
-  }
-
-  // MAPA DE COLORES HEXADECIMALES PARA LAS BOLITAS
   const colorMap = {
     'NEGRO': '#000000',
     'BLANCO': '#ffffff',
@@ -996,6 +1014,8 @@
   let filteredProducts = [];
   let currentCategory = 'TODOS';
   let cart = [];
+  let lastOrderCart = [];
+  let lastOrderDiscount = 0;
   let listadoCuponesHoja = {}; 
 
   let currentPage = 1;
@@ -1003,6 +1023,18 @@
 
   let couponDiscount = 0; 
   let appliedCoupon = null; 
+
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
 
   function checkDeliveryType() {
     const deliveryType = document.getElementById('client-delivery').value;
@@ -1043,14 +1075,13 @@
         }
       })
       .catch(err => {
-        console.error("Error al cargar cupones de la hoja 2:", err);
+        console.error("Error al cargar cupones:", err);
         listadoCuponesHoja["XPONLg"] = 0.10;
       });
   }
 
   cargarCuponesDesdeHoja();
 
-  // CARGA SEGURA DESDE LOCALSTORAGE
   try {
     const rawData = localStorage.getItem('cart_virtual');
     if (rawData) {
@@ -1075,7 +1106,6 @@
     });
   }
 
-  // CARGA DE PRODUCTOS Y DECODIFICACIÓN DE IMÁGENES/COLORES
   fetch(SHEET_CSV_URL)
     .then(response => response.text())
     .then(data => {
@@ -1193,11 +1223,9 @@
       const initialColor = p.variants[0].color;
 
       card.innerHTML = `
-        <!-- ETIQUETA DE ESCASEZ (FOMO) -->
         <span class="fomo-badge">🔥 ¡ÚLTIMAS UNIDADES!</span>
 
         <div>
-          <!-- CARRUSEL DE IMÁGENES CON LAZY LOADING NATIVO -->
           <div class="product-gallery" id="gallery-${p.id}">
             ${p.variants.map((v, idx) => `
               <img 
@@ -1210,7 +1238,6 @@
             `).join('')}
           </div>
 
-          <!-- BOLITAS DE COLORES -->
           <div class="color-swatches-container">
             <span class="color-swatches-label">Color: <strong id="color-name-${p.id}">${initialColor}</strong></span>
             <div class="color-swatches">
@@ -1437,7 +1464,6 @@
     const discountAmount = totalPrice * couponDiscount;
     const finalTotal = totalPrice - discountAmount;
 
-    // Actualiza la barra flotante inferior (Móvil y Escritorio)
     const bottomCountElem = document.getElementById('bottom-cart-count');
     const bottomTotalElem = document.getElementById('bottom-cart-total');
     if(bottomCountElem) bottomCountElem.innerText = totalItems;
@@ -1463,7 +1489,6 @@
       }
     }
 
-    // SUGERENCIA CROSS-SELLING / UPSELLING DENTRO DEL RESUMEN
     const upsellContainer = document.getElementById('upsell-container');
     const upsellText = document.getElementById('upsell-text');
     if (upsellContainer && upsellText) {
@@ -1754,6 +1779,10 @@
     const promoCodeBox = document.getElementById('assigned-promo-code');
     if (promoCodeBox) promoCodeBox.innerText = codigoRegalo;
 
+    // RESPALDO PARA IMPRESIÓN ANTES DE LIMPIAR
+    lastOrderCart = JSON.parse(JSON.stringify(cart));
+    lastOrderDiscount = couponDiscount;
+
     cart = [];
     couponDiscount = 0;
     appliedCoupon = null;
@@ -1781,118 +1810,65 @@
 
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }
-  // CLAVE DE ADMINISTRADOR
-const ADMIN_PIN = "6666"; // Cambia esta clave por la que tú desees
 
-function printAdminTicket() {
-  // 1. Pedir clave de acceso
-  const inputPin = prompt("Ingrese la clave de administrador para imprimir:");
-  
-  if (inputPin !== ADMIN_PIN) {
-    showToast("❌ Clave incorrecta. Acceso denegado.");
-    return;
+  function printAdminTicket() {
+    const inputPin = prompt("Ingrese la clave de administrador para imprimir:");
+    
+    if (inputPin !== ADMIN_PIN) {
+      showToast("❌ Clave incorrecta. Acceso denegado.");
+      return;
+    }
+
+    const name = document.getElementById('client-name').value.trim() || "Cliente General";
+    const phone = document.getElementById('client-phone').value.trim() || "-";
+    const delivery = document.getElementById('client-delivery').value;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString() + " " + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    document.getElementById('ticket-date').innerText = "Fecha: " + dateStr;
+    document.getElementById('ticket-client').innerText = "Cliente: " + name;
+    document.getElementById('ticket-phone').innerText = "Tel: " + phone;
+    document.getElementById('ticket-delivery').innerText = "Entrega: " + delivery;
+
+    const tbody = document.getElementById('ticket-items');
+    tbody.innerHTML = '';
+
+    let total = 0;
+    const itemsToPrint = lastOrderCart.length > 0 ? lastOrderCart : cart;
+    const discToPrint = lastOrderCart.length > 0 ? lastOrderDiscount : couponDiscount;
+    
+    itemsToPrint.forEach(item => {
+      const subtotal = Number(item.price) * Number(item.qty);
+      total += subtotal;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${item.qty}</td>
+        <td>${item.nombre} (${item.size}/${item.color})</td>
+        <td style="text-align: right;">S/ ${subtotal.toFixed(2)}</td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    const discountAmount = total * discToPrint;
+    const finalTotal = total - discountAmount;
+
+    if (discToPrint > 0) {
+      document.getElementById('ticket-discount').innerText = `Desc. (${Math.round(discToPrint*100)}%): -S/ ${discountAmount.toFixed(2)}`;
+    } else {
+      document.getElementById('ticket-discount').innerText = "";
+    }
+
+    document.getElementById('ticket-total').innerText = finalTotal.toFixed(2);
+
+    const ticketElem = document.getElementById('printable-ticket');
+    ticketElem.style.display = 'block';
+
+    window.print();
+
+    ticketElem.style.display = 'none';
   }
-
-  // 2. Extraer datos del formulario y del carrito actual/reciente
-  const name = document.getElementById('client-name').value.trim() || "Cliente General";
-  const phone = document.getElementById('client-phone').value.trim() || "-";
-  const delivery = document.getElementById('client-delivery').value;
-  const now = new Date();
-  const dateStr = now.toLocaleDateString() + " " + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  // 3. Rellenar los campos del ticket HTML
-  document.getElementById('ticket-date').innerText = "Fecha: " + dateStr;
-  document.getElementById('ticket-client').innerText = "Cliente: " + name;
-  document.getElementById('ticket-phone').innerText = "Tel: " + phone;
-  document.getElementById('ticket-delivery').innerText = "Entrega: " + delivery;
-
-  const tbody = document.getElementById('ticket-items');
-  tbody.innerHTML = '';
-
-  let total = 0;
-  
-  // Rellenar la tabla con los ítems comprados
-  cart.forEach(item => {
-    const subtotal = Number(item.price) * Number(item.qty);
-    total += subtotal;
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${item.qty}</td>
-      <td>${item.nombre} (${item.size}/${item.color})</td>
-      <td style="text-align: right;">S/ ${subtotal.toFixed(2)}</td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  const discountAmount = total * couponDiscount;
-  const finalTotal = total - discountAmount;
-
-  if (couponDiscount > 0) {
-    document.getElementById('ticket-discount').innerText = `Desc. (${Math.round(couponDiscount*100)}%): -S/ ${discountAmount.toFixed(2)}`;
-  } else {
-    document.getElementById('ticket-discount').innerText = "";
-  }
-
-  document.getElementById('ticket-total').innerText = finalTotal.toFixed(2);
-
-  // 4. Mostrar temporalmente la vista previa e invocar la impresora del celular/PC
-  const ticketElem = document.getElementById('printable-ticket');
-  ticketElem.style.display = 'block';
-
-  window.print();
-
-  // Ocultar de nuevo tras la impresión
-  ticketElem.style.display = 'none';
-}
 </script>
-  
-<!-- PLANTILLA DEL TICKET TéRMICO (OCULTO) -->
-<div id="printable-ticket">
-  <div style="text-align: center;">
-    <img src="logo.png" style="max-width: 40mm; filter: grayscale(100%); margin-bottom: 5px;">
-    <h3 style="margin: 0; font-size: 14px;">KIM'S ROPA</h3>
-    <p style="margin: 2px 0;">Tienda Virtual en Línea</p>
-    <p style="margin: 2px 0; font-size: 9px;">https://kim0alberca.github.io/kimsropa/</p>
-    <p style="margin: 2px 0;">WhatsApp: +51 968 495 402</p>
-  </div>
-  
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-  
-  <p style="margin: 2px 0;"><strong>TICKET DE VENTA</strong></p>
-  <p style="margin: 2px 0;" id="ticket-date">Fecha: --/--/----</p>
-  <p style="margin: 2px 0;" id="ticket-client">Cliente: --</p>
-  <p style="margin: 2px 0;" id="ticket-phone">Teléfono: --</p>
-  <p style="margin: 2px 0;" id="ticket-delivery">Entrega: --</p>
-  
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-  
-  <table style="width: 100%; text-align: left; font-size: 10px; border-collapse: collapse;">
-    <thead>
-      <tr>
-        <th style="width: 20%;">Cant</th>
-        <th style="width: 50%;">Producto</th>
-        <th style="width: 30%; text-align: right;">Total</th>
-      </tr>
-    </thead>
-    <tbody id="ticket-items">
-      <!-- Se llena dinámicamente con JS -->
-    </tbody>
-  </table>
-  
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-  
-  <div style="text-align: right; font-size: 12px;">
-    <p style="margin: 2px 0;" id="ticket-discount"></p>
-    <p style="margin: 2px 0;"><strong>TOTAL: S/ <span id="ticket-total">0.00</span></strong></p>
-  </div>
-  
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-  
-  <div style="text-align: center; font-size: 9px; margin-top: 8px;">
-    <p style="margin: 2px 0;">¡Gracias por tu compra!</p>
-    <p style="margin: 2px 0;">Visítanos de nuevo</p>
-  </div>
-</div>
+
 </body>
 </html>
