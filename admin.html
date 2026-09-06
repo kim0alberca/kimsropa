@@ -135,8 +135,10 @@
 
   <script>
     // --- CONFIGURACIÓN DE SEGURIDAD ---
-    const MI_LLAVE_SECRETA = "MI_TOKEN_EXCLUSIVO_2026"; // Cambia este texto por cualquier frase única
-    const MI_PIN = "6666"; // Tu PIN personal
+    const MI_LLAVE_SECRETA = "MI_TOKEN_EXCLUSIVO_2026"; // Mantiene tu token actual
+    const MI_PIN = "6666"; // Tu PIN de seguridad personalizado
+
+    let chartInstance = null; // Guardará la instancia del gráfico para actualizarlo al cambiar de fecha
 
     // 1. Verificación Inicial de Dispositivo
     window.onload = function() {
@@ -149,13 +151,18 @@
       }
     };
 
-    // 2. Validación de PIN
+    // 2. Validación de PIN y Carga Inicial de Fecha
     function validarPIN() {
       const pinIngresado = document.getElementById("pin-input").value;
       
       if (pinIngresado === MI_PIN) {
         document.getElementById("lock-screen").style.display = "none";
         document.getElementById("dashboard-content").style.display = "block";
+        
+        // Pone la fecha de HOY en el selector automáticamente
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById("fecha-select").value = hoy;
+
         cargarDatosVentas();
       } else {
         alert("PIN incorrecto");
@@ -163,23 +170,37 @@
       }
     }
 
-    // 3. Carga y renderizado de datos
+    // 3. Carga y renderizado de datos por fecha
     async function cargarDatosVentas() {
-      // AQUÍ CONECTAS LA URL DE TU GOOGLE APPS SCRIPT
-      // Por ahora se muestran datos de prueba:
+      const fechaSeleccionada = document.getElementById("fecha-select").value;
+      
+      // Muestra en la consola de tu navegador la fecha consultada
+      console.log("Consultando fecha:", fechaSeleccionada);
+
+      // AQUÍ IRÁ LA CONEXIÓN A TU GOOGLE APPS SCRIPT CON EL PARÁMETRO DE FECHA
+      // Ejemplo: const URL_API = `TU_URL_DE_APPS_SCRIPT?fecha=${fechaSeleccionada}`;
+
+      // Datos de prueba (Reemplazar cuando conectes tu base de datos):
       const totalMonto = 185.00;
       const totalPedidos = 4;
 
       document.getElementById("kpi-total").innerText = `S/ ${totalMonto.toFixed(2)}`;
       document.getElementById("kpi-pedidos").innerText = totalPedidos;
-      document.getElementById("kpi-promedio").innerText = `S/ ${(totalMonto / totalPedidos).toFixed(2)}`;
+      document.getElementById("kpi-promedio").innerText = `S/ ${(totalMonto / (totalPedidos || 1)).toFixed(2)}`;
 
       renderizarGrafico([120, 45, 20]); // Ejemplo Yape, Plin, Efectivo
     }
 
+    // 4. Renderizado del Gráfico (Evita duplicados al cambiar de día)
     function renderizarGrafico(datos) {
       const ctx = document.getElementById('salesChart').getContext('2d');
-      new Chart(ctx, {
+      
+      // Si ya hay un gráfico dibujado previamente, lo borra para crear el nuevo día
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: ['Yape', 'Plin', 'Efectivo'],
@@ -189,7 +210,12 @@
             backgroundColor: ['#7D2EC0', '#00D2FF', '#25D366']
           }]
         },
-        options: { responsive: true }
+        options: { 
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
       });
     }
   </script>
