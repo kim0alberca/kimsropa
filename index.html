@@ -1176,7 +1176,6 @@
       }
 
       const filterBar = document.getElementById('filter-bar');
-      filterBar.innerHTML = '<button class="filter-btn active" type="button" onclick="setCategory(\'TODOS\', this)">TODOS</button>';
 
       categoriesSet.forEach(cat => {
         const btn = document.createElement('button');
@@ -1628,7 +1627,16 @@
     const modal = document.getElementById('success-modal');
     if (modal) modal.style.display = 'none';
     document.body.classList.remove('modal-open');
-    location.reload(); 
+    
+    // Limpieza de datos sin recargar la página
+    document.getElementById('client-name').value = '';
+    document.getElementById('client-phone').value = '';
+    document.getElementById('client-address-detail').value = '';
+    document.getElementById('client-agency-detail').value = '';
+    document.getElementById('client-address').value = '';
+    document.getElementById('client-dni').value = '';
+    
+    closeOrderSummary();
   }
 
   document.addEventListener('keydown', function(event) {
