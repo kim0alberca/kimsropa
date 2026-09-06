@@ -1875,6 +1875,25 @@
 
     ticketElem.style.display = 'none';
   }
+  // URL de tu Google Apps Script
+const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzN2NhNoJU2Yj8ugL9lOZQVSE4q4vC3TQ9ADEQUokrYe6TsHTa3eJsOyMWyHyZjN-Qz/exec";
+
+function registrarVentaEnSheets(pedidoId, montoTotal, metodoPago, detallePedido) {
+  const datosVenta = {
+    pedidoId: pedidoId,
+    monto: montoTotal,
+    metodo: metodoPago,
+    detalle: detallePedido
+  };
+
+  // Envía los datos en segundo plano a la hoja Ventas sin interrumpir el mensaje de WhatsApp
+  fetch(URL_APPS_SCRIPT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datosVenta)
+  }).catch(err => console.error("Error al registrar venta:", err));
+}
 </script>
 
 </body>
