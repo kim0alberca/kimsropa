@@ -868,17 +868,18 @@
     </div>
   </div>
 
-  <!-- BARRA FLOTANTE INFERIOR FIJA PARA MÓVILES -->
-  <div class="bottom-floating-cart">
-    <div class="bottom-cart-info">
-      <span>🛒 <span id="bottom-cart-count">0</span> ítems</span>
-      <strong>S/ <span id="bottom-cart-total">0.00</span></strong>
-    </div>
-    <div class="bottom-cart-btns">
-      <button class="btn-view-cart" type="button" onclick="openOrderSummary()">VER PEDIDO</button>
-      <button class="btn-finish-cart" type="button" onclick="openCheckoutModal()">FINALIZAR</button>
-    </div>
+<!-- BARRA FLOTANTE INFERIOR FIJA PARA MÓVILES -->
+<div class="bottom-floating-cart">
+  <div class="bottom-cart-info">
+    <span class="cart-items-count">🛒 <span id="bottom-cart-count">0</span> ítems</span>
+    <span class="cart-total-price">S/ <span id="bottom-cart-total">0.00</span></span>
   </div>
+  
+  <div class="bottom-cart-btns">
+    <button type="button" class="btn-view-cart" onclick="openOrderSummary()">VER PEDIDO</button>
+    <button type="button" class="btn-finish-cart" onclick="openCheckoutModal()">FINALIZAR</button>
+  </div>
+</div>
 
 </div>
 
