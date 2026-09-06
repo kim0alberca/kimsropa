@@ -1566,6 +1566,7 @@
       codigoRegalo = codigosHoja[randomIndex];
     }
 
+    <script>
     let text = "[ NUEVO PEDIDO DE LA WEB ]\n\n";
     text += "NOMBRES Y APELLIDOS: " + name + "\n";
     text += "CELULAR / WHATSAPP: " + phone + "\n";
@@ -1595,10 +1596,11 @@
       text += "   - Color: " + item.color + "\n";
       text += "   - Cantidad: " + item.qty + "\n";
       text += "   - Subtotal: S/ " + subtotal.toFixed(2) + "\n";
-      if (item.driveUrl) {
-        text += "   - Link Drive Foto: " + item.driveUrl + "\n";
-      } else if (item.imgUrl) {
-        text += "   - Foto: " + item.imgUrl + "\n";
+
+      // Foto simplificada y directa
+      const fotoUrl = item.driveUrl || item.imgUrl;
+      if (fotoUrl) {
+        text += "   - Ver Foto: " + fotoUrl + "\n";
       }
     });
 
@@ -1612,11 +1614,11 @@
       text += "Subtotal: S/ " + total.toFixed(2) + "\n";
     }
     if (total >= 100) {
-      text += "ENVIO: ¡GRATIS (Supero S/ 100)!\n";
+      text += "ENVIO: ¡GRATIS (Superó S/ 100)!\n";
     }
     text += "TOTAL A PAGAR: S/ " + finalTotal.toFixed(2) + "\n\n";
     
-    text += "¡GRACIAS POR TU COMPRA! Tu codigo de descuento para tu proxima compra es: *" + codigoRegalo + "*.";
+    text += "¡GRACIAS POR TU COMPRA! Tu código de descuento para tu próxima compra es: *" + codigoRegalo + "*.";
 
     closeCheckoutModal();
 
@@ -1628,7 +1630,9 @@
     appliedCoupon = null;
     try {
       localStorage.removeItem('cart_virtual');
-    } catch(e) {}
+    } catch(e) {
+      console.error(e);
+    }
     updateCartUI();
 
     const finalOrderText = document.getElementById('final-order-text');
@@ -1647,7 +1651,6 @@
     }
 
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-  }
 </script>
 
 </body>
