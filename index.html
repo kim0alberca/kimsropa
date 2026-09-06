@@ -1664,14 +1664,29 @@
   }
 
   function registrarVentaEnSheets(pedidoId, montoTotal, metodoPago, detallePedido) {
-  // Parsea el texto "1x Producto (TALLA/COLOR); 2x Otro..." en un arreglo
+  // Extraer nombre y celular de los campos de texto del formulario de la tienda
+  const inputNombre = document.getElementById('client-name');
+  const inputCelular = document.getElementById('client-phone');
+  
+  const nombreCliente = inputNombre ? inputNombre.value.trim() : "";
+  const celularCliente = inputCelular ? inputCelular.value.trim() : "";
+  
+  let textoCliente = "Cliente Web";
+  if (nombreCliente && celularCliente) {
+    textoCliente = `${nombreCliente} - ${celularCliente}`;
+  } else if (nombreCliente) {
+    textoCliente = nombreCliente;
+  } else if (celularCliente) {
+    textoCliente = celularCliente;
+  }
+
+  // Desglosar los productos del carrito
   const listaItems = [];
   if (detallePedido && typeof detallePedido === 'string') {
     const partes = detallePedido.split(';');
     partes.forEach(p => {
       const limpio = p.trim();
       if (limpio) {
-        // Extrae cantidad, nombre y variante usando expresiones regulares
         const match = limpio.match(/^(\d+)x\s+(.+?)(?:\s*\((.+?)\))?$/);
         if (match) {
           listaItems.push({
@@ -1690,8 +1705,8 @@
     pedidoId: pedidoId,
     monto: montoTotal,
     metodo: metodoPago,
-    items: listaItems,
-    detalleOriginal: detallePedido
+    cliente: textoCliente, // <--- Envía el nombre y celular correcto
+    items: listaItems
   };
 
   fetch(URL_APPS_SCRIPT, {
@@ -1700,7 +1715,7 @@
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datosVenta)
   })
-  .then(() => console.log("Venta registrada exitosamente"))
+  .then(() => console.log("Venta registrada con datos de cliente"))
   .catch(err => console.error("Error al registrar:", err));
 }
   function generateOrderText() {
