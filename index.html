@@ -737,6 +737,33 @@
     body.modal-open {
       overflow: hidden;
     }
+    /* ESTILOS EXCLUSIVOS PARA LA IMPRESORA TÉRMICA */
+@media print {
+  /* Oculta toda la tienda virtual al imprimir */
+  body * {
+    visibility: hidden;
+  }
+  /* Muestra solo el ticket */
+  #printable-ticket, #printable-ticket * {
+    visibility: visible;
+  }
+  #printable-ticket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 58mm; /* Ajusta a 80mm si tu impresora es más grande */
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #000;
+    background: #fff;
+    padding: 2mm;
+  }
+}
+
+/* Oculto en la pantalla de la tienda */
+#printable-ticket {
+  display: none;
+}
   </style>
 </head>
 
