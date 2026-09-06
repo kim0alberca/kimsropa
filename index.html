@@ -1815,6 +1815,8 @@
       document.body.classList.add('modal-open');
     }
 
+    registrarVentaEnSheets("PED-" + Date.now().toString().slice(-4), totalPagar, metodoSeleccionado, resumenProductos);
+
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }
 
