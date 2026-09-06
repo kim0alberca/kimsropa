@@ -1664,7 +1664,7 @@
   }
 
   function registrarVentaEnSheets(pedidoId, montoTotal, metodoPago, detallePedido) {
-  // Capturar datos del cliente
+  // 1. Capturar datos del cliente
   const inputNombre = document.getElementById('client-name');
   const inputCelular = document.getElementById('client-phone');
   
@@ -1680,17 +1680,31 @@
     textoCliente = celularCliente;
   }
 
-  // Obtener los productos reales directamente del carrito de la tienda si existe globalmente
   let listaItems = [];
+
+  // 2. Intentar leer los precios reales directamente del carrito de la tienda
   if (typeof cart !== 'undefined' && Array.isArray(cart) && cart.length > 0) {
-    listaItems = cart.map(item => ({
-      cantidad: parseInt(item.quantity || item.cantidad) || 1,
-      nombre: item.name || item.nombre || "Producto",
-      variante: `${item.size || item.talla || ''}/${item.color || ''}`.trim() || '-',
-      precioUnit: parseFloat(item.price || item.precio) || 0
-    }));
+    // Calcular si hay descuento general aplicado en el total
+    let sumaPreciosReales = 0;
+    cart.forEach(item => {
+      sumaPreciosReales += (parseFloat(item.price || item.precio || 0) * (parseInt(item.quantity || item.cantidad) || 1));
+    });
+
+    // Factor de descuento (si sumaPreciosReales == montoTotal, no hay cupón; si es menor, se aplicó cupón)
+    let factorDescuento = (sumaPreciosReales > 0 && montoTotal < sumaPreciosReales) ? (montoTotal / sumaPreciosReales) : 1;
+
+    listaItems = cart.map(item => {
+      const precioOriginal = parseFloat(item.price || item.precio || 0);
+      return {
+        cantidad: parseInt(item.quantity || item.cantidad) || 1,
+        nombre: item.name || item.nombre || "Producto",
+        variante: `${item.size || item.talla || ''}/${item.color || ''}`.trim() || '-',
+        // Si hay cupón ajusta proporcionalmente, si no, MANTIENE EL PRECIO REAL EXACTO
+        precioUnit: precioOriginal * factorDescuento
+      };
+    });
   } else {
-    // Respaldo por si lee el texto plano del detalle
+    // 3. Respaldo por si lee el texto del detalle de WhatsApp
     if (detallePedido && typeof detallePedido === 'string') {
       const partes = detallePedido.split(';');
       partes.forEach(p => {
@@ -1702,7 +1716,7 @@
               cantidad: parseInt(match[1]) || 1,
               nombre: match[2].trim(),
               variante: match[3] ? match[3].trim() : '-',
-              precioUnit: montoTotal / partes.length // respaldo proporcional si no hay matriz de carrito
+              precioUnit: montoTotal / partes.length
             });
           }
         }
@@ -1718,14 +1732,15 @@
     items: listaItems
   };
 
+  // Enviar los datos correctos a Google Sheets
   fetch(URL_APPS_SCRIPT, {
     method: "POST",
     mode: "no-cors",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datosVenta)
   })
-  .then(() => console.log("Venta con precios reales enviada"))
-  .catch(err => console.error("Error:", err));
+  .then(() => console.log("Venta registrada con precios reales"))
+  .catch(err => console.error("Error al registrar venta:", err));
 }
   function generateOrderText() {
     const name = document.getElementById('client-name').value.trim();
