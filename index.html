@@ -47,7 +47,33 @@
       flex-direction: column;
       background: #0d0d0d;
       position: relative;
-      padding-bottom: 50px;
+      padding-bottom: 90px; /* Espacio extra para la barra flotante móvil */
+    }
+
+    /* NOTIFICACIONES TOAST */
+    .toast-notification {
+      position: fixed;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ccff00;
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      z-index: 1000000;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      transition: top 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+      text-align: center;
+      max-width: 90%;
+    }
+
+    .toast-notification.show {
+      top: 20px;
+      opacity: 1;
     }
 
     /* BANNER SUPERIOR */
@@ -143,7 +169,7 @@
       border-color: #ccff00;
     }
 
-    /* Resumen y Acciones */
+    /* Resumen de cabecera en Desktop */
     .cart-summary-bar {
       background: #161616;
       border: 1px solid #333;
@@ -192,6 +218,42 @@
       text-transform: uppercase;
     }
 
+    /* BARRA FLOTANTE INFERIOR (MÓVIL) */
+    .bottom-floating-cart {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #161616;
+      border-top: 2px solid #ccff00;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 9999;
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.8);
+    }
+
+    .bottom-cart-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bottom-cart-info span {
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+
+    .bottom-cart-info strong {
+      font-size: 1.1rem;
+      color: #ccff00;
+    }
+
+    .bottom-cart-btns {
+      display: flex;
+      gap: 8px;
+    }
+
     /* CATÁLOGO */
     #catalog-container {
       width: 100%;
@@ -214,6 +276,22 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      position: relative;
+    }
+
+    /* ETIQUETA DE ESCASEZ (FOMO) */
+    .fomo-badge {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      background: rgba(230, 0, 0, 0.9);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 10px;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
 
     /* CARRUSEL Y BOLITAS DE COLOR */
@@ -541,7 +619,7 @@
     #restore-banner {
       display: none;
       position: fixed;
-      bottom: 20px;
+      bottom: 80px;
       left: 15px;
       right: 15px;
       background: #161616;
@@ -716,7 +794,7 @@
       <button class="filter-btn active" type="button" onclick="setCategory('TODOS', this)">TODOS</button>
     </div>
 
-    <!-- CARRITO -->
+    <!-- CARRITO (DESKTOP / PANTALLAS ANCHAS) -->
     <div class="cart-summary-bar">
       <div class="cart-info">
         🛒 <span id="cart-count">0</span> ítems | Total: 
@@ -748,6 +826,11 @@
       <button type="button" class="back-catalog-btn" onclick="closeOrderSummary()">← Volver</button>
     </div>
 
+    <!-- SUGERENCIA DE CROSS-SELLING / UPSELLING EN RESUMEN -->
+    <div id="upsell-container" style="background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 6px; margin-bottom: 12px; text-align: center; font-size: 0.8rem; display: none;">
+      <span id="upsell-text" style="color: #ccff00; font-weight: bold;"></span>
+    </div>
+
     <div id="order-view-items" class="order-view-items">
       <!-- Aquí se cargan los productos -->
     </div>
@@ -772,6 +855,18 @@
         <button type="button" class="action-btn-main btn-keep-buying" onclick="closeOrderSummary()">Seguir Comprando</button>
         <button type="button" class="action-btn-main btn-checkout" onclick="openCheckoutModal()">FINALIZAR PEDIDO</button>
       </div>
+    </div>
+  </div>
+
+  <!-- BARRA FLOTANTE INFERIOR FIJA PARA MÓVILES -->
+  <div class="bottom-floating-cart">
+    <div class="bottom-cart-info">
+      <span>🛒 <span id="bottom-cart-count">0</span> ítems</span>
+      <strong>S/ <span id="bottom-cart-total">0.00</span></strong>
+    </div>
+    <div class="bottom-cart-btns">
+      <button class="btn-view-cart" type="button" onclick="openOrderSummary()">VER PEDIDO</button>
+      <button class="btn-finish-cart" type="button" onclick="openCheckoutModal()">FINALIZAR</button>
     </div>
   </div>
 
@@ -870,6 +965,19 @@
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?output=csv";
   const COUPONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ4V7z9AOOD8KRGuq0mknmuq96D_oDmGpO1ZtS5qscd6moZKQQbasjpVSJ3EElnKU1bzdDmWGobOlx/pub?gid=2024203765&single=true&output=csv"; 
   const MY_WHATSAPP_NUMBER = "51968495402";
+
+  // SISTEMA DE NOTIFICACIONES TOAST (En lugar de alert)
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
 
   // MAPA DE COLORES HEXADECIMALES PARA LAS BOLITAS
   const colorMap = {
@@ -1089,11 +1197,20 @@
       const initialColor = p.variants[0].color;
 
       card.innerHTML = `
+        <!-- ETIQUETA DE ESCASEZ (FOMO) -->
+        <span class="fomo-badge">🔥 ¡ÚLTIMAS UNIDADES!</span>
+
         <div>
-          <!-- CARRUSEL DE IMÁGENES -->
+          <!-- CARRUSEL DE IMÁGENES CON LAZY LOADING NATIVO -->
           <div class="product-gallery" id="gallery-${p.id}">
             ${p.variants.map((v, idx) => `
-              <img src="${v.url}" id="img-${p.id}-${idx}" data-color="${v.color}" onerror="this.src='https://via.placeholder.com/300x300?text=Producto'">
+              <img 
+                src="${v.url}" 
+                id="img-${p.id}-${idx}" 
+                data-color="${v.color}" 
+                loading="${idx === 0 ? 'eager' : 'lazy'}" 
+                onerror="this.src='https://via.placeholder.com/300x300?text=Producto'"
+              >
             `).join('')}
           </div>
 
@@ -1256,6 +1373,8 @@
     qtyInput.value = 1;
     saveAndSyncCart();
 
+    showToast("🛒 ¡Producto agregado al carrito!");
+
     if(btnAdd) {
       btnAdd.classList.add('added');
       btnAdd.innerText = '¡AGREGADO! ✓';
@@ -1281,6 +1400,7 @@
 
     if (!input) {
       message.innerText = "❌ Ingresa un código.";
+      showToast("❌ Ingresa un código promocional.");
       return;
     }
 
@@ -1292,6 +1412,7 @@
 
     if (cuponesUsados.includes(input)) {
       message.innerText = "❌ Este código ya fue utilizado anteriormente.";
+      showToast("❌ Este código ya fue utilizado.");
       return;
     }
 
@@ -1300,9 +1421,11 @@
       appliedCoupon = input;
       const porcentaje = Math.round(couponDiscount * 100);
       message.innerText = `✅ ¡Cupón aplicado! ${porcentaje}% de descuento.`;
+      showToast(`✅ ¡Cupón de ${porcentaje}% aplicado!`);
       updateCartUI();
     } else {
       message.innerText = "❌ Código inválido o expirado.";
+      showToast("❌ Código inválido o expirado.");
     }
   }
 
@@ -1318,12 +1441,19 @@
     const discountAmount = totalPrice * couponDiscount;
     const finalTotal = totalPrice - discountAmount;
 
+    // Actualiza la barra superior de escritorio
     const countElem = document.getElementById('cart-count');
     const totalElem = document.getElementById('cart-total');
-    const shippingBanner = document.getElementById('shipping-banner');
-    
     if(countElem) countElem.innerText = totalItems;
     if(totalElem) totalElem.innerText = finalTotal.toFixed(2);
+
+    // Actualiza la barra flotante inferior de móviles
+    const bottomCountElem = document.getElementById('bottom-cart-count');
+    const bottomTotalElem = document.getElementById('bottom-cart-total');
+    if(bottomCountElem) bottomCountElem.innerText = totalItems;
+    if(bottomTotalElem) bottomTotalElem.innerText = finalTotal.toFixed(2);
+
+    const shippingBanner = document.getElementById('shipping-banner');
     
     if (shippingBanner) {
       if (totalPrice > 0) {
@@ -1340,6 +1470,19 @@
         }
       } else {
         shippingBanner.style.display = 'none';
+      }
+    }
+
+    // SUGERENCIA CROSS-SELLING / UPSELLING DENTRO DEL RESUMEN
+    const upsellContainer = document.getElementById('upsell-container');
+    const upsellText = document.getElementById('upsell-text');
+    if (upsellContainer && upsellText) {
+      if (totalPrice > 0 && totalPrice < 100) {
+        const falta = (100 - totalPrice).toFixed(2);
+        upsellText.innerText = `💡 ¡Agrega S/ ${falta} más a tu pedido y obtén ENVÍO GRATIS a todo el Perú!`;
+        upsellContainer.style.display = 'block';
+      } else {
+        upsellContainer.style.display = 'none';
       }
     }
     
@@ -1417,11 +1560,8 @@
       cart[index].qty += delta;
       
       if(cart[index].qty < 1) {
-        if(confirm("¿Deseas eliminar este producto del carrito?")) {
-          cart.splice(index, 1);
-        } else {
-          cart[index].qty = 1;
-        }
+        cart.splice(index, 1);
+        showToast("🗑️ Producto eliminado");
       }
       
       saveAndSyncCart();
@@ -1431,6 +1571,7 @@
 
   function removeCartItem(index) {
     cart.splice(index, 1);
+    showToast("🗑️ Producto eliminado");
     saveAndSyncCart();
     openOrderSummary();
   }
@@ -1446,7 +1587,7 @@
 
   function openCheckoutModal() {
     if (cart.length === 0) {
-      alert("Tu carrito está vacío. Agrega un producto primero.");
+      showToast("⚠️ Tu carrito está vacío.");
       return;
     }
 
@@ -1495,7 +1636,7 @@
     if (textArea) {
       textArea.select();
       document.execCommand('copy');
-      alert("¡Texto del pedido copiado al portapapeles!");
+      showToast("📋 ¡Texto copiado al portapapeles!");
     }
   }
 
@@ -1508,13 +1649,13 @@
     if (delivery === 'A domicilio') {
       locationDetail = document.getElementById('client-address-detail').value.trim();
       if (!locationDetail) {
-        alert("Por favor ingresa la dirección exacta de domicilio.");
+        showToast("⚠️ Ingresa la dirección exacta.");
         return;
       }
     } else if (delivery === 'Envío por Agencia Shalom') {
       locationDetail = document.getElementById('client-agency-detail').value.trim();
       if (!locationDetail) {
-        alert("Por favor especifica la agencia exacta y ciudad (Shalom).");
+        showToast("⚠️ Especifica la agencia y ciudad.");
         return;
       }
     }
@@ -1524,13 +1665,13 @@
     const payment = document.getElementById('client-payment').value;
 
     if (!cart.length) {
-      alert("Tu carrito está vacío. Agrega un producto primero.");
+      showToast("⚠️ Tu carrito está vacío.");
       closeCheckoutModal();
       return;
     }
 
     if (!name || !phone || !dni) {
-      alert("Por favor completa todos los campos obligatorios del formulario.");
+      showToast("⚠️ Completa los campos obligatorios.");
       return;
     }
 
@@ -1538,12 +1679,12 @@
     const dniRegex = /^\d{8}$/;
 
     if (!phoneRegex.test(phone)) {
-      alert("El número de celular/WhatsApp debe tener exactamente 9 dígitos y empezar con 9.");
+      showToast("⚠️ El celular debe tener 9 dígitos.");
       return;
     }
 
     if (!dniRegex.test(dni)) {
-      alert("El DNI debe contener exactamente 8 dígitos numéricos.");
+      showToast("⚠️ El DNI debe tener 8 dígitos.");
       return;
     }
 
