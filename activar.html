@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activación de Dispositivo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #111;
+      color: #fff;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      background: #25d366;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Autorización de Dispositivo</h2>
+  <p>Presiona el botón para autorizar este celular:</p>
+  <button onclick="activarLlave()">AUTORIZAR ESTE DISPOSITIVO</button>
+
+  <script>
+    function activarLlave() {
+      // Guarda la misma llave en el almacenamiento del celular
+      localStorage.setItem("device_access_token", "MI_TOKEN_EXCLUSIVO_2026");
+      alert("¡Dispositivo Autorizado con Éxito! Ahora puedes entrar al panel.");
+      // Redirige directamente a tu panel administrativo
+      window.location.href = "admin.html";
+    }
+  </script>
+</body>
+</html>
