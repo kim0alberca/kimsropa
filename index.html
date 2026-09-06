@@ -1781,6 +1781,70 @@
 
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }
+  // CLAVE DE ADMINISTRADOR
+const ADMIN_PIN = "1234"; // Cambia esta clave por la que tú desees
+
+function printAdminTicket() {
+  // 1. Pedir clave de acceso
+  const inputPin = prompt("Ingrese la clave de administrador para imprimir:");
+  
+  if (inputPin !== ADMIN_PIN) {
+    showToast("❌ Clave incorrecta. Acceso denegado.");
+    return;
+  }
+
+  // 2. Extraer datos del formulario y del carrito actual/reciente
+  const name = document.getElementById('client-name').value.trim() || "Cliente General";
+  const phone = document.getElementById('client-phone').value.trim() || "-";
+  const delivery = document.getElementById('client-delivery').value;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString() + " " + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // 3. Rellenar los campos del ticket HTML
+  document.getElementById('ticket-date').innerText = "Fecha: " + dateStr;
+  document.getElementById('ticket-client').innerText = "Cliente: " + name;
+  document.getElementById('ticket-phone').innerText = "Tel: " + phone;
+  document.getElementById('ticket-delivery').innerText = "Entrega: " + delivery;
+
+  const tbody = document.getElementById('ticket-items');
+  tbody.innerHTML = '';
+
+  let total = 0;
+  
+  // Rellenar la tabla con los ítems comprados
+  cart.forEach(item => {
+    const subtotal = Number(item.price) * Number(item.qty);
+    total += subtotal;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.qty}</td>
+      <td>${item.nombre} (${item.size}/${item.color})</td>
+      <td style="text-align: right;">S/ ${subtotal.toFixed(2)}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  const discountAmount = total * couponDiscount;
+  const finalTotal = total - discountAmount;
+
+  if (couponDiscount > 0) {
+    document.getElementById('ticket-discount').innerText = `Desc. (${Math.round(couponDiscount*100)}%): -S/ ${discountAmount.toFixed(2)}`;
+  } else {
+    document.getElementById('ticket-discount').innerText = "";
+  }
+
+  document.getElementById('ticket-total').innerText = finalTotal.toFixed(2);
+
+  // 4. Mostrar temporalmente la vista previa e invocar la impresora del celular/PC
+  const ticketElem = document.getElementById('printable-ticket');
+  ticketElem.style.display = 'block';
+
+  window.print();
+
+  // Ocultar de nuevo tras la impresión
+  ticketElem.style.display = 'none';
+}
 </script>
   
 <!-- PLANTILLA DEL TICKET TéRMICO (OCULTO) -->
