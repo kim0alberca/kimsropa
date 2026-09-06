@@ -161,9 +161,12 @@
         document.getElementById("lock-screen").style.display = "none";
         document.getElementById("dashboard-content").style.display = "block";
         
-        // Pone la fecha de HOY por defecto
-        const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById("fecha-select").value = hoy;
+        // Pone la fecha de HOY por defecto (ajustado a la zona horaria local)
+        const hoy = new Date();
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(hoy.getDate()).padStart(2, '0');
+        document.getElementById("fecha-select").value = `${yyyy}-${mm}-${dd}`;
 
         cargarDatosVentas();
       } else {
@@ -172,31 +175,49 @@
       }
     }
 
-    // 3. Carga y lectura real de datos desde Google Sheets
-    async function cargarDatosVentas() {
+    // 3. Carga de datos usando inyección JSONP (salta el bloqueo de redirección/CORS)
+    function cargarDatosVentas() {
       const fechaSeleccionada = document.getElementById("fecha-select").value;
       
-      try {
-        // Pide a Google Apps Script los datos filtrados por la fecha elegida
-        const response = await fetch(`${URL_APPS_SCRIPT}?fecha=${fechaSeleccionada}`);
-        const data = await response.json();
+      // Creamos una función de callback única en el ámbito global
+      const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+      
+      // Creamos la etiqueta <script> para realizar la petición
+      const script = document.createElement('script');
+      script.src = `${URL_APPS_SCRIPT}?fecha=${fechaSeleccionada}&callback=${callbackName}`;
 
-        // Muestra los montos reales procesados por la pestaña "Ventas"
-        const totalMonto = data.total || 0;
-        const totalPedidos = data.pedidos || 0;
+      window[callbackName] = function(data) {
+        // Limpiamos el script e información del objeto window
+        delete window[callbackName];
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+
+        // Procesa los datos recibidos
+        const totalMonto = Number(data.total) || 0;
+        const totalPedidos = Number(data.pedidos) || 0;
         const ticketPromedio = totalPedidos > 0 ? (totalMonto / totalPedidos) : 0;
 
         document.getElementById("kpi-total").innerText = `S/ ${totalMonto.toFixed(2)}`;
         document.getElementById("kpi-pedidos").innerText = totalPedidos;
         document.getElementById("kpi-promedio").innerText = `S/ ${ticketPromedio.toFixed(2)}`;
 
-        // Actualiza las barras con los montos reales acumulados
-        renderizarGrafico([data.yape || 0, data.plin || 0, data.efectivo || 0]);
+        // Renderiza el gráfico
+        renderizarGrafico([
+          Number(data.yape) || 0, 
+          Number(data.plin) || 0, 
+          Number(data.efectivo) || 0
+        ]);
+      };
 
-      } catch(error) {
-        console.error("Error al conectar con la base de datos:", error);
+      script.onerror = function() {
         alert("No se pudieron cargar los datos de la fecha seleccionada.");
-      }
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      };
+
+      document.body.appendChild(script);
     }
 
     // 4. Dibujar Gráfico
