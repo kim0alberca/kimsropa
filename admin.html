@@ -176,7 +176,7 @@
 </head>
 <body>
 
-  <!-- PANTALLA DE ACCESO PIN -->
+  <!-- PANTALLA DE ACCESO PIN (4 DÍGITOS) -->
   <div id="lock-screen" class="lock-screen">
     <h2>🔐 ACCESO ADMIN</h2>
     <p style="font-size: 0.85rem; color: #64748b;">Ingresa tu PIN de 4 dígitos</p>
@@ -245,7 +245,7 @@
   </div>
 
   <script>
-    const ADMIN_PIN = "6666";
+    const ADMIN_PIN = "1234"; // Cambia aquí tu PIN de 4 dígitos si deseas
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
     let chartInstance = null;
 
@@ -272,10 +272,14 @@
       cargarDatosPanel();
     }
 
-    async function cargarDatosPanel() {
-      try {
-        const response = await fetch(URL_APPS_SCRIPT);
-        const data = await response.json();
+    function cargarDatosPanel() {
+      const callbackName = 'jsonp_admin_' + Math.floor(Math.random() * 100000);
+      const script = document.createElement('script');
+      script.src = `${URL_APPS_SCRIPT}?callback=${callbackName}`;
+
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
 
         const total = Number(data.total) || 0;
         const pedidos = Number(data.pedidos) || 0;
@@ -292,11 +296,14 @@
         ]);
 
         renderizarTabla(data.ventas || []);
+      };
 
-      } catch (error) {
-        console.error(error);
+      script.onerror = function() {
+        if (script.parentNode) script.parentNode.removeChild(script);
         document.getElementById("tabla-body").innerHTML = `<tr><td colspan="8" class="no-data">Error al conectar con Google Sheets.</td></tr>`;
-      }
+      };
+
+      document.body.appendChild(script);
     }
 
     function renderizarGrafico(valores) {
