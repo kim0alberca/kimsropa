@@ -1982,5 +1982,37 @@
     #modal-ticket { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
 }
 </style>
+  <script>
+        // 1. Activar botón flotante si entras con ?modo=admin
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('modo') === 'admin') {
+                const btnAdmin = document.getElementById('boton-imprimir-flotante');
+                if (btnAdmin) btnAdmin.style.display = 'block';
+            }
+        });
+
+        // 2. Función para armar e imprimir el ticket
+        function imprimirUltimoPedido(pedidoId, carritoItems, totalGeneral, metodoPago) {
+            document.getElementById('t-id').innerText = "#" + pedidoId;
+            document.getElementById('t-fecha').innerText = new Date().toLocaleString();
+            document.getElementById('t-pago').innerText = metodoPago;
+            
+            let htmlProductos = '';
+            carritoItems.forEach(item => {
+                let totalItem = item.precioUnit * item.cantidad;
+                htmlProductos += `
+                    <tr>
+                        <td>${item.cantidad}x ${item.nombre} (${item.variante || '-'})</td>
+                        <td align="right">S/ ${totalItem.toFixed(2)}</td>
+                    </tr>`;
+            });
+            
+            document.getElementById('t-productos').innerHTML = htmlProductos;
+            document.getElementById('t-total').innerText = "S/ " + totalGeneral.toFixed(2);
+            
+            window.print();
+        }
+    </script>
 </body>
 </html>
