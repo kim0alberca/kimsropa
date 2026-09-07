@@ -272,14 +272,39 @@
       cargarDatosPanel();
     }
 
-    function cargarDatosPanel() {
-      const callbackName = 'jsonp_admin_' + Math.floor(Math.random() * 100000);
-      const script = document.createElement('script');
-      script.src = `${URL_APPS_SCRIPT}?callback=${callbackName}`;
+    <script>
+    const ADMIN_PIN = "1234"; // Tu PIN de acceso
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
+    let chartInstance = null;
 
-      window[callbackName] = function(data) {
-        delete window[callbackName];
-        if (script.parentNode) script.parentNode.removeChild(script);
+    window.onload = function() {
+      if (sessionStorage.getItem("admin_logged") === "true") {
+        activarDashboard();
+      }
+    };
+
+    function verificarPin() {
+      const pin = document.getElementById("admin-pin").value;
+      if (pin === ADMIN_PIN) {
+        sessionStorage.setItem("admin_logged", "true");
+        activarDashboard();
+      } else {
+        alert("❌ PIN Incorrecto");
+        document.getElementById("admin-pin").value = "";
+      }
+    }
+
+    function activarDashboard() {
+      document.getElementById("lock-screen").style.display = "none";
+      document.getElementById("dashboard-content").style.display = "block";
+      cargarDatosPanel();
+    }
+
+    async function cargarDatosPanel() {
+      try {
+        // Petición fetch optimizada para celulares
+        const response = await fetch(URL_APPS_SCRIPT);
+        const data = await response.json();
 
         const total = Number(data.total) || 0;
         const pedidos = Number(data.pedidos) || 0;
@@ -296,14 +321,11 @@
         ]);
 
         renderizarTabla(data.ventas || []);
-      };
 
-      script.onerror = function() {
-        if (script.parentNode) script.parentNode.removeChild(script);
+      } catch (error) {
+        console.error(error);
         document.getElementById("tabla-body").innerHTML = `<tr><td colspan="8" class="no-data">Error al conectar con Google Sheets.</td></tr>`;
-      };
-
-      document.body.appendChild(script);
+      }
     }
 
     function renderizarGrafico(valores) {
