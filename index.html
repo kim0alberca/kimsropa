@@ -1938,6 +1938,49 @@
     ticketElem.style.display = 'none';
   }
 </script>
+<!-- TICKET OCULTO PARA IMPRESIÓN -->
+<div id="modal-ticket" style="display:none; padding: 10px; font-family: 'Courier New', monospace; width: 300px; background: white; color: black;">
+    <div style="text-align: center;">
+        <img id="ticket-logo" src="URL_DE_TU_LOGO_AQUI" style="max-width: 120px; margin-bottom: 5px;"><br>
+        <strong style="font-size: 16px;">KIM'S ROPA</strong><br>
+        <span style="font-size: 11px;">Piura - Perú<br>Tel: 900000000</span>
+    </div>
+    <hr style="border: dashed 1px black;">
+    <div style="font-size: 12px;">
+        <strong>NOTA DE VENTA:</strong> <span id="t-id">#000</span><br>
+        <strong>Fecha:</strong> <span id="t-fecha"></span><br>
+        <strong>Atendido por:</strong> Admin
+    </div>
+    <hr style="border: dashed 1px black;">
+    <table style="width: 100%; font-size: 11px;">
+        <thead>
+            <tr>
+                <th align="left">Prod</th>
+                <th align="right">Total</th>
+            </tr>
+        </thead>
+        <tbody id="t-productos"></tbody>
+    </table>
+    <hr style="border: dashed 1px black;">
+    <div style="font-size: 12px;">
+        <div style="display: flex; justify-content: space-between;"><span>TOTAL:</span> <strong id="t-total">S/ 0.00</strong></div>
+        <div style="display: flex; justify-content: space-between;"><span>Pago:</span> <span id="t-pago">Yape</span></div>
+    </div>
+    <hr style="border: dashed 1px black;">
+    <div style="text-align: center; font-size: 11px;">¡Gracias por su compra!<br><i>Generado desde Web</i></div>
+</div>
 
+<!-- BOTÓN FLOTANTE ADMIN (Oculto para el público) -->
+<button id="boton-imprimir-flotante" style="display:none; position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: #000; color: #fff; padding: 10px 15px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+    🖨️ Panel Admin Activo
+</button>
+
+<style>
+@media print {
+    body * { visibility: hidden; }
+    #modal-ticket, #modal-ticket * { visibility: visible; }
+    #modal-ticket { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+}
+</style>
 </body>
 </html>
