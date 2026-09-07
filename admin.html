@@ -180,7 +180,7 @@
   <div id="lock-screen" class="lock-screen">
     <h2>🔐 ACCESO ADMIN</h2>
     <p style="font-size: 0.85rem; color: #64748b;">Ingresa tu PIN de 4 dígitos</p>
-    <input type="password" id="admin-pin" placeholder="••••" maxlength="4">
+    <input type="password" id="admin-pin" placeholder="••••" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);">
     <button class="btn-main" onclick="verificarPin()">Ingresar</button>
   </div>
 
@@ -259,6 +259,12 @@
 
     function verificarPin() {
       const pin = document.getElementById("admin-pin").value;
+      
+      if (pin.length !== 4) {
+        alert("⚠️ El PIN debe tener exactamente 4 dígitos.");
+        return;
+      }
+
       if (pin === ADMIN_PIN) {
         sessionStorage.setItem("admin_logged", "true");
         activarDashboard();
