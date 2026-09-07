@@ -8,13 +8,13 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg-color: #0f0f0f;
-      --card-bg: #161616;
-      --border-color: #262626;
-      --text-main: #ffffff;
-      --text-muted: #888888;
-      --accent: #ccff00;
-      --accent-hover: #b3ff00;
+      --bg-color: #f4f5f7;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
     }
 
     * { box-sizing: border-box; }
@@ -36,7 +36,7 @@
       padding: 30px;
       border-radius: 12px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
     .lock-screen h2 {
@@ -46,9 +46,9 @@
 
     .lock-screen input {
       width: 100%;
-      background: #0b0b0b;
+      background: #f8fafc;
       border: 1px solid var(--border-color);
-      color: #fff;
+      color: #1e293b;
       padding: 12px;
       font-size: 1.2rem;
       text-align: center;
@@ -63,7 +63,7 @@
     .btn-main {
       width: 100%;
       background: var(--accent);
-      color: #000;
+      color: #fff;
       border: none;
       padding: 12px;
       font-weight: bold;
@@ -100,9 +100,9 @@
     }
 
     .date-picker {
-      background: #161616;
+      background: #ffffff;
       border: 1px solid var(--border-color);
-      color: #fff;
+      color: var(--text-main);
       padding: 10px 14px;
       border-radius: 8px;
       font-size: 0.95rem;
@@ -127,6 +127,7 @@
       padding: 20px;
       border-radius: 10px;
       border-left: 5px solid var(--accent);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .kpi-card h3 {
@@ -140,7 +141,7 @@
       margin: 10px 0 0;
       font-size: 1.8rem;
       font-weight: bold;
-      color: #fff;
+      color: var(--text-main);
     }
 
     /* SECCIONES Y CONTENEDORES */
@@ -150,6 +151,7 @@
       padding: 20px;
       border-radius: 10px;
       margin-bottom: 25px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .section-box h3 {
@@ -175,18 +177,18 @@
     }
 
     th, td {
-      padding: 10px 12px;
+      padding: 12px;
       border-bottom: 1px solid var(--border-color);
     }
 
     th {
-      background: #111;
+      background: #f8fafc;
       color: var(--text-muted);
       text-transform: uppercase;
       font-size: 0.75rem;
     }
 
-    tr:hover { background: rgba(255,255,255,0.02); }
+    tr:hover { background: #f8fafc; }
 
     .no-data {
       text-align: center;
@@ -197,10 +199,10 @@
 </head>
 <body>
 
-  <!-- PANTALLA DE ACCESO PIN -->
+  <!-- PANTALLA DE ACCESO PIN (4 DÍGITOS) -->
   <div id="lock-screen" class="lock-screen">
     <h2>🔐 ACCESO ADMIN</h2>
-    <p style="font-size: 0.85rem; color: #888;">Ingresa el PIN de seguridad</p>
+    <p style="font-size: 0.85rem; color: #64748b;">Ingresa tu PIN de 4 dígitos</p>
     <input type="password" id="admin-pin" placeholder="••••" maxlength="4">
     <button class="btn-main" onclick="verificarPin()">Ingresar</button>
   </div>
@@ -210,7 +212,7 @@
     <div class="dashboard-header">
       <div>
         <h1>📊 PANEL DE VENTAS</h1>
-        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #888;">Monitoreo en tiempo real de Kim's Ropa</p>
+        <p style="margin: 4px 0 0; font-size: 0.8rem; color: var(--text-muted);">Monitoreo en tiempo real de Kim's Ropa</p>
       </div>
       <div>
         <input type="date" id="fecha-filtro" class="date-picker" onchange="cargarDatosPanel()">
@@ -223,11 +225,11 @@
         <h3>Total Recaudado</h3>
         <p id="kpi-total">S/ 0.00</p>
       </div>
-      <div class="kpi-card" style="border-left-color: #00ff88;">
+      <div class="kpi-card" style="border-left-color: #10b981;">
         <h3>Pedidos Únicos</h3>
         <p id="kpi-pedidos">0</p>
       </div>
-      <div class="kpi-card" style="border-left-color: #00d2ff;">
+      <div class="kpi-card" style="border-left-color: #06b6d4;">
         <h3>Ticket Promedio</h3>
         <p id="kpi-promedio">S/ 0.00</p>
       </div>
@@ -268,12 +270,12 @@
   </div>
 
   <script>
-    const ADMIN_PIN = "6666";
+    // PIN de 4 dígitos
+    const ADMIN_PIN = "1234"; 
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
     let chartInstance = null;
 
     window.onload = function() {
-      // Verificamos si ya inició sesión previamente en la sesión actual
       if (sessionStorage.getItem("admin_logged") === "true") {
         activarDashboard();
       }
@@ -294,7 +296,6 @@
       document.getElementById("lock-screen").style.display = "none";
       document.getElementById("dashboard-content").style.display = "block";
 
-      // Establecer fecha de hoy por defecto
       const hoy = new Date();
       const yyyy = hoy.getFullYear();
       const mm = String(hoy.getMonth() + 1).padStart(2, '0');
@@ -315,7 +316,8 @@
         delete window[callbackName];
         if (script.parentNode) script.parentNode.removeChild(script);
 
-        // Procesar KPIs
+        console.log("Datos recibidos de Google Sheets:", data); // Depuración en consola
+
         const total = Number(data.total) || 0;
         const pedidos = Number(data.pedidos) || 0;
         const promedio = pedidos > 0 ? (total / pedidos) : 0;
@@ -324,14 +326,12 @@
         document.getElementById("kpi-pedidos").innerText = pedidos;
         document.getElementById("kpi-promedio").innerText = `S/ ${promedio.toFixed(2)}`;
 
-        // Renderizar gráfico
         renderizarGrafico([
           Number(data.yape) || 0,
           Number(data.plin) || 0,
           Number(data.efectivo) || 0
         ]);
 
-        // Renderizar tabla
         renderizarTabla(data.ventas || []);
       };
 
@@ -353,14 +353,14 @@
           labels: ['Yape', 'Plin', 'Efectivo'],
           datasets: [{
             data: valores,
-            backgroundColor: ['#9b51e0', '#00d2ff', '#00ff88'],
+            backgroundColor: ['#8b5cf6', '#06b6d4', '#10b981'],
             borderWidth: 0
           }]
         },
         options: {
           responsive: true,
           plugins: {
-            legend: { position: 'bottom', labels: { color: '#fff' } }
+            legend: { position: 'bottom', labels: { color: '#1e293b' } }
           }
         }
       });
@@ -371,7 +371,7 @@
       tbody.innerHTML = "";
 
       if (ventas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="no-data">No hay ventas registradas en esta fecha.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="no-data">No hay ventas registradas para la fecha seleccionada. Cambia de fecha arriba si tus ventas son de otro día.</td></tr>`;
         return;
       }
 
@@ -385,7 +385,7 @@
           <td>${v.cantidad}</td>
           <td>S/ ${Number(v.monto).toFixed(2)}</td>
           <td><strong>S/ ${subtotal}</strong></td>
-          <td><span style="padding: 2px 8px; border-radius: 4px; font-size:0.75rem; background:#222; color:var(--accent);">${v.metodo || 'Yape'}</span></td>
+          <td><span style="padding: 2px 8px; border-radius: 4px; font-size:0.75rem; background:#e0f2fe; color:#0369a1; font-weight:bold;">${v.metodo.toUpperCase()}</span></td>
         `;
         tbody.appendChild(tr);
       });
