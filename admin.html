@@ -27,7 +27,6 @@
       padding: 20px;
     }
 
-    /* PANTALLA DE BLOQUEO PIN */
     .lock-screen {
       max-width: 360px;
       margin: 100px auto;
@@ -58,8 +57,6 @@
       letter-spacing: 4px;
     }
 
-    .lock-screen input:focus { border-color: var(--accent); }
-
     .btn-main {
       width: 100%;
       background: var(--accent);
@@ -75,7 +72,6 @@
 
     .btn-main:hover { background: var(--accent-hover); }
 
-    /* DASHBOARD */
     #dashboard-content {
       display: none;
       max-width: 1100px;
@@ -86,8 +82,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
       border-bottom: 2px solid var(--border-color);
       padding-bottom: 15px;
       margin-bottom: 25px;
@@ -99,21 +93,6 @@
       color: var(--accent);
     }
 
-    .date-picker {
-      background: #ffffff;
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-weight: bold;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .date-picker:focus { border-color: var(--accent); }
-
-    /* KPIS GRID */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -144,7 +123,6 @@
       color: var(--text-main);
     }
 
-    /* SECCIONES Y CONTENEDORES */
     .section-box {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -163,7 +141,6 @@
       text-transform: uppercase;
     }
 
-    /* TABLA */
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -212,10 +189,7 @@
     <div class="dashboard-header">
       <div>
         <h1>📊 PANEL DE VENTAS</h1>
-        <p style="margin: 4px 0 0; font-size: 0.8rem; color: var(--text-muted);">Monitoreo en tiempo real de Kim's Ropa</p>
-      </div>
-      <div>
-        <input type="date" id="fecha-filtro" class="date-picker" onchange="cargarDatosPanel()">
+        <p style="margin: 4px 0 0; font-size: 0.8rem; color: var(--text-muted);">Monitoreo general de Kim's Ropa</p>
       </div>
     </div>
 
@@ -237,7 +211,7 @@
 
     <!-- GRÁFICO DE MÉTODOS DE PAGO -->
     <div class="section-box">
-      <h3>Métodos de Pago</h3>
+      <h3>Métodos de Pago Totales</h3>
       <div style="max-width: 400px; margin: 0 auto;">
         <canvas id="paymentChart"></canvas>
       </div>
@@ -245,11 +219,12 @@
 
     <!-- TABLA DE VENTAS -->
     <div class="section-box">
-      <h3>Detalle de Prendas Vendidas</h3>
+      <h3>Detalle de Todas las Prendas Vendidas</h3>
       <div class="table-container">
         <table>
           <thead>
             <tr>
+              <th>Fecha</th>
               <th>ID Pedido</th>
               <th>Cliente / Celular</th>
               <th>Producto / Variante</th>
@@ -261,7 +236,7 @@
           </thead>
           <tbody id="tabla-body">
             <tr>
-              <td colspan="7" class="no-data">Cargando registros...</td>
+              <td colspan="8" class="no-data">Cargando registros...</td>
             </tr>
           </tbody>
         </table>
@@ -270,8 +245,7 @@
   </div>
 
   <script>
-    // PIN de 4 dígitos
-    const ADMIN_PIN = "1234"; 
+    const ADMIN_PIN = "1234"; // Cambia aquí tu PIN de 4 dígitos si deseas
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
     let chartInstance = null;
 
@@ -295,28 +269,17 @@
     function activarDashboard() {
       document.getElementById("lock-screen").style.display = "none";
       document.getElementById("dashboard-content").style.display = "block";
-
-      const hoy = new Date();
-      const yyyy = hoy.getFullYear();
-      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-      const dd = String(hoy.getDate()).padStart(2, '0');
-      document.getElementById("fecha-filtro").value = `${yyyy}-${mm}-${dd}`;
-
       cargarDatosPanel();
     }
 
     function cargarDatosPanel() {
-      const fechaSeleccionada = document.getElementById("fecha-filtro").value;
       const callbackName = 'jsonp_admin_' + Math.floor(Math.random() * 100000);
-
       const script = document.createElement('script');
-      script.src = `${URL_APPS_SCRIPT}?fecha=${fechaSeleccionada}&callback=${callbackName}`;
+      script.src = `${URL_APPS_SCRIPT}?callback=${callbackName}`;
 
       window[callbackName] = function(data) {
         delete window[callbackName];
         if (script.parentNode) script.parentNode.removeChild(script);
-
-        console.log("Datos recibidos de Google Sheets:", data); // Depuración en consola
 
         const total = Number(data.total) || 0;
         const pedidos = Number(data.pedidos) || 0;
@@ -337,7 +300,7 @@
 
       script.onerror = function() {
         if (script.parentNode) script.parentNode.removeChild(script);
-        document.getElementById("tabla-body").innerHTML = `<tr><td colspan="7" class="no-data">Error al conectar con Google Sheets.</td></tr>`;
+        document.getElementById("tabla-body").innerHTML = `<tr><td colspan="8" class="no-data">Error al conectar con Google Sheets.</td></tr>`;
       };
 
       document.body.appendChild(script);
@@ -371,7 +334,7 @@
       tbody.innerHTML = "";
 
       if (ventas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="no-data">No hay ventas registradas para la fecha seleccionada. Cambia de fecha arriba si tus ventas son de otro día.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="no-data">No hay ventas registradas todavía.</td></tr>`;
         return;
       }
 
@@ -379,6 +342,7 @@
         const tr = document.createElement("tr");
         const subtotal = (Number(v.cantidad) * Number(v.monto)).toFixed(2);
         tr.innerHTML = `
+          <td>${v.fecha}</td>
           <td><strong>${v.pedidoId}</strong></td>
           <td>${v.cliente}</td>
           <td>${v.producto} ${v.variante !== '-' ? '('+v.variante+')' : ''}</td>
