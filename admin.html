@@ -232,11 +232,12 @@
               <th>P. Unit</th>
               <th>Subtotal</th>
               <th>Pago</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody id="tabla-body">
             <tr>
-              <td colspan="8" class="no-data">Cargando registros...</td>
+              <td colspan="9" class="no-data">Cargando registros...</td>
             </tr>
           </tbody>
         </table>
@@ -248,6 +249,7 @@
     const ADMIN_PIN = "6666"; // Cambia aquí tu PIN de 4 dígitos si deseas
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
     let chartInstance = null;
+    let listaGlobalVentas = []; // Guardamos los datos para agrupar por Pedido ID
 
     window.onload = function() {
       if (sessionStorage.getItem("admin_logged") === "true") {
@@ -277,6 +279,8 @@
         const response = await fetch(URL_APPS_SCRIPT);
         const data = await response.json();
 
+        listaGlobalVentas = data.ventas || [];
+
         const total = Number(data.total) || 0;
         const pedidos = Number(data.pedidos) || 0;
         const promedio = pedidos > 0 ? (total / pedidos) : 0;
@@ -291,11 +295,11 @@
           Number(data.efectivo) || 0
         ]);
 
-        renderizarTabla(data.ventas || []);
+        renderizarTabla(listaGlobalVentas);
 
       } catch (error) {
         console.error(error);
-        document.getElementById("tabla-body").innerHTML = `<tr><td colspan="8" class="no-data">Error al conectar con Google Sheets.</td></tr>`;
+        document.getElementById("tabla-body").innerHTML = `<tr><td colspan="9" class="no-data">Error al conectar con Google Sheets.</td></tr>`;
       }
     }
 
@@ -327,7 +331,7 @@
       tbody.innerHTML = "";
 
       if (ventas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="no-data">No hay ventas registradas todavía.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="no-data">No hay ventas registradas todavía.</td></tr>`;
         return;
       }
 
@@ -343,9 +347,114 @@
           <td>S/ ${Number(v.monto).toFixed(2)}</td>
           <td><strong>S/ ${subtotal}</strong></td>
           <td><span style="padding: 2px 8px; border-radius: 4px; font-size:0.75rem; background:#e0f2fe; color:#0369a1; font-weight:bold;">${v.metodo.toUpperCase()}</span></td>
+          <td>
+            <button onclick="imprimirTicketUnico('${v.pedidoId}')" style="background: #2563eb; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold;">
+              🖨️ Ticket
+            </button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    // 🟢 FUNCIÓN INTELIGENTE PARA AGRUPAR TODOS LOS PRODUCTOS DEL MISMO PEDIDO ID EN 1 SOLO TICKET
+    function imprimirTicketUnico(pedidoId) {
+      // Filtramos todas las filas que pertenezcan a este mismo ID de pedido
+      const itemsPedido = listaGlobalVentas.filter(v => v.pedidoId === pedidoId);
+      
+      if (itemsPedido.length === 0) {
+        alert("No se encontraron datos para este pedido.");
+        return;
+      }
+
+      const datosPrincipal = itemsPedido[0];
+      let totalGeneral = 0;
+
+      let filasHtml = '';
+      itemsPedido.forEach(item => {
+        const subtotalItem = Number(item.cantidad) * Number(item.monto);
+        totalGeneral += subtotalItem;
+        filasHtml += `
+          <tr>
+            <td>${item.producto} ${item.variante !== '-' ? '<br><small>(' + item.variante + ')</small>' : ''}</td>
+            <td style="text-align: center;">${item.cantidad}</td>
+            <td style="text-align: right;">S/ ${Number(item.monto).toFixed(2)}</td>
+            <td style="text-align: right;">S/ ${subtotalItem.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      const ventanaImpresion = window.open('', '_blank', 'width=400,height=650');
+      
+      ventanaImpresion.document.write(`
+        <html>
+          <head>
+            <title>Ticket - ${pedidoId}</title>
+            <style>
+              body { font-family: monospace; padding: 10px; width: 300px; margin: 0 auto; color: #000; background: #fff; }
+              .text-center { text-align: center; }
+              .logo { max-width: 90px; margin: 0 auto 5px auto; display: block; }
+              h2 { margin: 2px 0; font-size: 16px; }
+              h4 { margin: 2px 0 10px 0; font-size: 11px; font-weight: normal; }
+              hr { border: dashed 1px #000; margin: 8px 0; }
+              .info { font-size: 11px; margin-bottom: 8px; line-height: 1.4; }
+              .detalle { font-size: 11px; width: 100%; border-collapse: collapse; margin-top: 5px; }
+              .detalle th { border-bottom: 1px solid #000; padding-bottom: 4px; font-size: 10px; text-align: left; }
+              .detalle td { padding: 6px 2px; vertical-align: top; }
+              .total-box { font-size: 13px; font-weight: bold; text-align: right; margin-top: 8px; }
+              .footer { text-align: center; font-size: 10px; margin-top: 15px; }
+            </style>
+          </head>
+          <body>
+            <div class="text-center">
+              <img src="logo.png" alt="Logo" class="logo">
+              <h2>KIM'S ROPA</h2>
+              <h4>Comprobante de Venta</h4>
+            </div>
+            <hr>
+            <div class="info">
+              <strong>Pedido ID:</strong> ${pedidoId}<br>
+              <strong>Fecha:</strong> ${datosPrincipal.fecha}<br>
+              <strong>Cliente:</strong> ${datosPrincipal.cliente}
+            </div>
+            <hr>
+            <table class="detalle">
+              <thead>
+                <tr>
+                  <th>ITEM / DESC</th>
+                  <th style="text-align: center;">CANT</th>
+                  <th style="text-align: right;">P.UNIT</th>
+                  <th style="text-align: right;">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filasHtml}
+              </tbody>
+            </table>
+            <hr>
+            <div style="font-size: 11px;">
+              <strong>Método de Pago:</strong> ${datosPrincipal.metodo.toUpperCase()}
+            </div>
+            <div class="total-box">
+              TOTAL A PAGAR: S/ ${totalGeneral.toFixed(2)}
+            </div>
+            <hr>
+            <div class="footer">
+              ¡Gracias por tu compra en Kim's Ropa!<br>
+              Conserva este ticket para cualquier consulta.
+            </div>
+            <script>
+              window.onload = function() { 
+                setTimeout(function() {
+                  window.print(); 
+                  window.close(); 
+                }, 400);
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      ventanaImpresion.document.close();
     }
   </script>
 </body>
