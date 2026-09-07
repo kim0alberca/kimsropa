@@ -176,7 +176,7 @@
 </head>
 <body>
 
-  <!-- PANTALLA DE ACCESO PIN (4 DÍGITOS) -->
+  <!-- PANTALLA DE ACCESO PIN -->
   <div id="lock-screen" class="lock-screen">
     <h2>🔐 ACCESO ADMIN</h2>
     <p style="font-size: 0.85rem; color: #64748b;">Ingresa tu PIN de 4 dígitos</p>
@@ -245,35 +245,7 @@
   </div>
 
   <script>
-    const ADMIN_PIN = "6666"; // Cambia aquí tu PIN de 4 dígitos si deseas
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
-    let chartInstance = null;
-
-    window.onload = function() {
-      if (sessionStorage.getItem("admin_logged") === "true") {
-        activarDashboard();
-      }
-    };
-
-    function verificarPin() {
-      const pin = document.getElementById("admin-pin").value;
-      if (pin === ADMIN_PIN) {
-        sessionStorage.setItem("admin_logged", "true");
-        activarDashboard();
-      } else {
-        alert("❌ PIN Incorrecto");
-        document.getElementById("admin-pin").value = "";
-      }
-    }
-
-    function activarDashboard() {
-      document.getElementById("lock-screen").style.display = "none";
-      document.getElementById("dashboard-content").style.display = "block";
-      cargarDatosPanel();
-    }
-
-    <script>
-    const ADMIN_PIN = "6666"; // Tu PIN de acceso
+    const ADMIN_PIN = "6666";
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
     let chartInstance = null;
 
@@ -302,7 +274,6 @@
 
     async function cargarDatosPanel() {
       try {
-        // Petición fetch optimizada para celulares
         const response = await fetch(URL_APPS_SCRIPT);
         const data = await response.json();
 
