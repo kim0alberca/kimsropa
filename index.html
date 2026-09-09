@@ -737,6 +737,10 @@
 
     /* ESTILOS DE IMPRESIÓN TÉRMICA */
     @media print {
+      @page {
+        margin: 0;
+        size: 58mm auto;
+      }
       body * {
         visibility: hidden;
       }
@@ -748,12 +752,14 @@
         left: 0;
         top: 0;
         width: 58mm;
-        font-family: 'Courier New', monospace;
-        font-size: 11px;
+        font-family: 'Courier New', monospace, sans-serif;
+        font-size: 14px;
+        font-weight: bold;
         color: #000;
         background: #fff;
-        padding: 2mm;
+        padding: 2mm 1mm;
         display: block !important;
+        box-sizing: border-box;
       }
     }
 
@@ -945,45 +951,47 @@
 <!-- PLANTILLA DEL TICKET TÉRMICO UNIFICADA -->
 <div id="printable-ticket">
   <div style="text-align: center;">
-    <h3 style="margin: 0; font-size: 14px;">KIM'S ROPA</h3>
-    <p style="margin: 2px 0;">Tienda Virtual en Línea - Piura</p>
-    <p style="margin: 2px 0; font-size: 9px;">https://kim0alberca.github.io/kimsropa/</p>
-    <p style="margin: 2px 0;">WhatsApp: +51 968 495 402</p>
+    <h2 style="margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
+    <p style="margin: 3px 0; font-size: 12px; font-weight: bold;">Tienda Virtual en Línea - Piura</p>
+    <p style="margin: 3px 0; font-size: 11px;">https://kim0alberca.github.io/kimsropa/</p>
+    <p style="margin: 3px 0; font-size: 13px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
   </div>
   
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+  <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
   
-  <p style="margin: 2px 0;"><strong>TICKET DE VENTA</strong></p>
-  <p style="margin: 2px 0;" id="ticket-date">Fecha: --/--/----</p>
-  <p style="margin: 2px 0;" id="ticket-client">Cliente: --</p>
-  <p style="margin: 2px 0;" id="ticket-phone">Teléfono: --</p>
-  <p style="margin: 2px 0;" id="ticket-delivery">Entrega: --</p>
+  <div style="font-size: 13px; font-weight: bold; line-height: 1.3;">
+    <p style="margin: 3px 0; font-size: 15px; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
+    <p style="margin: 3px 0;" id="ticket-date">Fecha: --/--/----</p>
+    <p style="margin: 3px 0;" id="ticket-client">Cliente: --</p>
+    <p style="margin: 3px 0;" id="ticket-phone">Teléfono: --</p>
+    <p style="margin: 3px 0;" id="ticket-delivery">Entrega: --</p>
+  </div>
   
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+  <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
   
-  <table style="width: 100%; text-align: left; font-size: 10px; border-collapse: collapse;">
+  <table style="width: 100%; text-align: left; font-size: 13px; font-weight: bold; border-collapse: collapse;">
     <thead>
-      <tr>
-        <th style="width: 20%;">Cant</th>
-        <th style="width: 50%;">Producto</th>
-        <th style="width: 30%; text-align: right;">Total</th>
+      <tr style="border-bottom: 1px solid #000;">
+        <th style="width: 15%; text-align: center; padding-bottom: 4px;">CANT</th>
+        <th style="width: 55%; padding-bottom: 4px;">PRODUCTO</th>
+        <th style="width: 30%; text-align: right; padding-bottom: 4px;">TOTAL</th>
       </tr>
     </thead>
     <tbody id="ticket-items"></tbody>
   </table>
   
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+  <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
   
-  <div style="text-align: right; font-size: 12px;">
-    <p style="margin: 2px 0;" id="ticket-discount"></p>
-    <p style="margin: 2px 0;"><strong>TOTAL: S/ <span id="ticket-total">0.00</span></strong></p>
+  <div style="text-align: right; font-size: 14px; font-weight: bold; line-height: 1.4;">
+    <p style="margin: 3px 0;" id="ticket-discount"></p>
+    <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold;">TOTAL: S/ <span id="ticket-total">0.00</span></p>
   </div>
   
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+  <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
   
-  <div style="text-align: center; font-size: 9px; margin-top: 8px;">
-    <p style="margin: 2px 0;">¡Gracias por tu compra!</p>
-    <p style="margin: 2px 0;">Visítanos de nuevo</p>
+  <div style="text-align: center; font-size: 12px; font-weight: bold; margin-top: 10px;">
+    <p style="margin: 3px 0; font-size: 13px;">¡Gracias por tu compra!</p>
+    <p style="margin: 3px 0;">Visítanos de nuevo</p>
   </div>
 </div>
 
@@ -1874,7 +1882,7 @@
     window.location.href = whatsappUrl;
   }
 
-  function printAdminTicket() {
+  async function printAdminTicket() {
     const inputPin = prompt("Ingrese la clave de administrador para imprimir:");
     
     if (inputPin !== ADMIN_PIN) {
@@ -1906,9 +1914,12 @@
 
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${item.qty}</td>
-        <td>${item.nombre} (${item.size}/${item.color})</td>
-        <td style="text-align: right;">S/ ${subtotal.toFixed(2)}</td>
+        <td style="text-align: center; vertical-align: top; font-size: 14px; font-weight: bold; padding: 4px 0;">${item.qty}</td>
+        <td style="font-size: 13px; font-weight: bold; padding: 4px 0; text-transform: uppercase;">
+          ${item.nombre}<br>
+          <span style="font-size: 11px;">Talla: ${item.size} | Color: ${item.color}</span>
+        </td>
+        <td style="text-align: right; vertical-align: top; font-size: 14px; font-weight: bold; padding: 4px 0;">S/ ${subtotal.toFixed(2)}</td>
       `;
       tbody.appendChild(row);
     });
@@ -1924,6 +1935,119 @@
 
     document.getElementById('ticket-total').innerText = finalTotal.toFixed(2);
 
+    // Intentar impresión directa con Web Bluetooth API ESC/POS (58mm)
+    if ('bluetooth' in navigator) {
+      try {
+        showToast("🔍 Buscando impresora Bluetooth...");
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [
+            '000018f0-0000-1000-8000-00805f9b34fb',
+            '00001101-0000-1000-8000-00805f9b34fb',
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+          ]
+        });
+
+        const server = await device.gatt.connect();
+        const services = await server.getPrimaryServices();
+        let targetCharacteristic = null;
+
+        for (const service of services) {
+          const characteristics = await service.getCharacteristics();
+          for (const char of characteristics) {
+            if (char.properties.write || char.properties.writeWithoutResponse) {
+              targetCharacteristic = char;
+              break;
+            }
+          }
+          if (targetCharacteristic) break;
+        }
+
+        if (targetCharacteristic) {
+          showToast("🖨️ Imprimiendo ticket vía Bluetooth...");
+          
+          let esc = '\x1B';
+          let gs = '\x1D';
+          let reset = esc + '@';
+          let center = esc + 'a' + '\x01';
+          let left = esc + 'a' + '\x00';
+          let right = esc + 'a' + '\x02';
+          let boldOn = esc + 'E' + '\x01';
+          let boldOff = esc + 'E' + '\x00';
+          let doubleSize = gs + '!' + '\x11'; 
+          let normalSize = gs + '!' + '\x00';
+
+          let data = reset;
+          
+          // Encabezado
+          data += center + doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
+          data += "Tienda Virtual en Linea - Piura\n";
+          data += "https://kim0alberca.github.io/kimsropa/\n";
+          data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
+          data += "--------------------------------\n";
+          
+          // Datos del Ticket
+          data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
+          data += left;
+          data += "Fecha: " + dateStr + "\n";
+          data += "Cliente: " + name + "\n";
+          data += "Telefono: " + phone + "\n";
+          data += "Entrega: " + delivery + "\n";
+          data += "--------------------------------\n";
+          
+          // Encabezados de Tabla
+          data += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
+          data += "--------------------------------\n";
+          
+          // Ítems (32 Caracteres de ancho para 58mm)
+          itemsToPrint.forEach(item => {
+            let cantStr = (item.qty + " ").padEnd(6, ' ');
+            let subtotalStr = ("S/" + (item.price * item.qty).toFixed(2)).padStart(8, ' ');
+            let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
+            let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
+            
+            data += boldOn + cantStr + prodNombre + subtotalStr + "\n";
+            data += "      " + ("Talla: " + item.size + " | Color: " + item.color) + "\n" + boldOff;
+          });
+          
+          data += "--------------------------------\n";
+          
+          // Totales
+          data += right;
+          if (discToPrint > 0) {
+            data += "Desc. (" + Math.round(discToPrint*100) + "%): -S/ " + discountAmount.toFixed(2) + "\n";
+          }
+          data += doubleSize + boldOn + "TOTAL: S/ " + finalTotal.toFixed(2) + "\n" + normalSize + boldOff;
+          data += "--------------------------------\n";
+          
+          // Pie de Página
+          data += center;
+          data += boldOn + "¡Gracias por tu compra!\n" + boldOff;
+          data += "Visitanos de nuevo\n\n\n\n";
+
+          let encoder = new TextEncoder();
+          let bytes = encoder.encode(data);
+          
+          // Enviar en paquetes pequeños
+          let chunkSize = 512;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            let chunk = bytes.slice(i, i + chunkSize);
+            if (targetCharacteristic.properties.writeWithoutResponse) {
+              await targetCharacteristic.writeValueWithoutResponse(chunk);
+            } else {
+              await targetCharacteristic.writeValue(chunk);
+            }
+          }
+
+          showToast("✅ ¡Ticket impreso con éxito!");
+          return;
+        }
+      } catch (err) {
+        console.warn("Error/Cancelado Bluetooth, usando impresión nativa del sistema:", err);
+      }
+    }
+
+    // Si no cuenta con Bluetooth o falla, usa el cuadro nativo del sistema
     window.print();
   }
 </script>
