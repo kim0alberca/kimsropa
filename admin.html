@@ -172,6 +172,53 @@
       color: var(--text-muted);
       padding: 30px;
     }
+
+    .btn-print {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .btn-print:hover {
+      background: #059669;
+    }
+
+    /* ESTILOS DE IMPRESIÓN TÉRMICA */
+    @media print {
+      @page {
+        margin: 0;
+        size: 58mm auto;
+      }
+      body * {
+        visibility: hidden;
+      }
+      #printable-ticket, #printable-ticket * {
+        visibility: visible;
+      }
+      #printable-ticket {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 58mm;
+        font-family: 'Courier New', monospace, sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        color: #000;
+        background: #fff;
+        padding: 2mm 1mm;
+        display: block !important;
+        box-sizing: border-box;
+      }
+    }
+
+    #printable-ticket {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -245,6 +292,52 @@
     </div>
   </div>
 
+  <!-- PLANTILLA DEL TICKET TÉRMICO UNIFICADA -->
+  <div id="printable-ticket">
+    <div style="text-align: center;">
+      <h2 style="margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
+      <p style="margin: 3px 0; font-size: 12px; font-weight: bold;">Tienda Virtual en Línea - Piura</p>
+      <p style="margin: 3px 0; font-size: 11px;">https://kim0alberca.github.io/kimsropa/</p>
+      <p style="margin: 3px 0; font-size: 13px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
+    </div>
+    
+    <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
+    
+    <div style="font-size: 13px; font-weight: bold; line-height: 1.3;">
+      <p style="margin: 3px 0; font-size: 15px; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
+      <p style="margin: 3px 0;" id="ticket-date">Fecha: --/--/----</p>
+      <p style="margin: 3px 0;" id="ticket-id">Pedido: --</p>
+      <p style="margin: 3px 0;" id="ticket-client">Cliente: --</p>
+      <p style="margin: 3px 0;" id="ticket-payment">Pago: --</p>
+    </div>
+    
+    <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
+    
+    <table style="width: 100%; text-align: left; font-size: 13px; font-weight: bold; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid #000;">
+          <th style="width: 15%; text-align: center; padding-bottom: 4px;">CANT</th>
+          <th style="width: 55%; padding-bottom: 4px;">PRODUCTO</th>
+          <th style="width: 30%; text-align: right; padding-bottom: 4px;">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody id="ticket-items"></tbody>
+    </table>
+    
+    <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
+    
+    <div style="text-align: right; font-size: 14px; font-weight: bold; line-height: 1.4;">
+      <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold;">TOTAL: S/ <span id="ticket-total">0.00</span></p>
+    </div>
+    
+    <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
+    
+    <div style="text-align: center; font-size: 12px; font-weight: bold; margin-top: 10px;">
+      <p style="margin: 3px 0; font-size: 13px;">¡Gracias por tu compra!</p>
+      <p style="margin: 3px 0;">Visítanos de nuevo</p>
+    </div>
+  </div>
+
   <script>
     const ADMIN_PIN = "6666"; 
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
@@ -277,125 +370,217 @@
     function activarDashboard() {
       document.getElementById("lock-screen").style.display = "none";
       document.getElementById("dashboard-content").style.display = "block";
-      cargarDatosPanel();
+      cargarDatosVentas();
     }
 
-    async function cargarDatosPanel() {
-      try {
-        const response = await fetch(URL_APPS_SCRIPT);
-        const data = await response.json();
+    function cargarDatosVentas() {
+      fetch(URL_APPS_SCRIPT)
+        .then(response => response.json())
+        .then(data => {
+          listaGlobalVentas = data;
+          procesarYRenderizar(data);
+        })
+        .catch(err => {
+          console.error("Error al obtener datos:", err);
+          document.getElementById("tabla-body").innerHTML = `<tr><td colspan="9" class="no-data">Error al cargar datos desde Google Sheets.</td></tr>`;
+        });
+    }
 
-        listaGlobalVentas = data.ventas || [];
+    function procesarYRenderizar(ventas) {
+      const tbody = document.getElementById("tabla-body");
+      tbody.innerHTML = "";
 
-        const total = Number(data.total) || 0;
-        const pedidos = Number(data.pedidos) || 0;
-        const promedio = pedidos > 0 ? (total / pedidos) : 0;
-
-        document.getElementById("kpi-total").innerText = `S/ ${total.toFixed(2)}`;
-        document.getElementById("kpi-pedidos").innerText = pedidos;
-        document.getElementById("kpi-promedio").innerText = `S/ ${promedio.toFixed(2)}`;
-
-        renderizarGrafico([
-          Number(data.yape) || 0,
-          Number(data.plin) || 0,
-          Number(data.efectivo) || 0
-        ]);
-
-        renderizarTabla(listaGlobalVentas);
-
-      } catch (error) {
-        console.error(error);
-        document.getElementById("tabla-body").innerHTML = `<tr><td colspan="9" class="no-data">Error al conectar con Google Sheets.</td></tr>`;
+      if (!ventas || ventas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="no-data">No hay registros de ventas.</td></tr>`;
+        return;
       }
+
+      let totalMonto = 0;
+      let pedidosSet = new Set();
+      let metodosPago = { Yape: 0, Plin: 0, Efectivo: 0, Otro: 0 };
+
+      ventas.forEach((v, index) => {
+        const subtotal = (parseFloat(v.cantidad) || 1) * (parseFloat(v.precioUnit) || 0);
+        totalMonto += subtotal;
+        
+        if (v.pedidoId) pedidosSet.add(v.pedidoId);
+
+        const metodo = v.metodo || "Otro";
+        if (metodosPago.hasOwnProperty(metodo)) {
+          metodosPago[metodo] += subtotal;
+        } else {
+          metodosPago.Otro += subtotal;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${v.fecha || '--'}</td>
+          <td><strong>${v.pedidoId || '--'}</strong></td>
+          <td>${v.cliente || '--'}</td>
+          <td>${v.nombre || '--'} (${v.variante || '--'})</td>
+          <td>${v.cantidad || 1}</td>
+          <td>S/ ${parseFloat(v.precioUnit || 0).toFixed(2)}</td>
+          <td><strong>S/ ${subtotal.toFixed(2)}</strong></td>
+          <td>${v.metodo || '--'}</td>
+          <td>
+            <button class="btn-print" onclick="imprimirTicketDesdeAdmin(${index})">🖨️ Ticket</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Actualización de KPIs
+      document.getElementById("kpi-total").innerText = `S/ ${totalMonto.toFixed(2)}`;
+      document.getElementById("kpi-pedidos").innerText = pedidosSet.size;
+      const promedio = pedidosSet.size > 0 ? (totalMonto / pedidosSet.size) : 0;
+      document.getElementById("kpi-promedio").innerText = `S/ ${promedio.toFixed(2)}`;
+
+      renderChart(metodosPago);
     }
 
-    function renderizarGrafico(valores) {
-      const ctx = document.getElementById('paymentChart').getContext('2d');
+    function renderChart(metodos) {
+      const ctx = document.getElementById("paymentChart").getContext("2d");
       if (chartInstance) chartInstance.destroy();
 
       chartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Yape', 'Plin', 'Efectivo'],
+          labels: ['Yape', 'Plin', 'Efectivo', 'Otro'],
           datasets: [{
-            data: valores,
-            backgroundColor: ['#8b5cf6', '#06b6d4', '#10b981'],
-            borderWidth: 0
+            data: [metodos.Yape, metodos.Plin, metodos.Efectivo, metodos.Otro],
+            backgroundColor: ['#8b5cf6', '#06b6d4', '#10b981', '#64748b']
           }]
         },
         options: {
           responsive: true,
           plugins: {
-            legend: { position: 'bottom', labels: { color: '#1e293b' } }
+            legend: { position: 'bottom' }
           }
         }
       });
     }
 
-    function renderizarTabla(ventas) {
-      const tbody = document.getElementById("tabla-body");
-      tbody.innerHTML = "";
+    async function imprimirTicketDesdeAdmin(index) {
+      const venta = listaGlobalVentas[index];
+      if (!venta) return;
 
-      if (ventas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="no-data">No hay ventas registradas todavía.</td></tr>`;
-        return;
+      document.getElementById('ticket-date').innerText = "Fecha: " + (venta.fecha || new Date().toLocaleDateString());
+      document.getElementById('ticket-id').innerText = "Pedido: " + (venta.pedidoId || "S/N");
+      document.getElementById('ticket-client').innerText = "Cliente: " + (venta.cliente || "Cliente General");
+      document.getElementById('ticket-payment').innerText = "Pago: " + (venta.metodo || "-");
+
+      const tbody = document.getElementById('ticket-items');
+      tbody.innerHTML = '';
+
+      const subtotal = (parseFloat(venta.cantidad) || 1) * (parseFloat(venta.precioUnit) || 0);
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="text-align: center; vertical-align: top; font-size: 14px; font-weight: bold; padding: 4px 0;">${venta.cantidad || 1}</td>
+        <td style="font-size: 13px; font-weight: bold; padding: 4px 0; text-transform: uppercase;">
+          ${venta.nombre || 'Producto'}<br>
+          <span style="font-size: 11px;">Variante: ${venta.variante || '-'}</span>
+        </td>
+        <td style="text-align: right; vertical-align: top; font-size: 14px; font-weight: bold; padding: 4px 0;">S/ ${subtotal.toFixed(2)}</td>
+      `;
+      tbody.appendChild(row);
+
+      document.getElementById('ticket-total').innerText = subtotal.toFixed(2);
+
+      // Intentar impresión directa vía Web Bluetooth (ESC/POS 58mm)
+      if ('bluetooth' in navigator) {
+        try {
+          const device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [
+              '000018f0-0000-1000-8000-00805f9b34fb',
+              '00001101-0000-1000-8000-00805f9b34fb',
+              '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+            ]
+          });
+
+          const server = await device.gatt.connect();
+          const services = await server.getPrimaryServices();
+          let targetCharacteristic = null;
+
+          for (const service of services) {
+            const characteristics = await service.getCharacteristics();
+            for (const char of characteristics) {
+              if (char.properties.write || char.properties.writeWithoutResponse) {
+                targetCharacteristic = char;
+                break;
+              }
+            }
+            if (targetCharacteristic) break;
+          }
+
+          if (targetCharacteristic) {
+            let esc = '\x1B';
+            let gs = '\x1D';
+            let reset = esc + '@';
+            let center = esc + 'a' + '\x01';
+            let left = esc + 'a' + '\x00';
+            let right = esc + 'a' + '\x02';
+            let boldOn = esc + 'E' + '\x01';
+            let boldOff = esc + 'E' + '\x00';
+            let doubleSize = gs + '!' + '\x11'; 
+            let normalSize = gs + '!' + '\x00';
+
+            let data = reset;
+            data += center + doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
+            data += "Tienda Virtual en Linea - Piura\n";
+            data += "https://kim0alberca.github.io/kimsropa/\n";
+            data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
+            data += "--------------------------------\n";
+            
+            data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
+            data += left;
+            data += "Fecha: " + (venta.fecha || '') + "\n";
+            data += "Pedido: " + (venta.pedidoId || '') + "\n";
+            data += "Cliente: " + (venta.cliente || '') + "\n";
+            data += "Pago: " + (venta.metodo || '') + "\n";
+            data += "--------------------------------\n";
+            
+            data += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
+            data += "--------------------------------\n";
+            
+            let cantStr = ((venta.cantidad || 1) + " ").padEnd(6, ' ');
+            let subtotalStr = ("S/" + subtotal.toFixed(2)).padStart(8, ' ');
+            let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
+            let prodNombre = (venta.nombre || 'Producto').substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
+            
+            data += boldOn + cantStr + prodNombre + subtotalStr + "\n";
+            data += "      " + ("Var: " + (venta.variante || '-')) + "\n" + boldOff;
+            
+            data += "--------------------------------\n";
+            data += right;
+            data += doubleSize + boldOn + "TOTAL: S/ " + subtotal.toFixed(2) + "\n" + normalSize + boldOff;
+            data += "--------------------------------\n";
+            
+            data += center;
+            data += boldOn + "¡Gracias por tu compra!\n" + boldOff;
+            data += "Visitanos de nuevo\n\n\n\n";
+
+            let encoder = new TextEncoder();
+            let bytes = encoder.encode(data);
+            
+            let chunkSize = 512;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+              let chunk = bytes.slice(i, i + chunkSize);
+              if (targetCharacteristic.properties.writeWithoutResponse) {
+                await targetCharacteristic.writeValueWithoutResponse(chunk);
+              } else {
+                await targetCharacteristic.writeValue(chunk);
+              }
+            }
+            return;
+          }
+        } catch (err) {
+          console.warn("Uso de impresion nativa:", err);
+        }
       }
 
-      ventas.forEach(v => {
-        const tr = document.createElement("tr");
-        const subtotal = (Number(v.cantidad) * Number(v.monto)).toFixed(2);
-        tr.innerHTML = `
-          <td>${v.fecha}</td>
-          <td><strong>${v.pedidoId}</strong></td>
-          <td>${v.cliente}</td>
-          <td>${v.producto} ${v.variante !== '-' ? '('+v.variante+')' : ''}</td>
-          <td>${v.cantidad}</td>
-          <td>S/ ${Number(v.monto).toFixed(2)}</td>
-          <td><strong>S/ ${subtotal}</strong></td>
-          <td><span style="padding: 2px 8px; border-radius: 4px; font-size:0.75rem; background:#e0f2fe; color:#0369a1; font-weight:bold;">${v.metodo.toUpperCase()}</span></td>
-          <td>
-            <button onclick="imprimirTicketUnico('${v.pedidoId}')" style="background: #2563eb; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold;">
-              🖨️ Ticket
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function imprimirTicketUnico(pedidoId) {
-      const itemsPedido = listaGlobalVentas.filter(v => v.pedidoId === pedidoId);
-      
-      if (itemsPedido.length === 0) {
-        alert("No se encontraron datos para este pedido.");
-        return;
-      }
-
-      const datosPrincipal = itemsPedido[0];
-      let totalGeneral = 0;
-
-      let filasHtml = '';
-      itemsPedido.forEach(item => {
-        const subtotalItem = Number(item.cantidad) * Number(item.monto);
-        totalGeneral += subtotalItem;
-        filasHtml += '<tr><td>' + item.producto + (item.variante !== '-' ? '<br><small>(' + item.variante + ')</small>' : '') + '</td><td style="text-align: center;">' + item.cantidad + '</td><td style="text-align: right;">S/ ' + Number(item.monto).toFixed(2) + '</td><td style="text-align: right;">S/ ' + subtotalItem.toFixed(2) + '</td></tr>';
-      });
-
-      const contenidoHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Ticket - ' + pedidoId + '</title><style>body { font-family: monospace; padding: 10px; width: 300px; margin: 0 auto; color: #000; background: #fff; }.text-center { text-align: center; }.logo { max-width: 90px; margin: 0 auto 5px auto; display: block; }h2 { margin: 2px 0; font-size: 16px; }h4 { margin: 2px 0 10px 0; font-size: 11px; font-weight: normal; }hr { border: dashed 1px #000; margin: 8px 0; }.info { font-size: 11px; margin-bottom: 8px; line-height: 1.4; }.detalle { font-size: 11px; width: 100%; border-collapse: collapse; margin-top: 5px; }.detalle th { border-bottom: 1px solid #000; padding-bottom: 4px; font-size: 10px; text-align: left; }.detalle td { padding: 6px 2px; vertical-align: top; }.total-box { font-size: 13px; font-weight: bold; text-align: right; margin-top: 8px; }.footer { text-align: center; font-size: 10px; margin-top: 15px; }</style></head><body><div class="text-center"><img src="logo.png" alt="Logo" class="logo"><h2>KIM\'S ROPA</h2><h4>Comprobante de Venta</h4></div><hr><div class="info"><strong>Pedido ID:</strong> ' + pedidoId + '<br><strong>Fecha:</strong> ' + datosPrincipal.fecha + '<br><strong>Cliente:</strong> ' + datosPrincipal.cliente + '</div><hr><table class="detalle"><thead><tr><th>ITEM / DESC</th><th style="text-align: center;">CANT</th><th style="text-align: right;">P.UNIT</th><th style="text-align: right;">TOTAL</th></tr></thead><tbody>' + filasHtml + '</tbody></table><hr><div style="font-size: 11px;"><strong>Método de Pago:</strong> ' + datosPrincipal.metodo.toUpperCase() + '</div><div class="total-box">TOTAL A PAGAR: S/ ' + totalGeneral.toFixed(2) + '</div><hr><div class="footer">¡Gracias por tu compra en Kim\'s Ropa!<br>Conserva este ticket para cualquier consulta.</div></body></html>';
-
-      const ventanaImpresion = window.open('', '_blank', 'width=400,height=650');
-      if (ventanaImpresion) {
-        ventanaImpresion.document.open();
-        ventanaImpresion.document.write(contenidoHtml);
-        ventanaImpresion.document.close();
-        setTimeout(function() {
-          ventanaImpresion.focus();
-          ventanaImpresion.print();
-          ventanaImpresion.close();
-        }, 500);
-      } else {
-        alert("Por favor, permite las ventanas emergentes (pop-ups) para imprimir el ticket.");
-      }
+      window.print();
     }
   </script>
 </body>
