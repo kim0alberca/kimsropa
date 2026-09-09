@@ -19,6 +19,11 @@
     }
     .header {
       margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
     }
     .header h1 {
       color: #1a73e8;
@@ -30,6 +35,19 @@
     .header p {
       color: #666;
       font-size: 14px;
+    }
+    .btn-reload {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+    }
+    .btn-reload:hover {
+      background: #1557b0;
     }
     .kpi-container {
       display: grid;
@@ -98,13 +116,99 @@
       text-align: center;
       color: #666;
     }
+    .btn-action {
+      background: #34a853;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .btn-action:hover {
+      background: #2d8e47;
+    }
+
+    /* MODAL DE VISTA PREVIA DEL TICKET */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .btn-modal {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      text-align: center;
+      font-size: 13px;
+    }
+    .btn-modal-close { background: #666; color: #fff; }
+    .btn-modal-print { background: #1a73e8; color: #fff; }
+
+    /* ESTILOS DE IMPRESIÓN TÉRMICA (58mm) */
+    @media print {
+      @page {
+        margin: 0;
+        size: 58mm auto;
+      }
+      body * {
+        visibility: hidden;
+      }
+      #printable-ticket, #printable-ticket * {
+        visibility: visible;
+      }
+      #printable-ticket {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 58mm;
+        font-family: 'Courier New', monospace, sans-serif;
+        font-size: 12px;
+        font-weight: bold;
+        color: #000;
+        background: #fff;
+        padding: 2mm 1mm;
+        display: block !important;
+        box-sizing: border-box;
+      }
+    }
+    #printable-ticket {
+      display: none;
+    }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <h1>📊 PANEL DE VENTAS</h1>
-    <p>Monitoreo general de Kim's Ropa</p>
+    <div>
+      <h1>📊 PANEL DE VENTAS</h1>
+      <p>Monitoreo general de Kim's Ropa</p>
+    </div>
+    <button class="btn-reload" onclick="cargarDatosVentas()">🔄 Actualizar Datos</button>
   </div>
 
   <!-- Tarjetas KPI -->
@@ -127,26 +231,26 @@
   <div class="panel">
     <div class="panel-title">Métodos de Pago Totales</div>
     <div id="metodos-pago-container">
-      <p style="color: #888; font-size: 13px;">Cargando metodos de pago...</p>
+      <p style="color: #888; font-size: 13px;">Cargando métodos de pago...</p>
     </div>
   </div>
 
   <!-- Tabla de Ventas -->
   <div class="panel">
-    <div class="panel-title">Detalle de Todas las Prendas Vendidas</div>
+    <div class="panel-title">Detalle de Todas las Ventas y Productos</div>
     <div style="overflow-x: auto;">
       <table>
         <thead>
           <tr>
             <th>Fecha</th>
             <th>ID Pedido</th>
-            <th>Cliente / Celular</th>
+            <th>Cliente / Datos</th>
             <th>Producto / Variante</th>
             <th class="text-center">Cant</th>
             <th class="text-right">P. Unit</th>
-            <th class="text-right">Subtotal</th>
+            <th class="text-right">Subtotal / Total</th>
             <th>Pago</th>
-            <th>Acción</th>
+            <th class="text-center">Acción</th>
           </tr>
         </thead>
         <tbody id="tabla-ventas-body">
@@ -158,15 +262,81 @@
     </div>
   </div>
 
+  <!-- MODAL VISTA PREVIA TICKET -->
+  <div id="ticket-modal" class="modal">
+    <div class="modal-content">
+      <div id="ticket-preview-box" style="border: 1px dashed #ccc; padding: 10px; background: #fff; color: #000; font-family: monospace; font-size: 12px;">
+        <!-- Se genera dinámicamente -->
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal btn-modal-close" onclick="cerrarModal()">Cerrar</button>
+        <button class="btn-modal btn-modal-print" onclick="ejecutarImpresion()">🖨️ Imprimir Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLANTILLA DEL TICKET PARA IMPRESIÓN (58mm) -->
+  <div id="printable-ticket">
+    <div style="text-align: center;">
+      <h2 style="margin: 0; font-size: 18px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
+      <p style="margin: 2px 0; font-size: 11px;">Tienda Virtual en Línea - Piura</p>
+      <p style="margin: 2px 0; font-size: 10px;">https://kim0alberca.github.io/kimsropa/</p>
+      <p style="margin: 2px 0; font-size: 11px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
+    </div>
+    
+    <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+    
+    <div style="font-size: 11px; font-weight: bold; line-height: 1.2;">
+      <p style="margin: 2px 0; font-size: 12px; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
+      <p style="margin: 2px 0;" id="ticket-id">ID: --</p>
+      <p style="margin: 2px 0;" id="ticket-date">Fecha: --/--/----</p>
+      <p style="margin: 2px 0;" id="ticket-client">Cliente: --</p>
+      <p style="margin: 2px 0;" id="ticket-payment">Pago: --</p>
+    </div>
+    
+    <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+    
+    <table style="width: 100%; text-align: left; font-size: 11px; font-weight: bold; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid #000;">
+          <th style="width: 15%; text-align: center;">CANT</th>
+          <th style="width: 55%;">DESCRIPCIÓN</th>
+          <th style="width: 30%; text-align: right;">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody id="ticket-items-body"></tbody>
+    </table>
+    
+    <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+    
+    <div style="text-align: right; font-size: 14px; font-weight: bold;">
+      <p style="margin: 2px 0;">TOTAL: S/ <span id="ticket-total-val">0.00</span></p>
+    </div>
+    
+    <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+    
+    <div style="text-align: center; font-size: 10px; font-weight: bold; margin-top: 6px;">
+      <p style="margin: 2px 0;">¡Gracias por tu preferencia!</p>
+      <p style="margin: 2px 0;">Visítanos de nuevo</p>
+    </div>
+  </div>
+
   <script>
-    // ⚠️ REEMPLAZA ESTA URL CON TU ENLACE DE GOOGLE APPS SCRIPT
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
+    
+    let cacheVentas = [];
 
     document.addEventListener("DOMContentLoaded", () => {
       cargarDatosVentas();
     });
 
     function cargarDatosVentas() {
+      document.getElementById("tabla-ventas-body").innerHTML = `
+        <tr>
+          <td colspan="9" class="status-msg">Cargando datos desde Google Sheets...</td>
+        </tr>
+      `;
+
       fetch(WEB_APP_URL)
         .then(response => {
           if (!response.ok) {
@@ -182,7 +352,7 @@
           document.getElementById("tabla-ventas-body").innerHTML = `
             <tr>
               <td colspan="9" class="status-msg" style="color: #d93025;">
-                Error al cargar datos desde Google Sheets. Verifique la consola o la configuración del Web App.
+                Error al cargar datos desde Google Sheets. Verifique la conexión o la configuración del Web App.
               </td>
             </tr>
           `;
@@ -190,7 +360,6 @@
     }
 
     function procesarYRenderizar(datos) {
-      // 1. Extraer el array de ventas sin importar el formato enviado
       let ventas = [];
       if (Array.isArray(datos)) {
         ventas = datos;
@@ -200,7 +369,8 @@
         ventas = datos.ventas;
       }
 
-      // 2. Si no es un arreglo válido o está vacío
+      cacheVentas = ventas;
+
       if (!Array.isArray(ventas) || ventas.length === 0) {
         document.getElementById("tabla-ventas-body").innerHTML = `
           <tr>
@@ -208,54 +378,92 @@
           </tr>
         `;
         actualizarKPIs(0, 0);
+        renderizarMetodosPago({});
         return;
       }
 
-      // 3. Variables para cálculo de KPIs
       let totalRecaudado = 0;
       let pedidosSet = new Set();
       let metodosPago = {};
       let htmlFilas = "";
 
-      // 4. Recorrer de forma segura con .forEach()
-      ventas.forEach(venta => {
-        // Adaptar nombres de campos según las columnas de tu hoja de cálculo
+      ventas.forEach((venta, idx) => {
         const fecha = venta.fecha || venta.Fecha || "-";
-        const idPedido = venta.idPedido || venta.ID || venta["ID Pedido"] || "-";
+        const idPedido = venta.pedidoId || venta.idPedido || venta.ID || venta["ID Pedido"] || `-`;
         const cliente = venta.cliente || venta.Cliente || venta.celular || "-";
-        const producto = venta.producto || venta.Producto || venta.prenda || "-";
-        const cantidad = Number(venta.cantidad || venta.Cantidad || 1);
-        const pUnit = Number(venta.pUnit || venta.precio || venta["P. Unit"] || 0);
-        const subtotal = Number(venta.subtotal || venta.Subtotal || (cantidad * pUnit));
-        const pago = venta.pago || venta["Método de Pago"] || venta.metodoPago || "-";
+        const pago = venta.metodo || venta.pago || venta["Método de Pago"] || venta.metodoPago || "-";
+        
+        // Manejo flexible si la fila viene con monto directo o con desglose de items
+        const montoGlobal = parseFloat(venta.monto || venta.subtotal || venta.Subtotal || 0);
 
-        totalRecaudado += subtotal;
         if (idPedido !== "-") pedidosSet.add(idPedido);
 
-        // Conteo de métodos de pago
-        if (pago !== "-") {
-          metodosPago[pago] = (metodosPago[pago] || 0) + subtotal;
-        }
+        // Si la venta trae una lista de ítems estructurada
+        if (Array.isArray(venta.items) && venta.items.length > 0) {
+          totalRecaudado += montoGlobal;
 
-        htmlFilas += `
-          <tr>
-            <td>${fecha}</td>
-            <td><strong>${idPedido}</strong></td>
-            <td>${cliente}</td>
-            <td>${producto}</td>
-            <td class="text-center">${cantidad}</td>
-            <td class="text-right">S/ ${pUnit.toFixed(2)}</td>
-            <td class="text-right"><strong>S/ ${subtotal.toFixed(2)}</strong></td>
-            <td>${pago}</td>
-            <td><button style="cursor:pointer;" onclick="console.log('${idPedido}')">Ver</button></td>
-          </tr>
-        `;
+          if (pago !== "-") {
+            metodosPago[pago] = (metodosPago[pago] || 0) + montoGlobal;
+          }
+
+          venta.items.forEach((item, itemIdx) => {
+            const prodNombre = item.nombre || item.producto || "Producto";
+            const variante = item.variante || item.size || "-";
+            const cant = Number(item.cantidad || item.qty || 1);
+            const pUnit = Number(item.precioUnit || item.price || 0);
+            const subtotalItem = cant * pUnit;
+
+            htmlFilas += `
+              <tr>
+                <td>${itemIdx === 0 ? fecha : ''}</td>
+                <td><strong>${itemIdx === 0 ? idPedido : ''}</strong></td>
+                <td>${itemIdx === 0 ? cliente : ''}</td>
+                <td>${prodNombre} <small style="color:#666;">(${variante})</small></td>
+                <td class="text-center">${cant}</td>
+                <td class="text-right">S/ ${pUnit.toFixed(2)}</td>
+                <td class="text-right">
+                  ${itemIdx === 0 ? `<strong>S/ ${montoGlobal.toFixed(2)}</strong>` : `S/ ${subtotalItem.toFixed(2)}`}
+                </td>
+                <td>${itemIdx === 0 ? pago : ''}</td>
+                <td class="text-center">
+                  ${itemIdx === 0 ? `<button class="btn-action" onclick="prepararTicketModal(${idx})">🎟️ Ticket</button>` : ''}
+                </td>
+              </tr>
+            `;
+          });
+        } else {
+          // Si la fila viene plana (un ítem por fila de hoja)
+          const producto = venta.producto || venta.Producto || venta.prenda || "-";
+          const cantidad = Number(venta.cantidad || venta.Cantidad || 1);
+          const pUnit = Number(venta.pUnit || venta.precio || venta["P. Unit"] || 0);
+          const subtotal = montoGlobal > 0 ? montoGlobal : (cantidad * pUnit);
+
+          totalRecaudado += subtotal;
+
+          if (pago !== "-") {
+            metodosPago[pago] = (metodosPago[pago] || 0) + subtotal;
+          }
+
+          htmlFilas += `
+            <tr>
+              <td>${fecha}</td>
+              <td><strong>${idPedido}</strong></td>
+              <td>${cliente}</td>
+              <td>${producto}</td>
+              <td class="text-center">${cantidad}</td>
+              <td class="text-right">S/ ${pUnit.toFixed(2)}</td>
+              <td class="text-right"><strong>S/ ${subtotal.toFixed(2)}</strong></td>
+              <td>${pago}</td>
+              <td class="text-center">
+                <button class="btn-action" onclick="prepararTicketModal(${idx})">🎟️ Ticket</button>
+              </td>
+            </tr>
+          `;
+        }
       });
 
-      // 5. Renderizar en el DOM
       document.getElementById("tabla-ventas-body").innerHTML = htmlFilas;
 
-      // 6. Actualizar KPIs
       const cantidadPedidos = pedidosSet.size > 0 ? pedidosSet.size : ventas.length;
       actualizarKPIs(totalRecaudado, cantidadPedidos);
       renderizarMetodosPago(metodosPago);
@@ -277,12 +485,99 @@
         return;
       }
 
-      let html = `<ul style="list-style: none; display: flex; gap: 20px; font-size: 14px;">`;
+      let html = `<ul style="list-style: none; display: flex; gap: 20px; font-size: 14px; flex-wrap: wrap;">`;
       llaves.forEach(metodo => {
         html += `<li><strong>${metodo}:</strong> S/ ${metodos[metodo].toFixed(2)}</li>`;
       });
       html += `</ul>`;
       container.innerHTML = html;
+    }
+
+    function prepararTicketModal(index) {
+      const venta = cacheVentas[index];
+      if (!venta) return;
+
+      const idPedido = venta.pedidoId || venta.idPedido || venta.ID || "PED-0000";
+      const fecha = venta.fecha || venta.Fecha || new Date().toLocaleDateString('es-PE');
+      const cliente = venta.cliente || venta.Cliente || "Cliente General";
+      const pago = venta.metodo || venta.pago || "Efectivo/Yape";
+      const totalGlobal = parseFloat(venta.monto || venta.subtotal || 0);
+
+      document.getElementById('ticket-id').innerText = "ID: " + idPedido;
+      document.getElementById('ticket-date').innerText = "Fecha: " + fecha;
+      document.getElementById('ticket-client').innerText = "Cliente: " + cliente;
+      document.getElementById('ticket-payment').innerText = "Pago: " + pago;
+
+      const tbody = document.getElementById('ticket-items-body');
+      tbody.innerHTML = '';
+
+      let previewItemsHTML = '';
+      let sumaTotal = 0;
+
+      if (Array.isArray(venta.items) && venta.items.length > 0) {
+        venta.items.forEach(item => {
+          const cant = Number(item.cantidad || 1);
+          const nom = item.nombre || "Producto";
+          const varnt = item.variante ? ` (${item.variante})` : "";
+          const pUnit = Number(item.precioUnit || 0);
+          const subt = cant * pUnit;
+          sumaTotal += subt;
+
+          // Fila para el ticket imprimible
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td style="text-align: center; vertical-align: top;">${cant}</td>
+            <td style="text-transform: uppercase;">${nom}${varnt}</td>
+            <td style="text-align: right; vertical-align: top;">S/ ${subt.toFixed(2)}</td>
+          `;
+          tbody.appendChild(row);
+
+          previewItemsHTML += `<div>${cant}x ${nom}${varnt} - S/ ${subt.toFixed(2)}</div>`;
+        });
+      } else {
+        const cant = Number(venta.cantidad || 1);
+        const nom = venta.producto || "Producto";
+        const pUnit = Number(venta.pUnit || venta.precio || 0);
+        sumaTotal = totalGlobal > 0 ? totalGlobal : (cant * pUnit);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="text-align: center; vertical-align: top;">${cant}</td>
+          <td style="text-transform: uppercase;">${nom}</td>
+          <td style="text-align: right; vertical-align: top;">S/ ${sumaTotal.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+
+        previewItemsHTML += `<div>${cant}x ${nom} - S/ ${sumaTotal.toFixed(2)}</div>`;
+      }
+
+      const finalVal = totalGlobal > 0 ? totalGlobal : sumaTotal;
+      document.getElementById('ticket-total-val').innerText = finalVal.toFixed(2);
+
+      // Renderizar vista previa dentro del Modal
+      const previewBox = document.getElementById('ticket-preview-box');
+      previewBox.innerHTML = `
+        <div style="text-align:center; font-weight:bold;">KIM'S ROPA</div>
+        <div style="text-align:center;">Ticket: ${idPedido}</div>
+        <div style="text-align:center;">Fecha: ${fecha}</div>
+        <hr style="border:none; border-top:1px dashed #000; margin:5px 0;">
+        <div><strong>Cliente:</strong> ${cliente}</div>
+        <div><strong>Método de Pago:</strong> ${pago}</div>
+        <hr style="border:none; border-top:1px dashed #000; margin:5px 0;">
+        ${previewItemsHTML}
+        <hr style="border:none; border-top:1px dashed #000; margin:5px 0;">
+        <div style="text-align:right; font-size:14px; font-weight:bold;">TOTAL: S/ ${finalVal.toFixed(2)}</div>
+      `;
+
+      document.getElementById('ticket-modal').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+      document.getElementById('ticket-modal').style.display = 'none';
+    }
+
+    function ejecutarImpresion() {
+      window.print();
     }
   </script>
 </body>
