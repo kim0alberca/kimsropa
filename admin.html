@@ -295,7 +295,7 @@
     
     <div style="font-size: 10px; line-height: 1.3;">
       <p style="margin: 1px 0; font-size: 11px; font-weight: bold; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
-      <p style="margin: 1px 0;" id="ticket-id">ID: --</p>
+      <p style="margin: 1px 0;" id="ticket-id">CÓDIGO: --</p>
       <p style="margin: 1px 0;" id="ticket-date">Fecha: --</p>
       <p style="margin: 1px 0;" id="ticket-client">Cliente: --</p>
       <p style="margin: 1px 0;" id="ticket-payment">Pago: --</p>
@@ -322,11 +322,10 @@
     
     <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
 
-    <!-- SECCIÓN DE DESCUENTO Y FIDELIZACIÓN -->
     <div style="border: 1px dashed #000; padding: 6px; text-align: center; margin: 6px 0; border-radius: 4px;">
       <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">🎁 ¡REGALO ESPECIAL!</p>
       <p style="margin: 2px 0; font-size: 10px;">Obtén <strong style="font-size: 11px;">10% OFF</strong> en tu próxima compra presentando este ticket.</p>
-      <p style="margin: 2px 0; font-size: 10px; font-weight: bold;">CÓDIGO: <span style="letter-spacing: 1px; font-size: 11px;">KIMS10</span></p>
+      <p style="margin: 2px 0; font-size: 10px; font-weight: bold;">CÓDIGO DE DESCUENTO: <span style="letter-spacing: 1px; font-size: 11px;" id="ticket-promo-code">KIMS10</span></p>
     </div>
     
     <div style="text-align: center; font-size: 9px; margin-top: 4px;">
@@ -394,9 +393,9 @@
 
       pedidosAgrupadosGlobal = {};
 
-      // AGRUPACIÓN DE FILAS POR ID PEDIDO
       filasRaw.forEach((fila, idx) => {
-        const idPedido = (fila.pedidoId || fila.idPedido || fila.ID || fila["ID Pedido"] || `IND-${idx}`).toString().trim();
+        // Garantizamos obtener el ID o Código exacto del pedido
+        const idPedido = (fila.pedidoId || fila.idPedido || fila.ID || fila["ID Pedido"] || fila.codigo || fila.Codigo || `PED-${idx}`).toString().trim();
         const fecha = formatearFecha(fila.fecha || fila.Fecha || "-");
         const cliente = fila.cliente || fila.Cliente || fila.celular || "Cliente General";
         const pago = fila.metodo || fila.pago || fila["Método de Pago"] || fila.metodoPago || "Efectivo/Yape";
@@ -412,7 +411,6 @@
           };
         }
 
-        // Si la fila trae un arreglo 'items' estructurado
         if (Array.isArray(fila.items) && fila.items.length > 0) {
           fila.items.forEach(it => {
             const cant = Number(it.cantidad || it.qty || 1);
@@ -432,7 +430,6 @@
             pedidosAgrupadosGlobal[idPedido].totalPedido += subt;
           });
         } else {
-          // Si la fila viene plana (una fila por prenda en Sheets)
           const nombre = fila.producto || fila.Producto || fila.prenda || "Prenda";
           const talla = fila.talla || fila.Talla || fila.size || "-";
           const color = fila.color || fila.Color || fila.colour || "-";
@@ -462,7 +459,6 @@
         }
       });
 
-      // CONSTRUIR TABLA Y MÉTRICAS
       let totalRecaudadoGlobal = 0;
       let metodosPagoMap = {};
       let htmlFilas = "";
@@ -477,7 +473,6 @@
           metodosPagoMap[ped.pago] = (metodosPagoMap[ped.pago] || 0) + ped.totalPedido;
         }
 
-        // Resumen de prendas para la tabla
         const resumenProductos = ped.items.map(i => {
           let det = `<strong>${i.nombre}</strong>`;
           let specs = [];
@@ -549,8 +544,8 @@
       const ped = pedidosAgrupadosGlobal[idPedido];
       if (!ped) return;
 
-      // Actualizar campos estáticos del ticket imprimible
-      document.getElementById('ticket-id').innerText = "ID: " + ped.idPedido;
+      // Actualizar campos estáticos del ticket imprimible usando el código exacto
+      document.getElementById('ticket-id').innerText = "CÓDIGO PEDIDO: " + ped.idPedido;
       document.getElementById('ticket-date').innerText = "Fecha: " + ped.fecha;
       document.getElementById('ticket-client').innerText = "Cliente: " + ped.cliente;
       document.getElementById('ticket-payment').innerText = "Pago: " + ped.pago;
@@ -562,7 +557,6 @@
       let previewItemsHTML = '';
 
       ped.items.forEach(item => {
-        // Formatear detalles de talla y color
         let detallesSpecs = [];
         if (item.talla && item.talla !== "-") detallesSpecs.push(`Talla: ${item.talla}`);
         if (item.color && item.color !== "-") detallesSpecs.push(`Color: ${item.color}`);
@@ -570,7 +564,6 @@
 
         const specsTexto = detallesSpecs.length > 0 ? `<br><small style="font-size:9px;">[${detallesSpecs.join(" | ")}]</small>` : '';
 
-        // Fila para el Ticket Imprimible
         const row = document.createElement('tr');
         row.style.borderBottom = "1px dashed #eee";
         row.innerHTML = `
@@ -582,7 +575,6 @@
         `;
         tbody.appendChild(row);
 
-        // Fila para la Vista Previa Modal
         previewItemsHTML += `
           <div style="margin-bottom: 6px; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
             <div><strong>${item.cantidad}x ${item.nombre}</strong> - S/ ${item.subtotal.toFixed(2)}</div>
@@ -591,13 +583,13 @@
         `;
       });
 
-      // Renderizar Vista Previa Modal
       const previewBox = document.getElementById('ticket-preview-box');
       previewBox.innerHTML = `
         <div style="text-align:center;">
           <img src="logo.png" alt="Logo" style="max-width: 120px; height: auto; margin-bottom: 4px;"><br>
           <strong style="font-size:14px;">KIM'S ROPA</strong><br>
-          <span style="font-size:10px;">Ticket: ${ped.idPedido} | Fecha: ${ped.fecha}</span>
+          <span style="font-size:11px; font-weight:bold;">CÓDIGO PEDIDO: ${ped.idPedido}</span><br>
+          <span style="font-size:10px;">Fecha: ${ped.fecha}</span>
         </div>
         <hr style="border:none; border-top:1px dashed #000; margin:6px 0;">
         <div style="font-size:11px;">
