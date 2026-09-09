@@ -880,6 +880,11 @@
     </div>
 
     <div class="form-group">
+      <label>DNI (8 dígitos):</label>
+      <input type="text" id="client-dni" placeholder="Número de DNI" maxlength="8">
+    </div>
+
+    <div class="form-group">
       <label>Tipo de Entrega:</label>
       <select id="client-delivery" onchange="checkDeliveryType()">
         <option value="Tienda">Tienda</option>
@@ -901,11 +906,6 @@
     <div class="form-group" id="address-group" style="display: none;">
       <label id="address-label">Referencia adicional:</label>
       <input type="text" id="client-address" placeholder="Calle, número o referencia">
-    </div>
-
-    <div class="form-group">
-      <label>DNI de quien recibe (8 dígitos):</label>
-      <input type="text" id="client-dni" placeholder="Número de DNI" maxlength="8">
     </div>
 
     <div class="form-group">
