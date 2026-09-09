@@ -888,7 +888,7 @@
       </select>
     </div>
 
-    <div class="form-group" id="address-detail-group">
+    <div class="form-group" id="address-detail-group" style="display: none;">
       <label>Dirección exacta de domicilio:</label>
       <input type="text" id="client-address-detail" placeholder="Ej. Av. Larco 123, dpto 402">
     </div>
@@ -898,7 +898,7 @@
       <input type="text" id="client-agency-detail" placeholder="Ej. Shalom Óvalo Puno, Trujillo Centro, etc.">
     </div>
 
-    <div class="form-group" id="address-group">
+    <div class="form-group" id="address-group" style="display: none;">
       <label id="address-label">Referencia adicional:</label>
       <input type="text" id="client-address" placeholder="Calle, número o referencia">
     </div>
@@ -991,6 +991,7 @@
   <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
   
   <div style="text-align: center; font-size: 12px; font-weight: bold; margin-top: 10px;">
+    <p style="margin: 3px 0;" id="ticket-promo-code">CÓDIGO PROMOCIONAL DE REGALO: --</p>
     <p style="margin: 3px 0; font-size: 13px;">¡Gracias por tu compra!</p>
     <p style="margin: 3px 0;">Visítanos de nuevo</p>
   </div>
@@ -1025,6 +1026,8 @@
   let cart = [];
   let lastOrderCart = [];
   let lastOrderDiscount = 0;
+  let lastOrderGiftCode = "";
+  let lastOrderDateStr = "";
   let listadoCuponesHoja = {}; 
 
   let currentPage = 1;
@@ -1049,13 +1052,20 @@
     const deliveryType = document.getElementById('client-delivery').value;
     const addressDetailGroup = document.getElementById('address-detail-group');
     const agencyDetailGroup = document.getElementById('agency-detail-group');
+    const addressGroup = document.getElementById('address-group');
 
-    if (deliveryType === 'A domicilio') {
+    if (deliveryType === 'Tienda') {
+      addressDetailGroup.style.display = 'none';
+      agencyDetailGroup.style.display = 'none';
+      addressGroup.style.display = 'none';
+    } else if (deliveryType === 'A domicilio') {
       addressDetailGroup.style.display = 'flex';
       agencyDetailGroup.style.display = 'none';
+      addressGroup.style.display = 'flex';
     } else if (deliveryType === 'Envío por Agencia Shalom') {
       addressDetailGroup.style.display = 'none';
       agencyDetailGroup.style.display = 'flex';
+      addressGroup.style.display = 'flex';
     }
   }
 
@@ -1689,7 +1699,6 @@
 
     let listaItems = [];
 
-    // Mapeo corregido usando las propiedades reales del carrito (.qty, .nombre, .size, .color, .price)
     const itemsOrigen = lastOrderCart.length > 0 ? lastOrderCart : cart;
     if (Array.isArray(itemsOrigen) && itemsOrigen.length > 0) {
       listaItems = itemsOrigen.map(item => {
@@ -1801,11 +1810,11 @@
     
     if (delivery === 'A domicilio') {
       text += "DIRECCIÓN EXACTA DE DOMICILIO: " + locationDetail + "\n";
-    } else {
+    } else if (delivery === 'Envío por Agencia Shalom') {
       text += "AGENCIA EXACTA Y CIUDAD (SHALOM): " + locationDetail + "\n";
     }
 
-    if (address) {
+    if (address && delivery !== 'Tienda') {
       text += "REFERENCIA ADICIONAL: " + address + "\n";
     }
 
@@ -1855,6 +1864,16 @@
     const promoCodeBox = document.getElementById('assigned-promo-code');
     if (promoCodeBox) promoCodeBox.innerText = codigoRegalo;
 
+    // FECHA EXACTA Y CAPTURA DE DATOS DEL PEDIDO
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    lastOrderDateStr = `${day}/${month}/${year} ${hours}:${minutes}`;
+    lastOrderGiftCode = codigoRegalo;
     lastOrderCart = JSON.parse(JSON.stringify(cart));
     lastOrderDiscount = couponDiscount;
 
@@ -1895,7 +1914,6 @@
     const phone = document.getElementById('client-phone').value.trim() || "-";
     const delivery = document.getElementById('client-delivery').value;
     
-    // Captura de datos detallados para el ticket
     let locationDetail = "";
     if (delivery === 'A domicilio') {
       locationDetail = document.getElementById('client-address-detail').value.trim();
@@ -1906,13 +1924,14 @@
     const dni = document.getElementById('client-dni').value.trim() || "-";
     const payment = document.getElementById('client-payment').value || "-";
 
-    const now = new Date();
-    const dateStr = now.toLocaleDateString() + " " + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = lastOrderDateStr || new Date().toLocaleString('es-PE');
+    const promoCodeToPrint = lastOrderGiftCode || "XPONLg";
 
     document.getElementById('ticket-date').innerText = "Fecha: " + dateStr;
     document.getElementById('ticket-client').innerText = "Cliente: " + name;
     document.getElementById('ticket-phone').innerText = "Tel: " + phone;
     document.getElementById('ticket-delivery').innerText = "Entrega: " + delivery;
+    document.getElementById('ticket-promo-code').innerText = "CÓDIGO PROMOCIONAL DE REGALO: " + promoCodeToPrint;
 
     const tbody = document.getElementById('ticket-items');
     tbody.innerHTML = '';
@@ -1948,7 +1967,7 @@
 
     document.getElementById('ticket-total').innerText = finalTotal.toFixed(2);
 
-    // Intentar impresión directa con Web Bluetooth API ESC/POS (58mm)
+    // Impresión con Web Bluetooth API ESC/POS (58mm)
     if ('bluetooth' in navigator) {
       try {
         showToast("🔍 Buscando impresora Bluetooth...");
@@ -1999,7 +2018,7 @@
           data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
           data += "--------------------------------\n";
           
-          // Datos del Ticket (INCLUYE DIRECCIÓN/AGENCIA, REFERENCIA, DNI Y PAGO)
+          // Datos del Ticket
           data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
           data += left;
           data += "Fecha: " + dateStr + "\n";
@@ -2007,10 +2026,10 @@
           data += "Telefono: " + phone + "\n";
           data += "DNI Recibe: " + dni + "\n";
           data += "Tipo Entrega: " + delivery + "\n";
-          if (locationDetail) {
+          if (locationDetail && delivery !== 'Tienda') {
             data += (delivery === 'A domicilio' ? "Direccion: " : "Agencia: ") + locationDetail + "\n";
           }
-          if (address) {
+          if (address && delivery !== 'Tienda') {
             data += "Ref: " + address + "\n";
           }
           data += "Pago: " + payment + "\n";
@@ -2043,13 +2062,13 @@
           
           // Pie de Página
           data += center;
+          data += boldOn + "CODIGO PROMO DE REGALO:\n" + promoCodeToPrint + "\n\n" + boldOff;
           data += boldOn + "¡Gracias por tu compra!\n" + boldOff;
           data += "Visitanos de nuevo\n\n\n\n";
 
           let encoder = new TextEncoder();
           let bytes = encoder.encode(data);
           
-          // Enviar en paquetes pequeños
           let chunkSize = 512;
           for (let i = 0; i < bytes.length; i += chunkSize) {
             let chunk = bytes.slice(i, i + chunkSize);
@@ -2068,7 +2087,6 @@
       }
     }
 
-    // Si no cuenta con Bluetooth o falla, usa el cuadro nativo del sistema
     window.print();
   }
 </script>
