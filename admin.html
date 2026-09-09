@@ -129,8 +129,16 @@
     .btn-action:hover {
       background: #2d8e47;
     }
+    .badge-qty {
+      background: #e8f0fe;
+      color: #1a73e8;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 11px;
+    }
 
-    /* MODAL DE VISTA PREVIA DEL TICKET */
+    /* MODAL VISTA PREVIA */
     .modal {
       display: none;
       position: fixed;
@@ -145,7 +153,7 @@
       background: #fff;
       padding: 20px;
       border-radius: 8px;
-      max-width: 400px;
+      max-width: 420px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -169,7 +177,7 @@
     .btn-modal-close { background: #666; color: #fff; }
     .btn-modal-print { background: #1a73e8; color: #fff; }
 
-    /* ESTILOS DE IMPRESIÓN TÉRMICA (58mm) */
+    /* FORMATO IMPRESIÓN TÉRMICA */
     @media print {
       @page {
         margin: 0;
@@ -187,8 +195,7 @@
         top: 0;
         width: 58mm;
         font-family: 'Courier New', monospace, sans-serif;
-        font-size: 12px;
-        font-weight: bold;
+        font-size: 11px;
         color: #000;
         background: #fff;
         padding: 2mm 1mm;
@@ -235,38 +242,37 @@
     </div>
   </div>
 
-  <!-- Tabla de Ventas -->
+  <!-- Tabla de Ventas Agrupadas -->
   <div class="panel">
-    <div class="panel-title">Detalle de Todas las Ventas y Productos</div>
+    <div class="panel-title">Detalle de Pedidos Agrupados</div>
     <div style="overflow-x: auto;">
       <table>
         <thead>
           <tr>
             <th>Fecha</th>
             <th>ID Pedido</th>
-            <th>Cliente / Datos</th>
-            <th>Producto / Variante</th>
-            <th class="text-center">Cant</th>
-            <th class="text-right">P. Unit</th>
-            <th class="text-right">Subtotal / Total</th>
-            <th>Pago</th>
+            <th>Cliente / Teléfono</th>
+            <th>Productos Incluidos</th>
+            <th class="text-center">Cant. Ítems</th>
+            <th class="text-right">Total Pedido</th>
+            <th>Método Pago</th>
             <th class="text-center">Acción</th>
           </tr>
         </thead>
         <tbody id="tabla-ventas-body">
           <tr>
-            <td colspan="9" class="status-msg">Cargando datos desde Google Sheets...</td>
+            <td colspan="8" class="status-msg">Cargando datos desde Google Sheets...</td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- MODAL VISTA PREVIA TICKET -->
+  <!-- MODAL DE VISTA PREVIA TICKET -->
   <div id="ticket-modal" class="modal">
     <div class="modal-content">
-      <div id="ticket-preview-box" style="border: 1px dashed #ccc; padding: 10px; background: #fff; color: #000; font-family: monospace; font-size: 12px;">
-        <!-- Se genera dinámicamente -->
+      <div id="ticket-preview-box" style="border: 1px dashed #bbb; padding: 12px; background: #fff; color: #000; font-family: 'Courier New', monospace; font-size: 12px;">
+        <!-- Vista previa dinámica -->
       </div>
       <div class="modal-actions">
         <button class="btn-modal btn-modal-close" onclick="cerrarModal()">Cerrar</button>
@@ -275,56 +281,64 @@
     </div>
   </div>
 
-  <!-- PLANTILLA DEL TICKET PARA IMPRESIÓN (58mm) -->
+  <!-- PLANTILLA DE IMPRESIÓN TÉRMICA (58mm) -->
   <div id="printable-ticket">
     <div style="text-align: center;">
-      <h2 style="margin: 0; font-size: 18px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
-      <p style="margin: 2px 0; font-size: 11px;">Tienda Virtual en Línea - Piura</p>
-      <p style="margin: 2px 0; font-size: 10px;">https://kim0alberca.github.io/kimsropa/</p>
-      <p style="margin: 2px 0; font-size: 11px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
+      <img src="logo.png" alt="Logo Kim's Ropa" style="max-width: 42mm; height: auto; margin-bottom: 4px;">
+      <h2 style="margin: 0; font-size: 15px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
+      <p style="margin: 1px 0; font-size: 10px;">Tienda Virtual de Moda - Piura</p>
+      <p style="margin: 1px 0; font-size: 9px;">kim0alberca.github.io/kimsropa/</p>
+      <p style="margin: 1px 0; font-size: 10px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
     </div>
     
-    <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+    <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
     
-    <div style="font-size: 11px; font-weight: bold; line-height: 1.2;">
-      <p style="margin: 2px 0; font-size: 12px; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
-      <p style="margin: 2px 0;" id="ticket-id">ID: --</p>
-      <p style="margin: 2px 0;" id="ticket-date">Fecha: --/--/----</p>
-      <p style="margin: 2px 0;" id="ticket-client">Cliente: --</p>
-      <p style="margin: 2px 0;" id="ticket-payment">Pago: --</p>
+    <div style="font-size: 10px; line-height: 1.3;">
+      <p style="margin: 1px 0; font-size: 11px; font-weight: bold; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
+      <p style="margin: 1px 0;" id="ticket-id">ID: --</p>
+      <p style="margin: 1px 0;" id="ticket-date">Fecha: --</p>
+      <p style="margin: 1px 0;" id="ticket-client">Cliente: --</p>
+      <p style="margin: 1px 0;" id="ticket-payment">Pago: --</p>
     </div>
     
-    <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+    <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
     
-    <table style="width: 100%; text-align: left; font-size: 11px; font-weight: bold; border-collapse: collapse;">
+    <table style="width: 100%; text-align: left; font-size: 10px; border-collapse: collapse;">
       <thead>
         <tr style="border-bottom: 1px solid #000;">
-          <th style="width: 15%; text-align: center;">CANT</th>
-          <th style="width: 55%;">DESCRIPCIÓN</th>
+          <th style="width: 12%; text-align: center;">CANT</th>
+          <th style="width: 58%;">PRENDA / TALLA / COLOR</th>
           <th style="width: 30%; text-align: right;">TOTAL</th>
         </tr>
       </thead>
       <tbody id="ticket-items-body"></tbody>
     </table>
     
-    <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+    <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
     
-    <div style="text-align: right; font-size: 14px; font-weight: bold;">
-      <p style="margin: 2px 0;">TOTAL: S/ <span id="ticket-total-val">0.00</span></p>
+    <div style="text-align: right; font-size: 13px; font-weight: bold;">
+      <p style="margin: 2px 0;">TOTAL COMPRA: S/ <span id="ticket-total-val">0.00</span></p>
     </div>
     
-    <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+    <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
+
+    <!-- SECCIÓN DE DESCUENTO Y FIDELIZACIÓN -->
+    <div style="border: 1px dashed #000; padding: 6px; text-align: center; margin: 6px 0; border-radius: 4px;">
+      <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">🎁 ¡REGALO ESPECIAL!</p>
+      <p style="margin: 2px 0; font-size: 10px;">Obtén <strong style="font-size: 11px;">10% OFF</strong> en tu próxima compra presentando este ticket.</p>
+      <p style="margin: 2px 0; font-size: 10px; font-weight: bold;">CÓDIGO: <span style="letter-spacing: 1px; font-size: 11px;">KIMS10</span></p>
+    </div>
     
-    <div style="text-align: center; font-size: 10px; font-weight: bold; margin-top: 6px;">
-      <p style="margin: 2px 0;">¡Gracias por tu preferencia!</p>
-      <p style="margin: 2px 0;">Visítanos de nuevo</p>
+    <div style="text-align: center; font-size: 9px; margin-top: 4px;">
+      <p style="margin: 1px 0;">¡Gracias por tu preferencia!</p>
+      <p style="margin: 1px 0;">Vuelve pronto ✨</p>
     </div>
   </div>
 
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
     
-    let cacheVentas = [];
+    let pedidosAgrupadosGlobal = {};
 
     document.addEventListener("DOMContentLoaded", () => {
       cargarDatosVentas();
@@ -333,15 +347,13 @@
     function cargarDatosVentas() {
       document.getElementById("tabla-ventas-body").innerHTML = `
         <tr>
-          <td colspan="9" class="status-msg">Cargando datos desde Google Sheets...</td>
+          <td colspan="8" class="status-msg">Cargando y agrupando ventas desde Google Sheets...</td>
         </tr>
       `;
 
       fetch(WEB_APP_URL)
         .then(response => {
-          if (!response.ok) {
-            throw new Error(`Error de red: ${response.status}`);
-          }
+          if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
           return response.json();
         })
         .then(datos => {
@@ -351,8 +363,8 @@
           console.error("Error al obtener datos:", error);
           document.getElementById("tabla-ventas-body").innerHTML = `
             <tr>
-              <td colspan="9" class="status-msg" style="color: #d93025;">
-                Error al cargar datos desde Google Sheets. Verifique la conexión o la configuración del Web App.
+              <td colspan="8" class="status-msg" style="color: #d93025;">
+                Error al cargar datos. Verifique la conexión con Google Sheets.
               </td>
             </tr>
           `;
@@ -360,21 +372,19 @@
     }
 
     function procesarYRenderizar(datos) {
-      let ventas = [];
+      let filasRaw = [];
       if (Array.isArray(datos)) {
-        ventas = datos;
+        filasRaw = datos;
       } else if (datos && Array.isArray(datos.data)) {
-        ventas = datos.data;
+        filasRaw = datos.data;
       } else if (datos && Array.isArray(datos.ventas)) {
-        ventas = datos.ventas;
+        filasRaw = datos.ventas;
       }
 
-      cacheVentas = ventas;
-
-      if (!Array.isArray(ventas) || ventas.length === 0) {
+      if (!Array.isArray(filasRaw) || filasRaw.length === 0) {
         document.getElementById("tabla-ventas-body").innerHTML = `
           <tr>
-            <td colspan="9" class="status-msg">No se encontraron registros de ventas.</td>
+            <td colspan="8" class="status-msg">No se encontraron ventas registradas.</td>
           </tr>
         `;
         actualizarKPIs(0, 0);
@@ -382,97 +392,139 @@
         return;
       }
 
-      let totalRecaudado = 0;
-      let pedidosSet = new Set();
-      let metodosPago = {};
-      let htmlFilas = "";
+      pedidosAgrupadosGlobal = {};
 
-      ventas.forEach((venta, idx) => {
-        const fecha = venta.fecha || venta.Fecha || "-";
-        const idPedido = venta.pedidoId || venta.idPedido || venta.ID || venta["ID Pedido"] || `-`;
-        const cliente = venta.cliente || venta.Cliente || venta.celular || "-";
-        const pago = venta.metodo || venta.pago || venta["Método de Pago"] || venta.metodoPago || "-";
-        
-        // Manejo flexible si la fila viene con monto directo o con desglose de items
-        const montoGlobal = parseFloat(venta.monto || venta.subtotal || venta.Subtotal || 0);
+      // AGRUPACIÓN DE FILAS POR ID PEDIDO
+      filasRaw.forEach((fila, idx) => {
+        const idPedido = (fila.pedidoId || fila.idPedido || fila.ID || fila["ID Pedido"] || `IND-${idx}`).toString().trim();
+        const fecha = formatearFecha(fila.fecha || fila.Fecha || "-");
+        const cliente = fila.cliente || fila.Cliente || fila.celular || "Cliente General";
+        const pago = fila.metodo || fila.pago || fila["Método de Pago"] || fila.metodoPago || "Efectivo/Yape";
 
-        if (idPedido !== "-") pedidosSet.add(idPedido);
+        if (!pedidosAgrupadosGlobal[idPedido]) {
+          pedidosAgrupadosGlobal[idPedido] = {
+            idPedido: idPedido,
+            fecha: fecha,
+            cliente: cliente,
+            pago: pago,
+            totalPedido: 0,
+            items: []
+          };
+        }
 
-        // Si la venta trae una lista de ítems estructurada
-        if (Array.isArray(venta.items) && venta.items.length > 0) {
-          totalRecaudado += montoGlobal;
+        // Si la fila trae un arreglo 'items' estructurado
+        if (Array.isArray(fila.items) && fila.items.length > 0) {
+          fila.items.forEach(it => {
+            const cant = Number(it.cantidad || it.qty || 1);
+            const precio = Number(it.precioUnit || it.price || 0);
+            const subt = cant * precio;
 
-          if (pago !== "-") {
-            metodosPago[pago] = (metodosPago[pago] || 0) + montoGlobal;
-          }
+            pedidosAgrupadosGlobal[idPedido].items.push({
+              nombre: it.nombre || it.producto || "Prenda",
+              talla: it.talla || it.size || "-",
+              color: it.color || it.colour || "-",
+              variante: it.variante || "",
+              cantidad: cant,
+              precioUnit: precio,
+              subtotal: subt
+            });
 
-          venta.items.forEach((item, itemIdx) => {
-            const prodNombre = item.nombre || item.producto || "Producto";
-            const variante = item.variante || item.size || "-";
-            const cant = Number(item.cantidad || item.qty || 1);
-            const pUnit = Number(item.precioUnit || item.price || 0);
-            const subtotalItem = cant * pUnit;
-
-            htmlFilas += `
-              <tr>
-                <td>${itemIdx === 0 ? fecha : ''}</td>
-                <td><strong>${itemIdx === 0 ? idPedido : ''}</strong></td>
-                <td>${itemIdx === 0 ? cliente : ''}</td>
-                <td>${prodNombre} <small style="color:#666;">(${variante})</small></td>
-                <td class="text-center">${cant}</td>
-                <td class="text-right">S/ ${pUnit.toFixed(2)}</td>
-                <td class="text-right">
-                  ${itemIdx === 0 ? `<strong>S/ ${montoGlobal.toFixed(2)}</strong>` : `S/ ${subtotalItem.toFixed(2)}`}
-                </td>
-                <td>${itemIdx === 0 ? pago : ''}</td>
-                <td class="text-center">
-                  ${itemIdx === 0 ? `<button class="btn-action" onclick="prepararTicketModal(${idx})">🎟️ Ticket</button>` : ''}
-                </td>
-              </tr>
-            `;
+            pedidosAgrupadosGlobal[idPedido].totalPedido += subt;
           });
         } else {
-          // Si la fila viene plana (un ítem por fila de hoja)
-          const producto = venta.producto || venta.Producto || venta.prenda || "-";
-          const cantidad = Number(venta.cantidad || venta.Cantidad || 1);
-          const pUnit = Number(venta.pUnit || venta.precio || venta["P. Unit"] || 0);
-          const subtotal = montoGlobal > 0 ? montoGlobal : (cantidad * pUnit);
+          // Si la fila viene plana (una fila por prenda en Sheets)
+          const nombre = fila.producto || fila.Producto || fila.prenda || "Prenda";
+          const talla = fila.talla || fila.Talla || fila.size || "-";
+          const color = fila.color || fila.Color || fila.colour || "-";
+          const variante = fila.variante || fila.Variante || "";
+          const cantidad = Number(fila.cantidad || fila.Cantidad || 1);
+          
+          let subtotalItem = parseFloat(fila.subtotal || fila.Subtotal || fila.monto || fila.Monto || 0);
+          let pUnit = Number(fila.pUnit || fila.precio || fila["P. Unit"] || 0);
 
-          totalRecaudado += subtotal;
-
-          if (pago !== "-") {
-            metodosPago[pago] = (metodosPago[pago] || 0) + subtotal;
+          if (subtotalItem === 0 && pUnit > 0) {
+            subtotalItem = cantidad * pUnit;
+          } else if (subtotalItem > 0 && pUnit === 0) {
+            pUnit = subtotalItem / cantidad;
           }
 
-          htmlFilas += `
-            <tr>
-              <td>${fecha}</td>
-              <td><strong>${idPedido}</strong></td>
-              <td>${cliente}</td>
-              <td>${producto}</td>
-              <td class="text-center">${cantidad}</td>
-              <td class="text-right">S/ ${pUnit.toFixed(2)}</td>
-              <td class="text-right"><strong>S/ ${subtotal.toFixed(2)}</strong></td>
-              <td>${pago}</td>
-              <td class="text-center">
-                <button class="btn-action" onclick="prepararTicketModal(${idx})">🎟️ Ticket</button>
-              </td>
-            </tr>
-          `;
+          pedidosAgrupadosGlobal[idPedido].items.push({
+            nombre: nombre,
+            talla: talla,
+            color: color,
+            variante: variante,
+            cantidad: cantidad,
+            precioUnit: pUnit,
+            subtotal: subtotalItem
+          });
+
+          pedidosAgrupadosGlobal[idPedido].totalPedido += subtotalItem;
         }
       });
 
-      document.getElementById("tabla-ventas-body").innerHTML = htmlFilas;
+      // CONSTRUIR TABLA Y MÉTRICAS
+      let totalRecaudadoGlobal = 0;
+      let metodosPagoMap = {};
+      let htmlFilas = "";
 
-      const cantidadPedidos = pedidosSet.size > 0 ? pedidosSet.size : ventas.length;
-      actualizarKPIs(totalRecaudado, cantidadPedidos);
-      renderizarMetodosPago(metodosPago);
+      const keysPedidos = Object.keys(pedidosAgrupadosGlobal);
+
+      keysPedidos.forEach(idKey => {
+        const ped = pedidosAgrupadosGlobal[idKey];
+        totalRecaudadoGlobal += ped.totalPedido;
+
+        if (ped.pago !== "-") {
+          metodosPagoMap[ped.pago] = (metodosPagoMap[ped.pago] || 0) + ped.totalPedido;
+        }
+
+        // Resumen de prendas para la tabla
+        const resumenProductos = ped.items.map(i => {
+          let det = `<strong>${i.nombre}</strong>`;
+          let specs = [];
+          if (i.talla !== "-") specs.push(`Talla: ${i.talla}`);
+          if (i.color !== "-") specs.push(`Color: ${i.color}`);
+          if (specs.length > 0) det += ` <small style="color:#666;">(${specs.join(', ')})</small>`;
+          return det;
+        }).join("<br>");
+
+        const totalItemsCount = ped.items.reduce((acc, i) => acc + i.cantidad, 0);
+
+        htmlFilas += `
+          <tr>
+            <td>${ped.fecha}</td>
+            <td><strong>${ped.idPedido}</strong></td>
+            <td>${ped.cliente}</td>
+            <td>${resumenProductos}</td>
+            <td class="text-center"><span class="badge-qty">${totalItemsCount}</span></td>
+            <td class="text-right"><strong>S/ ${ped.totalPedido.toFixed(2)}</strong></td>
+            <td>${ped.pago}</td>
+            <td class="text-center">
+              <button class="btn-action" onclick="prepararTicketModal('${ped.idPedido}')">🎟️ Ticket</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      document.getElementById("tabla-ventas-body").innerHTML = htmlFilas;
+      actualizarKPIs(totalRecaudadoGlobal, keysPedidos.length);
+      renderizarMetodosPago(metodosPagoMap);
     }
 
-    function actualizarKPIs(total, pedidos) {
-      const promedio = pedidos > 0 ? total / pedidos : 0;
+    function formatearFecha(cadenaFecha) {
+      if (!cadenaFecha || cadenaFecha === "-") return "-";
+      try {
+        const d = new Date(cadenaFecha);
+        if (isNaN(d.getTime())) return cadenaFecha;
+        return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) {
+        return cadenaFecha;
+      }
+    }
+
+    function actualizarKPIs(total, cantidadPedidos) {
+      const promedio = cantidadPedidos > 0 ? total / cantidadPedidos : 0;
       document.getElementById("kpi-recaudado").innerText = `S/ ${total.toFixed(2)}`;
-      document.getElementById("kpi-pedidos").innerText = pedidos;
+      document.getElementById("kpi-pedidos").innerText = cantidadPedidos;
       document.getElementById("kpi-promedio").innerText = `S/ ${promedio.toFixed(2)}`;
     }
 
@@ -481,7 +533,7 @@
       const llaves = Object.keys(metodos);
       
       if (llaves.length === 0) {
-        container.innerHTML = `<p style="color: #888; font-size: 13px;">No hay información de métodos de pago.</p>`;
+        container.innerHTML = `<p style="color: #888; font-size: 13px;">No hay datos de pago.</p>`;
         return;
       }
 
@@ -493,80 +545,77 @@
       container.innerHTML = html;
     }
 
-    function prepararTicketModal(index) {
-      const venta = cacheVentas[index];
-      if (!venta) return;
+    function prepararTicketModal(idPedido) {
+      const ped = pedidosAgrupadosGlobal[idPedido];
+      if (!ped) return;
 
-      const idPedido = venta.pedidoId || venta.idPedido || venta.ID || "PED-0000";
-      const fecha = venta.fecha || venta.Fecha || new Date().toLocaleDateString('es-PE');
-      const cliente = venta.cliente || venta.Cliente || "Cliente General";
-      const pago = venta.metodo || venta.pago || "Efectivo/Yape";
-      const totalGlobal = parseFloat(venta.monto || venta.subtotal || 0);
-
-      document.getElementById('ticket-id').innerText = "ID: " + idPedido;
-      document.getElementById('ticket-date').innerText = "Fecha: " + fecha;
-      document.getElementById('ticket-client').innerText = "Cliente: " + cliente;
-      document.getElementById('ticket-payment').innerText = "Pago: " + pago;
+      // Actualizar campos estáticos del ticket imprimible
+      document.getElementById('ticket-id').innerText = "ID: " + ped.idPedido;
+      document.getElementById('ticket-date').innerText = "Fecha: " + ped.fecha;
+      document.getElementById('ticket-client').innerText = "Cliente: " + ped.cliente;
+      document.getElementById('ticket-payment').innerText = "Pago: " + ped.pago;
+      document.getElementById('ticket-total-val').innerText = ped.totalPedido.toFixed(2);
 
       const tbody = document.getElementById('ticket-items-body');
       tbody.innerHTML = '';
 
       let previewItemsHTML = '';
-      let sumaTotal = 0;
 
-      if (Array.isArray(venta.items) && venta.items.length > 0) {
-        venta.items.forEach(item => {
-          const cant = Number(item.cantidad || 1);
-          const nom = item.nombre || "Producto";
-          const varnt = item.variante ? ` (${item.variante})` : "";
-          const pUnit = Number(item.precioUnit || 0);
-          const subt = cant * pUnit;
-          sumaTotal += subt;
+      ped.items.forEach(item => {
+        // Formatear detalles de talla y color
+        let detallesSpecs = [];
+        if (item.talla && item.talla !== "-") detallesSpecs.push(`Talla: ${item.talla}`);
+        if (item.color && item.color !== "-") detallesSpecs.push(`Color: ${item.color}`);
+        if (item.variante && item.variante !== "-") detallesSpecs.push(item.variante);
 
-          // Fila para el ticket imprimible
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td style="text-align: center; vertical-align: top;">${cant}</td>
-            <td style="text-transform: uppercase;">${nom}${varnt}</td>
-            <td style="text-align: right; vertical-align: top;">S/ ${subt.toFixed(2)}</td>
-          `;
-          tbody.appendChild(row);
+        const specsTexto = detallesSpecs.length > 0 ? `<br><small style="font-size:9px;">[${detallesSpecs.join(" | ")}]</small>` : '';
 
-          previewItemsHTML += `<div>${cant}x ${nom}${varnt} - S/ ${subt.toFixed(2)}</div>`;
-        });
-      } else {
-        const cant = Number(venta.cantidad || 1);
-        const nom = venta.producto || "Producto";
-        const pUnit = Number(venta.pUnit || venta.precio || 0);
-        sumaTotal = totalGlobal > 0 ? totalGlobal : (cant * pUnit);
-
+        // Fila para el Ticket Imprimible
         const row = document.createElement('tr');
+        row.style.borderBottom = "1px dashed #eee";
         row.innerHTML = `
-          <td style="text-align: center; vertical-align: top;">${cant}</td>
-          <td style="text-transform: uppercase;">${nom}</td>
-          <td style="text-align: right; vertical-align: top;">S/ ${sumaTotal.toFixed(2)}</td>
+          <td style="text-align: center; vertical-align: top; padding: 3px 0;">${item.cantidad}</td>
+          <td style="text-transform: uppercase; padding: 3px 0;">
+            <strong>${item.nombre}</strong>${specsTexto}
+          </td>
+          <td style="text-align: right; vertical-align: top; padding: 3px 0;">S/ ${item.subtotal.toFixed(2)}</td>
         `;
         tbody.appendChild(row);
 
-        previewItemsHTML += `<div>${cant}x ${nom} - S/ ${sumaTotal.toFixed(2)}</div>`;
-      }
+        // Fila para la Vista Previa Modal
+        previewItemsHTML += `
+          <div style="margin-bottom: 6px; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
+            <div><strong>${item.cantidad}x ${item.nombre}</strong> - S/ ${item.subtotal.toFixed(2)}</div>
+            ${detallesSpecs.length > 0 ? `<div style="font-size:10px; color:#555; margin-left: 10px;">• ${detallesSpecs.join(" | ")}</div>` : ''}
+          </div>
+        `;
+      });
 
-      const finalVal = totalGlobal > 0 ? totalGlobal : sumaTotal;
-      document.getElementById('ticket-total-val').innerText = finalVal.toFixed(2);
-
-      // Renderizar vista previa dentro del Modal
+      // Renderizar Vista Previa Modal
       const previewBox = document.getElementById('ticket-preview-box');
       previewBox.innerHTML = `
-        <div style="text-align:center; font-weight:bold;">KIM'S ROPA</div>
-        <div style="text-align:center;">Ticket: ${idPedido}</div>
-        <div style="text-align:center;">Fecha: ${fecha}</div>
-        <hr style="border:none; border-top:1px dashed #000; margin:5px 0;">
-        <div><strong>Cliente:</strong> ${cliente}</div>
-        <div><strong>Método de Pago:</strong> ${pago}</div>
-        <hr style="border:none; border-top:1px dashed #000; margin:5px 0;">
-        ${previewItemsHTML}
-        <hr style="border:none; border-top:1px dashed #000; margin:5px 0;">
-        <div style="text-align:right; font-size:14px; font-weight:bold;">TOTAL: S/ ${finalVal.toFixed(2)}</div>
+        <div style="text-align:center;">
+          <img src="logo.png" alt="Logo" style="max-width: 120px; height: auto; margin-bottom: 4px;"><br>
+          <strong style="font-size:14px;">KIM'S ROPA</strong><br>
+          <span style="font-size:10px;">Ticket: ${ped.idPedido} | Fecha: ${ped.fecha}</span>
+        </div>
+        <hr style="border:none; border-top:1px dashed #000; margin:6px 0;">
+        <div style="font-size:11px;">
+          <div><strong>Cliente:</strong> ${ped.cliente}</div>
+          <div><strong>Método de Pago:</strong> ${ped.pago}</div>
+        </div>
+        <hr style="border:none; border-top:1px dashed #000; margin:6px 0;">
+        <div style="font-size:11px;">
+          ${previewItemsHTML}
+        </div>
+        <hr style="border:none; border-top:1px dashed #000; margin:6px 0;">
+        <div style="text-align:right; font-size:13px; font-weight:bold;">TOTAL COMPRA: S/ ${ped.totalPedido.toFixed(2)}</div>
+        
+        <div style="border:1px dashed #000; padding:6px; text-align:center; margin-top:8px; border-radius:4px; font-size:10px;">
+          <strong>🎁 ¡REGALO ESPECIAL!</strong><br>
+          10% OFF en tu próxima compra.<br>
+          Código: <strong>KIMS10</strong>
+        </div>
       `;
 
       document.getElementById('ticket-modal').style.display = 'flex';
