@@ -1893,6 +1893,18 @@
     const name = document.getElementById('client-name').value.trim() || "Cliente General";
     const phone = document.getElementById('client-phone').value.trim() || "-";
     const delivery = document.getElementById('client-delivery').value;
+    
+    // Captura de datos detallados para el ticket
+    let locationDetail = "";
+    if (delivery === 'A domicilio') {
+      locationDetail = document.getElementById('client-address-detail').value.trim();
+    } else if (delivery === 'Envío por Agencia Shalom') {
+      locationDetail = document.getElementById('client-agency-detail').value.trim();
+    }
+    const address = document.getElementById('client-address').value.trim();
+    const dni = document.getElementById('client-dni').value.trim() || "-";
+    const payment = document.getElementById('client-payment').value || "-";
+
     const now = new Date();
     const dateStr = now.toLocaleDateString() + " " + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -1986,13 +1998,21 @@
           data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
           data += "--------------------------------\n";
           
-          // Datos del Ticket
+          // Datos del Ticket (INCLUYE DIRECCIÓN/AGENCIA, REFERENCIA, DNI Y PAGO)
           data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
           data += left;
           data += "Fecha: " + dateStr + "\n";
           data += "Cliente: " + name + "\n";
           data += "Telefono: " + phone + "\n";
-          data += "Entrega: " + delivery + "\n";
+          data += "DNI Recibe: " + dni + "\n";
+          data += "Tipo Entrega: " + delivery + "\n";
+          if (locationDetail) {
+            data += (delivery === 'A domicilio' ? "Direccion: " : "Agencia: ") + locationDetail + "\n";
+          }
+          if (address) {
+            data += "Ref: " + address + "\n";
+          }
+          data += "Pago: " + payment + "\n";
           data += "--------------------------------\n";
           
           // Encabezados de Tabla
