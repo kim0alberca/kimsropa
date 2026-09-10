@@ -138,6 +138,38 @@
       font-size: 11px;
     }
 
+    /* ESTILOS PARA EL ÚLTIMO PEDIDO RESALTADO */
+    .row-latest-order {
+      background-color: #f0fdf4 !important;
+      border-left: 4px solid #16a34a !important;
+    }
+    .badge-latest {
+      background-color: #16a34a;
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 4px;
+      box-shadow: 0 0 6px rgba(22, 163, 74, 0.4);
+      animation: pulse-latest 2s infinite;
+    }
+    .btn-action-latest {
+      background: #1a73e8 !important;
+      font-size: 12px !important;
+      padding: 7px 14px !important;
+      box-shadow: 0 2px 5px rgba(26, 115, 232, 0.3);
+    }
+    .btn-action-latest:hover {
+      background: #1557b0 !important;
+    }
+    @keyframes pulse-latest {
+      0% { opacity: 1; }
+      50% { opacity: 0.75; }
+      100% { opacity: 1; }
+    }
+
     /* MODAL VISTA PREVIA */
     .modal {
       display: none;
@@ -464,9 +496,10 @@
       let metodosPagoMap = {};
       let htmlFilas = "";
 
-      const keysPedidos = Object.keys(pedidosAgrupadosGlobal);
+      // Invertimos las claves para mostrar la última venta al inicio (arriba)
+      const keysPedidos = Object.keys(pedidosAgrupadosGlobal).reverse();
 
-      keysPedidos.forEach(idKey => {
+      keysPedidos.forEach((idKey, index) => {
         const ped = pedidosAgrupadosGlobal[idKey];
         totalRecaudadoGlobal += ped.totalPedido;
 
@@ -485,17 +518,24 @@
 
         const totalItemsCount = ped.items.reduce((acc, i) => acc + i.cantidad, 0);
 
+        // Identificar si es la última venta realizada (primer elemento de la lista invertida)
+        const esUltimoPedido = index === 0;
+        const claseFila = esUltimoPedido ? 'row-latest-order' : '';
+        const badgeUltimo = esUltimoPedido ? '<span class="badge-latest">🔥 ÚLTIMO PEDIDO</span><br>' : '';
+        const claseBoton = esUltimoPedido ? 'btn-action btn-action-latest' : 'btn-action';
+        const textoBoton = esUltimoPedido ? '🎟️ Imprimir Último Ticket' : '🎟️ Ticket';
+
         htmlFilas += `
-          <tr>
+          <tr class="${claseFila}">
             <td>${ped.fecha}</td>
-            <td><strong>${ped.idPedido}</strong></td>
+            <td>${badgeUltimo}<strong>${ped.idPedido}</strong></td>
             <td>${ped.cliente}</td>
             <td>${resumenProductos}</td>
             <td class="text-center"><span class="badge-qty">${totalItemsCount}</span></td>
             <td class="text-right"><strong>S/ ${ped.totalPedido.toFixed(2)}</strong></td>
             <td>${ped.pago}</td>
             <td class="text-center">
-              <button class="btn-action" onclick="prepararTicketModal('${ped.idPedido}')">🎟️ Ticket</button>
+              <button class="${claseBoton}" onclick="prepararTicketModal('${ped.idPedido}')">${textoBoton}</button>
             </td>
           </tr>
         `;
