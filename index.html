@@ -1681,7 +1681,7 @@
     }
   }
 
-  function registrarVentaEnSheets(pedidoId, montoTotal, metodoPago, detallePedido) {
+  function registrarVentaEnSheets(pedidoId, montoTotal, metodoPago, detallePedido, codigoRegalo) {
     const inputNombre = document.getElementById('client-name');
     const inputCelular = document.getElementById('client-phone');
     
@@ -1723,8 +1723,8 @@
       monto: montoTotal,
       metodo: metodoPago,
       cliente: textoCliente,
-      cupon: appliedCoupon || "-", // 👈 AQUÍ SE ENVÍA EL CÓDIGO DE DESCUENTO
-      cuponGenerado: codigoProximaCompra || "-", // 👈 AQUÍ SE ENVÍA EL CÓDIGO ASIGNADO (EJ: R10LVQ)
+      cupon: appliedCoupon || "-", 
+      cuponGenerado: codigoRegalo || "-", 
       items: listaItems
     };
 
@@ -1879,16 +1879,6 @@
     lastOrderCart = JSON.parse(JSON.stringify(cart));
     lastOrderDiscount = couponDiscount;
 
-    cart = [];
-    couponDiscount = 0;
-    appliedCoupon = null;
-    try {
-      localStorage.removeItem('cart_virtual');
-    } catch(e) {
-      console.error(e);
-    }
-    updateCartUI();
-
     const finalOrderText = document.getElementById('final-order-text');
     if (finalOrderText) finalOrderText.value = text;
 
@@ -1899,9 +1889,24 @@
     if (safeBtn) safeBtn.href = whatsappUrl;
 
     const pedidoId = "PED-" + Date.now().toString().slice(-4);
-    registrarVentaEnSheets(pedidoId, finalTotal, payment, resumenProductos);
+    registrarVentaEnSheets(pedidoId, finalTotal, payment, resumenProductos, codigoRegalo);
 
-    window.location.href = whatsappUrl;
+    // Muestra el modal de éxito con las opciones de copiar, ir a WhatsApp e imprimir ticket
+    const successModal = document.getElementById('success-modal');
+    if (successModal) {
+      successModal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+
+    cart = [];
+    couponDiscount = 0;
+    appliedCoupon = null;
+    try {
+      localStorage.removeItem('cart_virtual');
+    } catch(e) {
+      console.error(e);
+    }
+    updateCartUI();
   }
 
   async function printAdminTicket() {
