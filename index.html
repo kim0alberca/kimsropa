@@ -924,7 +924,7 @@
   </div>
 </div>
 
-<!-- MODAL DE ÉXITO -->
+<!-- MODAL ÉXITO -->
 <div id="success-modal">
   <div class="success-content">
     <h3>🎉 ¡PEDIDO GENERADO CON ÉXITO!</h3>
@@ -1885,18 +1885,8 @@
     const encodedText = encodeURIComponent(text);
     const whatsappUrl = "https://api.whatsapp.com/send?phone=" + MY_WHATSAPP_NUMBER + "&text=" + encodedText;
 
-    const safeBtn = document.getElementById('safe-whatsapp-btn');
-    if (safeBtn) safeBtn.href = whatsappUrl;
-
     const pedidoId = "PED-" + Date.now().toString().slice(-4);
     registrarVentaEnSheets(pedidoId, finalTotal, payment, resumenProductos, codigoRegalo);
-
-    // Muestra el modal de éxito con las opciones de copiar, ir a WhatsApp e imprimir ticket
-    const successModal = document.getElementById('success-modal');
-    if (successModal) {
-      successModal.style.display = 'flex';
-      document.body.classList.add('modal-open');
-    }
 
     cart = [];
     couponDiscount = 0;
@@ -1907,6 +1897,9 @@
       console.error(e);
     }
     updateCartUI();
+
+    // REDIRECCIÓN AUTOMÁTICA A WHATSAPP
+    window.location.href = whatsappUrl;
   }
 
   async function printAdminTicket() {
