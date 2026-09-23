@@ -541,117 +541,121 @@
       document.getElementById("ticket-modal").style.display = "none";
     }
 
-    // IMPRESIÓN DIRECTA BLUETOOTH DESDE EL ADMIN
+    // IMPRESIÓN DIRECTA BLUETOOTH ROBUSTA
     async function ejecutarImpresionBluetooth() {
       if (!pedidoActualParaImprimir) return;
       const ped = pedidoActualParaImprimir;
 
-      if ('bluetooth' in navigator) {
-        try {
-          alert("Busca y selecciona tu impresora térmica Bluetooth conectada.");
-          const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [
-              '000018f0-0000-1000-8000-00805f9b34fb',
-              '00001101-0000-1000-8000-00805f9b34fb',
-              '49535343-fe7d-4ae5-8fa9-9fafd205e455'
-            ]
-          });
+      if (!('bluetooth' in navigator)) {
+        alert("⚠️ Tu navegador o dispositivo no soporta Web Bluetooth. Usa Google Chrome en Android.");
+        return;
+      }
 
-          const server = await device.gatt.connect();
-          const services = await server.getPrimaryServices();
-          let targetCharacteristic = null;
+      try {
+        // Solicitar dispositivo permitiendo cualquier impresora térmica estándar (POS)
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [
+            '000018f0-0000-1000-8000-00805f9b34fb', // Estándar impresoras térmicas
+            '00001101-0000-1000-8000-00805f9b34fb', // Serial Port (SPP)
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Chipset ISSC / BlueTooth Printer común
+            '0000ff00-0000-1000-8000-00805f9b34fb'  // Genérico FF00
+          ]
+        });
 
-          for (const service of services) {
-            const characteristics = await service.getCharacteristics();
-            for (const char of characteristics) {
-              if (char.properties.write || char.properties.writeWithoutResponse) {
-                targetCharacteristic = char;
-                break;
-              }
+        const server = await device.gatt.connect();
+        const services = await server.getPrimaryServices();
+        let targetCharacteristic = null;
+
+        for (const service of services) {
+          const characteristics = await service.getCharacteristics();
+          for (const char of characteristics) {
+            if (char.properties.write || char.properties.writeWithoutResponse) {
+              targetCharacteristic = char;
+              break;
             }
-            if (targetCharacteristic) break;
           }
-
-          if (targetCharacteristic) {
-            let esc = '\x1B';
-            let gs = '\x1D';
-            let reset = esc + '@';
-            let center = esc + 'a' + '\x01';
-            let left = esc + 'a' + '\x00';
-            let right = esc + 'a' + '\x02';
-            let boldOn = esc + 'E' + '\x01';
-            let boldOff = esc + 'E' + '\x00';
-            let doubleSize = gs + '!' + '\x11'; 
-            let normalSize = gs + '!' + '\x00';
-
-            let data = reset;
-            
-            data += center + doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
-            data += "Tienda Virtual en Linea - Piura\n";
-            data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
-            data += "--------------------------------\n";
-            
-            data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
-            data += left;
-            data += "ID Pedido: " + ped.idPedido + "\n";
-            data += "Fecha: " + ped.fecha + "\n";
-            data += "Cliente: " + ped.cliente + "\n";
-            data += "Pago: " + ped.pago + "\n";
-            data += "--------------------------------\n";
-            
-            data += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
-            data += "--------------------------------\n";
-            
-            ped.items.forEach(item => {
-              let cantStr = (item.cantidad + " ").padEnd(6, ' ');
-              let subtotalStr = ("S/" + item.subtotal.toFixed(2)).padStart(8, ' ');
-              let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
-              let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
-              
-              data += boldOn + cantStr + prodNombre + subtotalStr + "\n";
-              let detalleVar = item.variante ? item.variante : `Talla: ${item.talla} | Color: ${item.color}`;
-              data += "      " + detalleVar + "\n" + boldOff;
-            });
-            
-            data += "--------------------------------\n";
-            data += right;
-            data += doubleSize + boldOn + "TOTAL: S/ " + ped.totalPedido.toFixed(2) + "\n" + normalSize + boldOff;
-            data += "--------------------------------\n";
-            
-            data += center;
-            data += boldOn + "CODIGO DE DESCUENTO EN TU PROXIMA COMPRA:\n" + boldOff;
-            data += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
-            
-            data += "--------------------------------\n";
-            data += "   ¡ESCANEA PARA VISITAR LA TIENDA!   \n";
-            data += "--------------------------------\n";
-            data += "¡Gracias por tu compra!\n";
-            data += "Visítanos de nuevo\n\n\n";
-
-            let encoder = new TextEncoder();
-            let bytes = encoder.encode(data);
-            
-            let chunkSize = 512;
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-              let chunk = bytes.slice(i, i + chunkSize);
-              if (targetCharacteristic.properties.writeWithoutResponse) {
-                await targetCharacteristic.writeValueWithoutResponse(chunk);
-              } else {
-                await targetCharacteristic.writeValue(chunk);
-              }
-            }
-
-            alert("✅ ¡Ticket enviado directamente a la impresora térmica con éxito!");
-            cerrarModal();
-            return;
-          }
-        } catch (err) {
-          console.warn("Error Bluetooth Admin:", err);
-          alert("⚠️ No se pudo conectar a la impresora Bluetooth.");
+          if (targetCharacteristic) break;
         }
-      } else {
-        alert("⚠️ Tu navegador no soporta Web Bluetooth.");
+
+        if (!targetCharacteristic) {
+          throw new Error("No se encontró una característica de escritura válida en la impresora.");
+        }
+
+        let esc = '\x1B';
+        let gs = '\x1D';
+        let reset = esc + '@';
+        let center = esc + 'a' + '\x01';
+        let left = esc + 'a' + '\x00';
+        let right = esc + 'a' + '\x02';
+        let boldOn = esc + 'E' + '\x01';
+        let boldOff = esc + 'E' + '\x00';
+        let doubleSize = gs + '!' + '\x11'; 
+        let normalSize = gs + '!' + '\x00';
+
+        let data = reset;
+        
+        data += center + doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
+        data += "Tienda Virtual en Linea - Piura\n";
+        data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
+        data += "--------------------------------\n";
+        
+        data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
+        data += left;
+        data += "ID Pedido: " + ped.idPedido + "\n";
+        data += "Fecha: " + ped.fecha + "\n";
+        data += "Cliente: " + ped.cliente + "\n";
+        data += "Pago: " + ped.pago + "\n";
+        data += "--------------------------------\n";
+        
+        data += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
+        data += "--------------------------------\n";
+        
+        ped.items.forEach(item => {
+          let cantStr = (item.cantidad + " ").padEnd(6, ' ');
+          let subtotalStr = ("S/" + item.subtotal.toFixed(2)).padStart(8, ' ');
+          let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
+          let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
+          
+          data += boldOn + cantStr + prodNombre + subtotalStr + "\n";
+          let detalleVar = item.variante ? item.variante : `Talla: ${item.talla} | Color: ${item.color}`;
+          data += "      " + detalleVar + "\n" + boldOff;
+        });
+        
+        data += "--------------------------------\n";
+        data += right;
+        data += doubleSize + boldOn + "TOTAL: S/ " + ped.totalPedido.toFixed(2) + "\n" + normalSize + boldOff;
+        data += "--------------------------------\n";
+        
+        data += center;
+        data += boldOn + "CODIGO DE DESCUENTO EN TU PROXIMA COMPRA:\n" + boldOff;
+        data += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
+        
+        data += "--------------------------------\n";
+        data += "   ¡ESCANEA PARA VISITAR LA TIENDA!   \n";
+        data += "--------------------------------\n";
+        data += "¡Gracias por tu compra!\n";
+        data += "Visítanos de nuevo\n\n\n";
+
+        let encoder = new TextEncoder();
+        let bytes = encoder.encode(data);
+        
+        let chunkSize = 512;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          let chunk = bytes.slice(i, i + chunkSize);
+          if (targetCharacteristic.properties.writeWithoutResponse) {
+            await targetCharacteristic.writeValueWithoutResponse(chunk);
+          } else {
+            await targetCharacteristic.writeValue(chunk);
+          }
+        }
+
+        alert("✅ ¡Ticket enviado directamente a la impresora térmica con éxito!");
+        cerrarModal();
+
+      } catch (err) {
+        console.warn("Error Bluetooth Admin:", err);
+        alert("⚠️ No se pudo conectar a la impresora Bluetooth. Asegúrate de encender la impresora, tener el Bluetooth del celular activo y SELECCIONAR la impresora en la lista desplegable del navegador al sincronizar.");
       }
     }
   </script>
