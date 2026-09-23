@@ -137,8 +137,6 @@
       font-weight: bold;
       font-size: 11px;
     }
-
-    /* ESTILOS PARA EL ÚLTIMO PEDIDO RESALTADO */
     .row-latest-order {
       background-color: #f0fdf4 !important;
       border-left: 4px solid #16a34a !important;
@@ -169,8 +167,6 @@
       50% { opacity: 0.75; }
       100% { opacity: 1; }
     }
-
-    /* MODAL VISTA PREVIA */
     .modal {
       display: none;
       position: fixed;
@@ -209,6 +205,8 @@
     .btn-modal-close { background: #666; color: #fff; }
     .btn-modal-print { background: #1a73e8; color: #fff; }
   </style>
+  <!-- Librería externa para renderizar código QR visualmente en el ticket -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -220,7 +218,6 @@
     <button class="btn-reload" onclick="cargarDatosVentas()">🔄 Actualizar Datos</button>
   </div>
 
-  <!-- Tarjetas KPI -->
   <div class="kpi-container">
     <div class="kpi-card">
       <div class="kpi-title">Total Recaudado</div>
@@ -236,7 +233,6 @@
     </div>
   </div>
 
-  <!-- Métodos de Pago -->
   <div class="panel">
     <div class="panel-title">Métodos de Pago Totales</div>
     <div id="metodos-pago-container">
@@ -244,7 +240,6 @@
     </div>
   </div>
 
-  <!-- Tabla de Ventas Agrupadas -->
   <div class="panel">
     <div class="panel-title">Detalle de Pedidos Agrupados</div>
     <div style="overflow-x: auto;">
@@ -270,7 +265,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE VISTA PREVIA TICKET -->
   <div id="ticket-modal" class="modal">
     <div class="modal-content">
       <div id="ticket-preview-box" style="border: 1px dashed #bbb; padding: 12px; background: #fff; color: #000; font-family: 'Courier New', monospace; font-size: 12px;">
@@ -285,6 +279,7 @@
 
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
+    const TIENDA_URL = "https://tutienda.github.io/kims-ropa/"; // Cambia por tu enlace real de tienda si lo deseas
     
     let pedidosAgrupadosGlobal = {};
     let pedidoActualParaImprimir = null;
@@ -526,13 +521,30 @@
         <div style="text-align: right; font-size: 13px; font-weight: bold;">
           TOTAL: S/ ${ped.totalPedido.toFixed(2)}
         </div>
+        <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
         <div style="text-align: center; font-size: 10px; margin-top: 8px;">
-          <p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO EN TU PRÓXIMA COMPRA:</strong><br>${ped.cuponGenerado}</p>
-          <p style="margin: 6px 0;"><strong>¡ESCANEA PARA VISITAR LA TIENDA!</strong></p>
-          <p style="margin: 2px 0;">¡Gracias por tu compra!</p>
+          <p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO:</strong> ${ped.cuponGenerado}</p>
+          <p style="margin: 6px 0 4px 0;"><strong>¡ESCANEA PARA VISITAR LA TIENDA!</strong></p>
+          <div id="qrcode-preview" style="display: inline-block; background: #fff; padding: 4px; margin: 4px 0;"></div>
+          <p style="margin: 4px 0 2px 0;">¡Gracias por tu compra!</p>
           <p style="margin: 2px 0;">Visítanos de nuevo</p>
         </div>
       `;
+
+      // Generar el Código QR usando la librería QRCode
+      setTimeout(() => {
+        const qrContainer = document.getElementById("qrcode-preview");
+        if (qrContainer) {
+          qrContainer.innerHTML = "";
+          QRCode.toCanvas(TIENDA_URL, { width: 110, margin: 1 }, function (err, canvas) {
+            if (!err && canvas) {
+              qrContainer.appendChild(canvas);
+            } else {
+              qrContainer.innerText = "[Error al generar QR visual]";
+            }
+          });
+        }
+      }, 100);
 
       document.getElementById("ticket-modal").style.display = "flex";
     }
@@ -541,7 +553,7 @@
       document.getElementById("ticket-modal").style.display = "none";
     }
 
-    // IMPRESIÓN DIRECTA BLUETOOTH ROBUSTA
+    // IMPRESIÓN BLUETOOTH ABIERTA Y COMPATIBLE CON CUALQUIER IMPRESORA TÉRMICA
     async function ejecutarImpresionBluetooth() {
       if (!pedidoActualParaImprimir) return;
       const ped = pedidoActualParaImprimir;
@@ -552,14 +564,15 @@
       }
 
       try {
-        // Solicitar dispositivo permitiendo cualquier impresora térmica estándar (POS)
+        // Solicitud general sin filtros restrictivos para garantizar que aparezca la impresora
         const device = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
           optionalServices: [
-            '000018f0-0000-1000-8000-00805f9b34fb', // Estándar impresoras térmicas
-            '00001101-0000-1000-8000-00805f9b34fb', // Serial Port (SPP)
-            '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Chipset ISSC / BlueTooth Printer común
-            '0000ff00-0000-1000-8000-00805f9b34fb'  // Genérico FF00
+            '000018f0-0000-1000-8000-00805f9b34fb',
+            '00001101-0000-1000-8000-00805f9b34fb',
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+            '0000ff00-0000-1000-8000-00805f9b34fb',
+            '0000fee7-0000-1000-8000-00805f9b34fb'
           ]
         });
 
@@ -615,7 +628,7 @@
           let cantStr = (item.cantidad + " ").padEnd(6, ' ');
           let subtotalStr = ("S/" + item.subtotal.toFixed(2)).padStart(8, ' ');
           let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
-          let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
+          let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ', ' ');
           
           data += boldOn + cantStr + prodNombre + subtotalStr + "\n";
           let detalleVar = item.variante ? item.variante : `Talla: ${item.talla} | Color: ${item.color}`;
@@ -628,7 +641,7 @@
         data += "--------------------------------\n";
         
         data += center;
-        data += boldOn + "CODIGO DE DESCUENTO EN TU PROXIMA COMPRA:\n" + boldOff;
+        data += boldOn + "CODIGO DE DESCUENTO:\n" + boldOff;
         data += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
         
         data += "--------------------------------\n";
@@ -655,7 +668,7 @@
 
       } catch (err) {
         console.warn("Error Bluetooth Admin:", err);
-        alert("⚠️ No se pudo conectar a la impresora Bluetooth. Asegúrate de encender la impresora, tener el Bluetooth del celular activo y SELECCIONAR la impresora en la lista desplegable del navegador al sincronizar.");
+        alert("⚠️ No se pudo conectar. Pasos para solucionarlo:\n1. Asegúrate de encender la impresora y activar el Bluetooth en tu celular.\n2. Si la impresora no aparece en la lista, ve a los ajustes de Bluetooth de tu Android, desvincúlala y vuelve a enlazarla.\n3. Al hacer clic en Imprimir, marca el recuadro de la impresora en la ventana flotante del navegador antes de sincronizar.");
       }
     }
   </script>
