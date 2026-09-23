@@ -279,7 +279,7 @@
 
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
-    const TIENDA_URL = "https://tutienda.github.io/kims-ropa/"; // Cambia por tu enlace real de tienda si lo deseas
+    const TIENDA_URL = "https://kimoalberca.github.io/kims-ropa/"; 
     
     let pedidosAgrupadosGlobal = {};
     let pedidoActualParaImprimir = null;
@@ -553,18 +553,18 @@
       document.getElementById("ticket-modal").style.display = "none";
     }
 
-    // IMPRESIÓN BLUETOOTH ABIERTA Y COMPATIBLE CON CUALQUIER IMPRESORA TÉRMICA
+    // IMPRESIÓN BLUETOOTH OPTIMIZADA PARA DETECTAR IMPRESORAS TÉRMICAS GENÉRICAS
     async function ejecutarImpresionBluetooth() {
       if (!pedidoActualParaImprimir) return;
       const ped = pedidoActualParaImprimir;
 
       if (!('bluetooth' in navigator)) {
-        alert("⚠️ Tu navegador o dispositivo no soporta Web Bluetooth. Usa Google Chrome en Android.");
+        alert("⚠️ Tu navegador no soporta Web Bluetooth. Usa Google Chrome en Android.");
         return;
       }
 
       try {
-        // Solicitud general sin filtros restrictivos para garantizar que aparezca la impresora
+        // Se usa acceptAllDevices: true con comodines amplios para forzar la visibilidad inmediata de impresoras Bluetooth (como BlueTooth Printer)
         const device = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
           optionalServices: [
@@ -572,7 +572,8 @@
             '00001101-0000-1000-8000-00805f9b34fb',
             '49535343-fe7d-4ae5-8fa9-9fafd205e455',
             '0000ff00-0000-1000-8000-00805f9b34fb',
-            '0000fee7-0000-1000-8000-00805f9b34fb'
+            '0000fee7-0000-1000-8000-00805f9b34fb',
+            '0000ffe0-0000-1000-8000-00805f9b34fb'
           ]
         });
 
@@ -609,7 +610,7 @@
         let data = reset;
         
         data += center + doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
-        data += "Tienda Virtual en Linea - Piura\n";
+        data += "Piura, Peru\n";
         data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
         data += "--------------------------------\n";
         
@@ -628,7 +629,7 @@
           let cantStr = (item.cantidad + " ").padEnd(6, ' ');
           let subtotalStr = ("S/" + item.subtotal.toFixed(2)).padStart(8, ' ');
           let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
-          let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ', ' ');
+          let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
           
           data += boldOn + cantStr + prodNombre + subtotalStr + "\n";
           let detalleVar = item.variante ? item.variante : `Talla: ${item.talla} | Color: ${item.color}`;
@@ -668,7 +669,7 @@
 
       } catch (err) {
         console.warn("Error Bluetooth Admin:", err);
-        alert("⚠️ No se pudo conectar. Pasos para solucionarlo:\n1. Asegúrate de encender la impresora y activar el Bluetooth en tu celular.\n2. Si la impresora no aparece en la lista, ve a los ajustes de Bluetooth de tu Android, desvincúlala y vuelve a enlazarla.\n3. Al hacer clic en Imprimir, marca el recuadro de la impresora en la ventana flotante del navegador antes de sincronizar.");
+        alert("⚠️ No se pudo conectar. Recuerda seleccionar explícitamente el dispositivo 'BlueTooth Printer' en la ventana emergente de Chrome antes de presionar 'Sincronizar'.");
       }
     }
   </script>
