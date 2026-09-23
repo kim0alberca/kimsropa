@@ -210,31 +210,51 @@
     .btn-modal-print { background: #1a73e8; color: #fff; }
 
     /* FORMATO IMPRESIÓN TÉRMICA */
+    /* FORMATO IMPRESIÓN TÉRMICA (58mm) CORREGIDO */
     @media print {
       @page {
         margin: 0;
         size: 58mm auto;
       }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 58mm !important;
+        background-color: #fff !important;
+      }
       body * {
-        visibility: hidden;
+        display: none !important;
       }
       #printable-ticket, #printable-ticket * {
-        visibility: visible;
+        display: block !important;
+        visibility: visible !important;
       }
       #printable-ticket {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 58mm;
+        display: block !important;
+        position: static !important;
+        width: 58mm !important;
+        max-width: 58mm !important;
+        min-width: 58mm !important;
+        margin: 0 auto !important;
         font-family: 'Courier New', monospace, sans-serif;
         font-size: 11px;
-        color: #000;
-        background: #fff;
-        padding: 2mm 1mm;
-        display: block !important;
-        box-sizing: border-box;
+        font-weight: bold;
+        color: #000 !important;
+        background: #fff !important;
+        padding: 2mm 1mm !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
       }
+      /* Permitir que la tabla interna del ticket mantenga su estructura de filas */
+      #printable-ticket table, #printable-ticket tr, #printable-ticket td, #printable-ticket th {
+        display: table !important;
+      }
+      #printable-ticket thead { display: table-header-group !important; }
+      #printable-ticket tbody { display: table-row-group !important; }
+      #printable-ticket tr { display: table-row !important; }
+      #printable-ticket th, #printable-ticket td { display: table-cell !important; }
     }
+
     #printable-ticket {
       display: none;
     }
