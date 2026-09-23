@@ -736,38 +736,57 @@
     }
 
     /* ESTILOS DE IMPRESIÓN TÉRMICA CORREGIDOS PARA 58MM */
-    @media print {
-      @page {
-        margin: 0;
-        size: 58mm auto;
-      }
-      body * {
-        visibility: hidden;
-      }
-      #printable-ticket, #printable-ticket * {
-        visibility: visible;
-      }
-      #printable-ticket {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 58mm;
-        max-width: 58mm;
-        font-family: 'Courier New', monospace, sans-serif;
-        font-size: 12px;
-        font-weight: bold;
-        color: #000;
-        background: #fff;
-        padding: 2mm 2mm;
-        display: block !important;
-        box-sizing: border-box;
-      }
+    <style>
+  /* Ocultar el ticket en la pantalla normal */
+  #printable-ticket {
+    display: none;
+  }
+
+  @media print {
+    /* 1. Limpiar la página para que no imprima encabezados ni pies de página del navegador */
+    @page {
+      margin: 0;
+      size: 58mm auto;
     }
 
-    #printable-ticket {
-      display: none;
+    /* 2. Resetear el cuerpo y la página para eliminar espacios y fondos extraños */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 58mm !important;
+      background-color: #fff !important;
     }
-  </style>
+
+    /* 3. Ocultar absolutamente todo lo que esté fuera del ticket */
+    body * {
+      display: none !important;
+    }
+
+    /* 4. Mostrar únicamente el contenedor del ticket y sus hijos */
+    #printable-ticket, #printable-ticket * {
+      display: block !important;
+      visibility: visible !important;
+    }
+
+    /* 5. Estilos estrictos para el contenedor de 58mm sin position: absolute */
+    #printable-ticket {
+      display: block !important;
+      position: static !important; /* Cambiado de absolute a static para evitar saltos de página extraños */
+      width: 58mm !important;
+      max-width: 58mm !important;
+      min-width: 58mm !important;
+      margin: 0 auto !important;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 11px; /* Reducido ligeramente a 11px para evitar que las palabras largas se corten */
+      font-weight: bold;
+      color: #000 !important;
+      background: #fff !important;
+      padding: 2mm !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+  }
+</style>
 </head>
 
 <body>
