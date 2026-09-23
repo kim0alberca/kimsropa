@@ -208,56 +208,6 @@
     }
     .btn-modal-close { background: #666; color: #fff; }
     .btn-modal-print { background: #1a73e8; color: #fff; }
-
-    /* FORMATO IMPRESIÓN TÉRMICA */
-    /* FORMATO IMPRESIÓN TÉRMICA (58mm) CORREGIDO */
-    @media print {
-      @page {
-        margin: 0;
-        size: 58mm auto;
-      }
-      html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 58mm !important;
-        background-color: #fff !important;
-      }
-      body * {
-        display: none !important;
-      }
-      #printable-ticket, #printable-ticket * {
-        display: block !important;
-        visibility: visible !important;
-      }
-      #printable-ticket {
-        display: block !important;
-        position: static !important;
-        width: 58mm !important;
-        max-width: 58mm !important;
-        min-width: 58mm !important;
-        margin: 0 auto !important;
-        font-family: 'Courier New', monospace, sans-serif;
-        font-size: 11px;
-        font-weight: bold;
-        color: #000 !important;
-        background: #fff !important;
-        padding: 2mm 1mm !important;
-        box-sizing: border-box !important;
-        overflow: hidden !important;
-      }
-      /* Permitir que la tabla interna del ticket mantenga su estructura de filas */
-      #printable-ticket table, #printable-ticket tr, #printable-ticket td, #printable-ticket th {
-        display: table !important;
-      }
-      #printable-ticket thead { display: table-header-group !important; }
-      #printable-ticket tbody { display: table-row-group !important; }
-      #printable-ticket tr { display: table-row !important; }
-      #printable-ticket th, #printable-ticket td { display: table-cell !important; }
-    }
-
-    #printable-ticket {
-      display: none;
-    }
   </style>
 </head>
 <body>
@@ -328,61 +278,8 @@
       </div>
       <div class="modal-actions">
         <button class="btn-modal btn-modal-close" onclick="cerrarModal()">Cerrar</button>
-        <button class="btn-modal btn-modal-print" onclick="ejecutarImpresion()">🖨️ Imprimir Ticket</button>
+        <button class="btn-modal btn-modal-print" onclick="ejecutarImpresionBluetooth()">🖨️ Imprimir Bluetooth Directo</button>
       </div>
-    </div>
-  </div>
-
-  <!-- PLANTILLA DE IMPRESIÓN TÉRMICA (58mm) -->
-  <div id="printable-ticket">
-    <div style="text-align: center;">
-      <img src="logo.png" alt="Logo Kim's Ropa" style="max-width: 42mm; height: auto; margin-bottom: 4px;">
-      <h2 style="margin: 0; font-size: 15px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
-      <p style="margin: 1px 0; font-size: 10px;">Tienda Virtual de Moda - Piura</p>
-      <p style="margin: 1px 0; font-size: 9px;">kim0alberca.github.io/kimsropa/</p>
-      <p style="margin: 1px 0; font-size: 10px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
-    </div>
-    
-    <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
-    
-    <div style="font-size: 10px; line-height: 1.3;">
-      <p style="margin: 1px 0; font-size: 11px; font-weight: bold; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
-      <p style="margin: 1px 0;" id="ticket-id">CÓDIGO: --</p>
-      <p style="margin: 1px 0;" id="ticket-date">Fecha: --</p>
-      <p style="margin: 1px 0;" id="ticket-client">Cliente: --</p>
-      <p style="margin: 1px 0;" id="ticket-payment">Pago: --</p>
-    </div>
-    
-    <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
-    
-    <table style="width: 100%; text-align: left; font-size: 10px; border-collapse: collapse;">
-      <thead>
-        <tr style="border-bottom: 1px solid #000;">
-          <th style="width: 12%; text-align: center;">CANT</th>
-          <th style="width: 58%;">PRENDA / TALLA / COLOR</th>
-          <th style="width: 30%; text-align: right;">TOTAL</th>
-        </tr>
-      </thead>
-      <tbody id="ticket-items-body"></tbody>
-    </table>
-    
-    <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
-    
-    <div style="text-align: right; font-size: 13px; font-weight: bold;">
-      <p style="margin: 2px 0;">TOTAL COMPRA: S/ <span id="ticket-total-val">0.00</span></p>
-    </div>
-    
-    <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
-
-    <div style="border: 1px dashed #000; padding: 6px; text-align: center; margin: 6px 0; border-radius: 4px;">
-      <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">🎁 ¡REGALO ESPECIAL!</p>
-      <p style="margin: 2px 0; font-size: 10px;">Obtén <strong style="font-size: 11px;">10% OFF</strong> en tu próxima compra presentando este ticket.</p>
-      <p style="margin: 2px 0; font-size: 10px; font-weight: bold;">CÓDIGO DE DESCUENTO: <span style="letter-spacing: 1px; font-size: 11px;" id="ticket-promo-code">--</span></p>
-    </div>
-    
-    <div style="text-align: center; font-size: 9px; margin-top: 4px;">
-      <p style="margin: 1px 0;">¡Gracias por tu preferencia!</p>
-      <p style="margin: 1px 0;">Vuelve pronto ✨</p>
     </div>
   </div>
 
@@ -390,6 +287,7 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLeYLuRXMshbl1LC8BGa887mfqlcZiN1CdSJUgXiMl_8sHrYqBT1DbPx-0m7jtY2BR/exec";
     
     let pedidosAgrupadosGlobal = {};
+    let pedidoActualParaImprimir = null;
 
     document.addEventListener("DOMContentLoaded", () => {
       cargarDatosVentas();
@@ -488,15 +386,8 @@
           const color = fila.color || fila.Color || fila.colour || "-";
           const variante = fila.variante || fila.Variante || "";
           const cantidad = Number(fila.cantidad || fila.Cantidad || 1);
-          
-          let subtotalItem = parseFloat(fila.subtotal || fila.Subtotal || fila.monto || fila.Monto || 0);
-          let pUnit = Number(fila.pUnit || fila.precio || fila["P. Unit"] || 0);
-
-          if (subtotalItem === 0 && pUnit > 0) {
-            subtotalItem = cantidad * pUnit;
-          } else if (subtotalItem > 0 && pUnit === 0) {
-            pUnit = subtotalItem / cantidad;
-          }
+          const subtotalItem = parseFloat(fila.subtotal || fila.Subtotal || fila.monto || fila.Monto || 0);
+          const precioUnitario = cantidad > 0 ? (subtotalItem / cantidad) : subtotalItem;
 
           pedidosAgrupadosGlobal[idPedido].items.push({
             nombre: nombre,
@@ -504,7 +395,7 @@
             color: color,
             variante: variante,
             cantidad: cantidad,
-            precioUnit: pUnit,
+            precioUnit: precioUnitario,
             subtotal: subtotalItem
           });
 
@@ -512,177 +403,249 @@
         }
       });
 
-      let totalRecaudadoGlobal = 0;
-      let metodosPagoMap = {};
-      let htmlFilas = "";
-
-      // Invertimos las claves para mostrar la última venta al inicio (arriba)
-      const keysPedidos = Object.keys(pedidosAgrupadosGlobal).reverse();
+      const keysPedidos = Object.keys(pedidosAgrupadosGlobal);
+      let totalRecaudadoGral = 0;
+      let conteoMetodos = {};
+      let htmlTabla = "";
 
       keysPedidos.forEach((idKey, index) => {
         const ped = pedidosAgrupadosGlobal[idKey];
-        totalRecaudadoGlobal += ped.totalPedido;
+        totalRecaudadoGral += ped.totalPedido;
 
-        if (ped.pago !== "-") {
-          metodosPagoMap[ped.pago] = (metodosPagoMap[ped.pago] || 0) + ped.totalPedido;
-        }
+        const metClean = ped.pago.toUpperCase().trim();
+        conteoMetodos[metClean] = (conteoMetodos[metClean] || 0) + ped.totalPedido;
 
-        const resumenProductos = ped.items.map(i => {
-          let det = `<strong>${i.nombre}</strong>`;
-          let specs = [];
-          if (i.talla !== "-") specs.push(`Talla: ${i.talla}`);
-          if (i.color !== "-") specs.push(`Color: ${i.color}`);
-          if (specs.length > 0) det += ` <small style="color:#666;">(${specs.join(', ')})</small>`;
-          return det;
-        }).join("<br>");
+        let totalCantidadItems = 0;
+        let listaNombresHtml = "";
+        ped.items.forEach(it => {
+          totalCantidadItems += it.cantidad;
+          let varTexto = it.variante ? ` (${it.variante})` : ` (${it.talla} / ${it.color})`;
+          listaNombresHtml += `• ${it.cantidad}x ${it.nombre}${varTexto}<br>`;
+        });
 
-        const totalItemsCount = ped.items.reduce((acc, i) => acc + i.cantidad, 0);
+        const esUltimo = (index === keysPedidos.length - 1);
+        const claseFila = esUltimo ? "row-latest-order" : "";
+        const badgeHtml = esUltimo ? '<span class="badge-latest">⭐ ÚLTIMO PEDIDO</span><br>' : '';
+        const btnClase = esUltimo ? "btn-action btn-action-latest" : "btn-action";
 
-        // Identificar si es la última venta realizada (primer elemento de la lista invertida)
-        const esUltimoPedido = index === 0;
-        const claseFila = esUltimoPedido ? 'row-latest-order' : '';
-        const badgeUltimo = esUltimoPedido ? '<span class="badge-latest">🔥 ÚLTIMO PEDIDO</span><br>' : '';
-        const claseBoton = esUltimoPedido ? 'btn-action btn-action-latest' : 'btn-action';
-        const textoBoton = esUltimoPedido ? '🎟️ Imprimir Último Ticket' : '🎟️ Ticket';
-
-        htmlFilas += `
+        htmlTabla += `
           <tr class="${claseFila}">
             <td>${ped.fecha}</td>
-            <td>${badgeUltimo}<strong>${ped.idPedido}</strong></td>
+            <td><strong>${ped.idPedido}</strong></td>
             <td>${ped.cliente}</td>
-            <td>${resumenProductos}</td>
-            <td class="text-center"><span class="badge-qty">${totalItemsCount}</span></td>
+            <td>${listaNombresHtml}</td>
+            <td class="text-center"><span class="badge-qty">${totalCantidadItems}</span></td>
             <td class="text-right"><strong>S/ ${ped.totalPedido.toFixed(2)}</strong></td>
             <td>${ped.pago}</td>
             <td class="text-center">
-              <button class="${claseBoton}" onclick="prepararTicketModal('${ped.idPedido}')">${textoBoton}</button>
+              ${badgeHtml}
+              <button class="${btnClase}" onclick="verTicket('${ped.idPedido}')">🖨️ Ver / Imprimir</button>
             </td>
           </tr>
         `;
       });
 
-      document.getElementById("tabla-ventas-body").innerHTML = htmlFilas;
-      actualizarKPIs(totalRecaudadoGlobal, keysPedidos.length);
-      renderizarMetodosPago(metodosPagoMap);
+      document.getElementById("tabla-ventas-body").innerHTML = htmlTabla;
+      actualizarKPIs(totalRecaudadoGral, keysPedidos.length);
+      renderizarMetodosPago(conteoMetodos);
     }
 
-    function formatearFecha(cadenaFecha) {
-      if (!cadenaFecha || cadenaFecha === "-") return "-";
-      try {
-        const d = new Date(cadenaFecha);
-        if (isNaN(d.getTime())) return cadenaFecha;
-        return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      } catch (e) {
-        return cadenaFecha;
-      }
-    }
-
-    function actualizarKPIs(total, cantidadPedidos) {
-      const promedio = cantidadPedidos > 0 ? total / cantidadPedidos : 0;
-      document.getElementById("kpi-recaudado").innerText = `S/ ${total.toFixed(2)}`;
-      document.getElementById("kpi-pedidos").innerText = cantidadPedidos;
+    function actualizarKPIs(recaudado, numPedidos) {
+      document.getElementById("kpi-recaudado").innerText = `S/ ${recaudado.toFixed(2)}`;
+      document.getElementById("kpi-pedidos").innerText = numPedidos;
+      const promedio = numPedidos > 0 ? (recaudado / numPedidos) : 0;
       document.getElementById("kpi-promedio").innerText = `S/ ${promedio.toFixed(2)}`;
     }
 
-    function renderizarMetodosPago(metodos) {
-      const container = document.getElementById("metodos-pago-container");
-      const llaves = Object.keys(metodos);
-      
-      if (llaves.length === 0) {
-        container.innerHTML = `<p style="color: #888; font-size: 13px;">No hay datos de pago.</p>`;
+    function renderizarMetodosPago(conteo) {
+      const contenedor = document.getElementById("metodos-pago-container");
+      const keys = Object.keys(conteo);
+      if (keys.length === 0) {
+        contenedor.innerHTML = `<p style="color: #888; font-size: 13px;">No hay registros de pagos.</p>`;
         return;
       }
-
-      let html = `<ul style="list-style: none; display: flex; gap: 20px; font-size: 14px; flex-wrap: wrap;">`;
-      llaves.forEach(metodo => {
-        html += `<li><strong>${metodo}:</strong> S/ ${metodos[metodo].toFixed(2)}</li>`;
-      });
-      html += `</ul>`;
-      container.innerHTML = html;
-    }
-
-    function prepararTicketModal(idPedido) {
-      const ped = pedidosAgrupadosGlobal[idPedido];
-      if (!ped) return;
-
-      const promoCode = (ped.cuponGenerado && ped.cuponGenerado !== "-") ? ped.cuponGenerado : "KIMS10";
-
-      // Actualizar campos del ticket imprimible de 58mm
-      document.getElementById('ticket-id').innerText = "CÓDIGO PEDIDO: " + ped.idPedido;
-      document.getElementById('ticket-date').innerText = "Fecha: " + ped.fecha;
-      document.getElementById('ticket-client').innerText = "Cliente: " + ped.cliente;
-      document.getElementById('ticket-payment').innerText = "Pago: " + ped.pago;
-      document.getElementById('ticket-total-val').innerText = ped.totalPedido.toFixed(2);
-      document.getElementById('ticket-promo-code').innerText = promoCode;
-
-      const tbody = document.getElementById('ticket-items-body');
-      tbody.innerHTML = '';
-
-      let previewItemsHTML = '';
-
-      ped.items.forEach(item => {
-        let detallesSpecs = [];
-        if (item.talla && item.talla !== "-") detallesSpecs.push(`Talla: ${item.talla}`);
-        if (item.color && item.color !== "-") detallesSpecs.push(`Color: ${item.color}`);
-        if (item.variante && item.variante !== "-") detallesSpecs.push(item.variante);
-
-        const specsTexto = detallesSpecs.length > 0 ? `<br><small style="font-size:9px;">[${detallesSpecs.join(" | ")}]</small>` : '';
-
-        const row = document.createElement('tr');
-        row.style.borderBottom = "1px dashed #eee";
-        row.innerHTML = `
-          <td style="text-align: center; vertical-align: top; padding: 3px 0;">${item.cantidad}</td>
-          <td style="text-transform: uppercase; padding: 3px 0;">
-            <strong>${item.nombre}</strong>${specsTexto}
-          </td>
-          <td style="text-align: right; vertical-align: top; padding: 3px 0;">S/ ${item.subtotal.toFixed(2)}</td>
-        `;
-        tbody.appendChild(row);
-
-        previewItemsHTML += `
-          <div style="margin-bottom: 6px; border-bottom: 1px dotted #ccc; padding-bottom: 4px;">
-            <div><strong>${item.cantidad}x ${item.nombre}</strong> - S/ ${item.subtotal.toFixed(2)}</div>
-            ${detallesSpecs.length > 0 ? `<div style="font-size:10px; color:#555; margin-left: 10px;">• ${detallesSpecs.join(" | ")}</div>` : ''}
+      let html = `<div style="display: flex; gap: 15px; flex-wrap: wrap;">`;
+      keys.forEach(metodo => {
+        html += `
+          <div style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 12px 18px; border-radius: 6px; min-width: 160px;">
+            <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">${metodo}</div>
+            <div style="font-size: 18px; font-weight: bold; color: #1a73e8; margin-top: 4px;">S/ ${conteo[metodo].toFixed(2)}</div>
           </div>
         `;
       });
+      html += `</div>`;
+      contenedor.innerHTML = html;
+    }
 
-      const previewBox = document.getElementById('ticket-preview-box');
+    function formatearFecha(fechaStr) {
+      if (!fechaStr || fechaStr === "-") return "-";
+      return fechaStr;
+    }
+
+    function verTicket(idPedido) {
+      const ped = pedidosAgrupadosGlobal[idPedido];
+      if (!ped) return;
+      
+      pedidoActualParaImprimir = ped;
+
+      let itemsHtml = "";
+      ped.items.forEach(it => {
+        let detalleVar = it.variante ? it.variante : `Talla: ${it.talla} | Color: ${it.color}`;
+        itemsHtml += `
+          <tr>
+            <td style="text-align: center; padding: 3px 0; vertical-align: top;">${it.cantidad}</td>
+            <td style="padding: 3px 0;">${it.nombre}<br><span style="font-size: 10px; color: #555;">${detalleVar}</span></td>
+            <td style="text-align: right; padding: 3px 0; vertical-align: top;">S/ ${it.subtotal.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      const previewBox = document.getElementById("ticket-preview-box");
       previewBox.innerHTML = `
-        <div style="text-align:center;">
-          <img src="logo.png" alt="Logo" style="max-width: 120px; height: auto; margin-bottom: 4px;"><br>
-          <strong style="font-size:14px;">KIM'S ROPA</strong><br>
-          <span style="font-size:11px; font-weight:bold;">CÓDIGO PEDIDO: ${ped.idPedido}</span><br>
-          <span style="font-size:10px;">Fecha: ${ped.fecha}</span>
+        <div style="text-align: center;">
+          <h3 style="margin: 0; font-size: 14px;">KIM'S ROPA</h3>
+          <p style="font-size: 10px; margin: 2px 0;">Piura, Perú</p>
         </div>
-        <hr style="border:none; border-top:1px dashed #000; margin:6px 0;">
-        <div style="font-size:11px;">
-          <div><strong>Cliente:</strong> ${ped.cliente}</div>
-          <div><strong>Método de Pago:</strong> ${ped.pago}</div>
+        <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>ID:</strong> ${ped.idPedido}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Fecha:</strong> ${ped.fecha}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Cliente:</strong> ${ped.cliente}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Pago:</strong> ${ped.pago}</p>
+        <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+        <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 1px solid #000;">
+              <th style="width: 15%; text-align: center;">CANT</th>
+              <th style="width: 55%;">PRODUCTO</th>
+              <th style="width: 30%; text-align: right;">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+        <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+        <div style="text-align: right; font-size: 13px; font-weight: bold;">
+          TOTAL: S/ ${ped.totalPedido.toFixed(2)}
         </div>
-        <hr style="border:none; border-top:1px dashed #000; margin:6px 0;">
-        <div style="font-size:11px;">
-          ${previewItemsHTML}
-        </div>
-        <hr style="border:none; border-top:1px dashed #000; margin:6px 0;">
-        <div style="text-align:right; font-size:13px; font-weight:bold;">TOTAL COMPRA: S/ ${ped.totalPedido.toFixed(2)}</div>
-        
-        <div style="border:1px dashed #000; padding:6px; text-align:center; margin-top:8px; border-radius:4px; font-size:10px;">
-          <strong>🎁 ¡REGALO ESPECIAL!</strong><br>
-          10% de DESCUENTO en tu próxima compra.<br>
-          Código: <strong>${promoCode}</strong>
+        <div style="text-align: center; font-size: 10px; margin-top: 8px;">
+          <p style="margin: 2px 0;"><strong>CÓDIGO PROMO:</strong> ${ped.cuponGenerado}</p>
+          <p style="margin: 2px 0;">¡Gracias por tu compra!</p>
         </div>
       `;
 
-      document.getElementById('ticket-modal').style.display = 'flex';
+      document.getElementById("ticket-modal").style.display = "flex";
     }
 
     function cerrarModal() {
-      document.getElementById('ticket-modal').style.display = 'none';
+      document.getElementById("ticket-modal").style.display = "none";
     }
 
-    function ejecutarImpresion() {
-      window.print();
+    // IMPRESIÓN DIRECTA BLUETOOTH DESDE EL ADMIN
+    async function ejecutarImpresionBluetooth() {
+      if (!pedidoActualParaImprimir) return;
+      const ped = pedidoActualParaImprimir;
+
+      if ('bluetooth' in navigator) {
+        try {
+          alert("Busca y selecciona tu impresora térmica Bluetooth conectada.");
+          const device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [
+              '000018f0-0000-1000-8000-00805f9b34fb',
+              '00001101-0000-1000-8000-00805f9b34fb',
+              '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+            ]
+          });
+
+          const server = await device.gatt.connect();
+          const services = await server.getPrimaryServices();
+          let targetCharacteristic = null;
+
+          for (const service of services) {
+            const characteristics = await service.getCharacteristics();
+            for (const char of characteristics) {
+              if (char.properties.write || char.properties.writeWithoutResponse) {
+                targetCharacteristic = char;
+                break;
+              }
+            }
+            if (targetCharacteristic) break;
+          }
+
+          if (targetCharacteristic) {
+            let esc = '\x1B';
+            let gs = '\x1D';
+            let reset = esc + '@';
+            let center = esc + 'a' + '\x01';
+            let left = esc + 'a' + '\x00';
+            let right = esc + 'a' + '\x02';
+            let boldOn = esc + 'E' + '\x01';
+            let boldOff = esc + 'E' + '\x00';
+            let doubleSize = gs + '!' + '\x11'; 
+            let normalSize = gs + '!' + '\x00';
+
+            let data = reset;
+            
+            data += center + doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
+            data += "Tienda Virtual en Linea - Piura\n";
+            data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
+            data += "--------------------------------\n";
+            
+            data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
+            data += left;
+            data += "ID Pedido: " + ped.idPedido + "\n";
+            data += "Fecha: " + ped.fecha + "\n";
+            data += "Cliente: " + ped.cliente + "\n";
+            data += "Pago: " + ped.pago + "\n";
+            data += "--------------------------------\n";
+            
+            data += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
+            data += "--------------------------------\n";
+            
+            ped.items.forEach(item => {
+              let cantStr = (item.cantidad + " ").padEnd(6, ' ');
+              let subtotalStr = ("S/" + item.subtotal.toFixed(2)).padStart(8, ' ');
+              let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
+              let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
+              
+              data += boldOn + cantStr + prodNombre + subtotalStr + "\n";
+              let detalleVar = item.variante ? item.variante : `Talla: ${item.talla} | Color: ${item.color}`;
+              data += "      " + detalleVar + "\n" + boldOff;
+            });
+            
+            data += "--------------------------------\n";
+            data += right;
+            data += doubleSize + boldOn + "TOTAL: S/ " + ped.totalPedido.toFixed(2) + "\n" + normalSize + boldOff;
+            data += "--------------------------------\n";
+            
+            data += center;
+            data += boldOn + "CODIGO PROMO DE REGALO:\n" + ped.cuponGenerado + "\n\n" + boldOff;
+            data += boldOn + "¡Gracias por tu compra!\n" + boldOff;
+            data += "Visitanos de nuevo\n\n\n\n";
+
+            let encoder = new TextEncoder();
+            let bytes = encoder.encode(data);
+            
+            let chunkSize = 512;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+              let chunk = bytes.slice(i, i + chunkSize);
+              if (targetCharacteristic.properties.writeWithoutResponse) {
+                await targetCharacteristic.writeValueWithoutResponse(chunk);
+              } else {
+                await targetCharacteristic.writeValue(chunk);
+              }
+            }
+
+            alert("✅ ¡Ticket enviado directamente a la impresora térmica con éxito!");
+            cerrarModal();
+            return;
+          }
+        } catch (err) {
+          console.warn("Error Bluetooth Admin:", err);
+          alert("⚠️ No se pudo conectar a la impresora Bluetooth.");
+        }
+      } else {
+        alert("⚠️ Tu navegador no soporta Web Bluetooth.");
+      }
     }
   </script>
 </body>
