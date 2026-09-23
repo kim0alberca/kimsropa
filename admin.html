@@ -494,8 +494,9 @@
 
       const previewBox = document.getElementById("ticket-preview-box");
       previewBox.innerHTML = `
-        <div style="text-align: center;">
-          <h3 style="margin: 0; font-size: 14px;">KIM'S ROPA</h3>
+        <div style="text-align: center; margin-bottom: 6px;">
+          <img src="logo.png" alt="Logo Tienda" style="width: 80px; height: auto; display: inline-block;" />
+          <h3 style="margin: 2px 0 0 0; font-size: 14px;">KIM'S ROPA</h3>
           <p style="font-size: 10px; margin: 2px 0;">Piura, Perú</p>
         </div>
         <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
@@ -537,13 +538,13 @@
       document.getElementById("ticket-modal").style.display = "none";
     }
 
-    // Función auxiliar para convertir la imagen local 'qr-tienda.png' en comandos raster ESC/POS para impresora térmica
-    async function obtenerComandosImagenQR() {
+    // Función auxiliar para convertir imagen local ('logo.png' o 'qr-tienda.png') en comandos raster ESC/POS
+    async function obtenerComandosImagen(nombreArchivo) {
       return new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = "Anonymous";
         img.onload = function() {
-          const targetWidth = 240; // Ancho óptimo para impresoras térmicas de 58mm/80mm
+          const targetWidth = (nombreArchivo === "logo.png") ? 160 : 240; 
           const scale = targetWidth / img.width;
           const targetHeight = Math.round(img.height * scale);
 
@@ -571,7 +572,7 @@
               const b = pixels[offset + 2];
               const avg = (r + g + b) / 3;
               
-              if (avg < 128) { // Si es oscuro (negro)
+              if (avg < 128) {
                 const byteIndex = Math.floor(x / 8);
                 const bitIndex = 7 - (x % 8);
                 rowBytes[byteIndex] |= (1 << bitIndex);
@@ -580,23 +581,23 @@
             rasterData.push(...rowBytes);
           }
 
-          // Comando ESC/POS Raster (GS v 0)
           let command = [];
-          command.push(0x1D, 0x76, 0x30, 0x00); // GS v 0 m
-          command.push(bytesPerRow & 0xFF, (bytesPerRow >> 8) & 0xFF); // xL xH
-          command.push(targetHeight & 0xFF, (targetHeight >> 8) & 0xFF); // yL yH
+          command.push(0x1D, 0x76, 0x30, 0x00);
+          command.push(bytesPerRow & 0xFF, (bytesPerRow >> 8) & 0xFF);
+          command.push(targetHeight & 0xFF, (targetHeight >> 8) & 0xFF);
           command.push(...rasterData);
 
-          resolve(new Uint8Array(command));
+          let centerAlign = [0x1B, 0x61, 0x01];
+          resolve(new Uint8Array([...centerAlign, ...command]));
         };
         img.onerror = function() {
-          resolve(null); // Si falla la carga, continúa sin romper la impresión de texto
+          resolve(null);
         };
-        img.src = "qr-tienda.png";
+        img.src = nombreArchivo;
       });
     }
 
-    // IMPRESIÓN BLUETOOTH DIRECTA CON QR INCLUIDO
+    // IMPRESIÓN BLUETOOTH DIRECTA CON LOGO Y QR INCLUIDOS
     async function ejecutarImpresionBluetooth() {
       if (!pedidoActualParaImprimir) return;
       const ped = pedidoActualParaImprimir;
@@ -649,23 +650,26 @@
         let doubleSize = gs + '!' + '\x11'; 
         let normalSize = gs + '!' + '\x00';
 
-        let data = reset;
+        // 1. Obtener imagen del logo en binario
+        let logoBytes = await obtenerComandosImagen("logo.png");
+
+        // 2. Texto de encabezado y datos
+        let dataHeader = reset + center;
+        dataHeader += doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
+        dataHeader += "Piura, Peru\n";
+        dataHeader += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
+        dataHeader += "--------------------------------\n";
         
-        data += center + doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
-        data += "Piura, Peru\n";
-        data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
-        data += "--------------------------------\n";
+        dataHeader += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
+        dataHeader += left;
+        dataHeader += "ID Pedido: " + ped.idPedido + "\n";
+        dataHeader += "Fecha: " + ped.fecha + "\n";
+        dataHeader += "Cliente: " + ped.cliente + "\n";
+        dataHeader += "Pago: " + ped.pago + "\n";
+        dataHeader += "--------------------------------\n";
         
-        data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
-        data += left;
-        data += "ID Pedido: " + ped.idPedido + "\n";
-        data += "Fecha: " + ped.fecha + "\n";
-        data += "Cliente: " + ped.cliente + "\n";
-        data += "Pago: " + ped.pago + "\n";
-        data += "--------------------------------\n";
-        
-        data += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
-        data += "--------------------------------\n";
+        dataHeader += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
+        dataHeader += "--------------------------------\n";
         
         ped.items.forEach(item => {
           let cantStr = (item.cantidad + " ").padEnd(6, ' ');
@@ -673,47 +677,49 @@
           let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
           let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
           
-          data += boldOn + cantStr + prodNombre + subtotalStr + "\n";
+          dataHeader += boldOn + cantStr + prodNombre + subtotalStr + "\n";
           let detalleVar = item.variante ? item.variante : `Talla: ${item.talla} | Color: ${item.color}`;
-          data += "      " + detalleVar + "\n" + boldOff;
+          dataHeader += "      " + detalleVar + "\n" + boldOff;
         });
         
-        data += "--------------------------------\n";
-        data += right;
-        data += doubleSize + boldOn + "TOTAL: S/ " + ped.totalPedido.toFixed(2) + "\n" + normalSize + boldOff;
-        data += "--------------------------------\n";
+        dataHeader += "--------------------------------\n";
+        dataHeader += right;
+        dataHeader += doubleSize + boldOn + "TOTAL: S/ " + ped.totalPedido.toFixed(2) + "\n" + normalSize + boldOff;
+        dataHeader += "--------------------------------\n";
         
-        data += center;
-        data += boldOn + "CODIGO DE DESCUENTO:\n" + boldOff;
-        data += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
-        
-        data += "--------------------------------\n";
-        data += "VISITA NUESTRA TIENDA WEB:\n";
-        data += "--------------------------------\n";
+        dataHeader += center;
+        dataHeader += boldOn + "CODIGO DE DESCUENTO:\n" + boldOff;
+        dataHeader += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
+        dataHeader += "--------------------------------\n";
+        dataHeader += "VISITA NUESTRA TIENDA WEB:\n";
+        dataHeader += boldOn + "kimoalberca.github.io/kims-ropa/\n" + boldOff;
+        dataHeader += "--------------------------------\n";
 
-        // Convertir texto acumulado a bytes
         let encoder = new TextEncoder();
-        let textBytes = encoder.encode(data);
+        let headerBytes = encoder.encode(dataHeader);
 
-        // Obtener la imagen QR en binario raster
-        let qrBytes = await obtComandosImagenQRConAlineacion(center, right); // O cargamos directamente el raster
+        // 3. Obtener imagen del QR en binario
+        let qrBytes = await obtenerComandosImagen("qr-tienda.png");
 
-        let qrImageBytes = await obtenerComandosImagenQR();
-
-        // Unir todos los bloques de bytes (Texto inicial + Imagen QR + Pie de página)
+        // 4. Pie de página final
         let footerText = center + "Gracias por tu compra!\nVisitanos de nuevo\n\n\n";
         let footerBytes = encoder.encode(footerText);
 
-        let totalLength = textBytes.length + (qrImageBytes ? qrImageBytes.length : 0) + footerBytes.length;
+        // Calcular tamaño total y unir todos los bloques de bytes en orden correcto: [Logo] -> [Cabecera/Productos] -> [QR] -> [Pie]
+        let totalLength = (logoBytes ? logoBytes.length : 0) + headerBytes.length + (qrBytes ? qrBytes.length : 0) + footerBytes.length;
         let finalBytes = new Uint8Array(totalLength);
         
         let offset = 0;
-        finalBytes.set(textBytes, offset);
-        offset += textBytes.length;
+        if (logoBytes) {
+          finalBytes.set(logoBytes, offset);
+          offset += logoBytes.length;
+        }
+        finalBytes.set(headerBytes, offset);
+        offset += headerBytes.length;
 
-        if (qrImageBytes) {
-          finalBytes.set(qrImageBytes, offset);
-          offset += qrImageBytes.length;
+        if (qrBytes) {
+          finalBytes.set(qrBytes, offset);
+          offset += qrBytes.length;
         }
 
         finalBytes.set(footerBytes, offset);
@@ -729,25 +735,13 @@
           }
         }
 
-        alert("✅ ¡Ticket con imagen QR enviado directamente a la impresora térmica con éxito!");
+        alert("✅ ¡Ticket con Logo y QR enviado directamente a la impresora térmica con éxito!");
         cerrarModal();
 
       } catch (err) {
         console.warn("Error Bluetooth Admin:", err);
         alert("⚠️ No se pudo conectar. Selecciona tu impresora en la ventana emergente de Chrome.");
       }
-    }
-
-    // Función auxiliar para alinear la imagen al centro antes de enviarla
-    async function obtComandosImagenQRConAlineacion() {
-      let centerAlign = new Uint8Array([0x1B, 0x61, 0x01]); // ESC a 1 (Centrar)
-      let qrBytes = await obtenerComandosImagenQR();
-      if (!qrBytes) return null;
-      
-      let combined = new Uint8Array(centerAlign.length + qrBytes.length);
-      combined.set(centerAlign, 0);
-      combined.set(qrBytes, centerAlign.length);
-      return combined;
     }
   </script>
 </body>
