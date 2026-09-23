@@ -527,8 +527,10 @@
           TOTAL: S/ ${ped.totalPedido.toFixed(2)}
         </div>
         <div style="text-align: center; font-size: 10px; margin-top: 8px;">
-          <p style="margin: 2px 0;"><strong>CÓDIGO PROMO:</strong> ${ped.cuponGenerado}</p>
+          <p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO EN TU PRÓXIMA COMPRA:</strong><br>${ped.cuponGenerado}</p>
+          <p style="margin: 6px 0;"><strong>¡ESCANEA PARA VISITAR LA TIENDA!</strong></p>
           <p style="margin: 2px 0;">¡Gracias por tu compra!</p>
+          <p style="margin: 2px 0;">Visítanos de nuevo</p>
         </div>
       `;
 
@@ -618,23 +620,14 @@
             data += "--------------------------------\n";
             
             data += center;
-            data += boldOn + "CODIGO DE DESCUENTO EN TU PROXIMA COMPRA:\n" + ped.cuponGenerado + "\n\n" + boldOff;
-            // --- PIE DE PÁGINA DEL TICKET ---
-
-// 1. Espacio y texto de invitación
-printLine("----------------------------------------");
-printLine("   ¡ESCANEA PARA VISITAR LA TIENDA!   ");
-printLine("----------------------------------------");
-
-// 2. Aquí imprimes el código QR usando el enlace directo de tu GitHub
-// (Asegúrate de pasarle la URL de la imagen que subiste a GitHub)
-printQRCodeImage("https://tu-usuario.github.io/kims-ropa/qr-tienda.png"); 
-
-printLine("");
-
-// 3. Mensajes finales de agradecimiento
-printLine("¡Gracias por tu compra!");
-printLine("Visitanos de nuevo");
+            data += boldOn + "CODIGO DE DESCUENTO EN TU PROXIMA COMPRA:\n" + boldOff;
+            data += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
+            
+            data += "--------------------------------\n";
+            data += "   ¡ESCANEA PARA VISITAR LA TIENDA!   \n";
+            data += "--------------------------------\n";
+            data += "¡Gracias por tu compra!\n";
+            data += "Visítanos de nuevo\n\n\n";
 
             let encoder = new TextEncoder();
             let bytes = encoder.encode(data);
