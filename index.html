@@ -735,7 +735,7 @@
       overflow: hidden;
     }
 
-    /* ESTILOS DE IMPRESIÓN TÉRMICA */
+    /* ESTILOS DE IMPRESIÓN TÉRMICA CORREGIDOS PARA 58MM */
     @media print {
       @page {
         margin: 0;
@@ -752,12 +752,13 @@
         left: 0;
         top: 0;
         width: 58mm;
+        max-width: 58mm;
         font-family: 'Courier New', monospace, sans-serif;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: bold;
         color: #000;
         background: #fff;
-        padding: 2mm 1mm;
+        padding: 2mm 2mm;
         display: block !important;
         box-sizing: border-box;
       }
@@ -950,50 +951,50 @@
 </div>
 
 <!-- PLANTILLA DEL TICKET TÉRMICO UNIFICADA -->
-<div id="printable-ticket">
+<div id="printable-ticket" style="width: 100%; max-width: 58mm; margin: 0 auto;">
   <div style="text-align: center;">
-    <h2 style="margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
-    <p style="margin: 3px 0; font-size: 12px; font-weight: bold;">Tienda Virtual en Línea - Piura</p>
-    <p style="margin: 3px 0; font-size: 11px;">https://kim0alberca.github.io/kimsropa/</p>
-    <p style="margin: 3px 0; font-size: 13px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
+    <h2 style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
+    <p style="margin: 2px 0; font-size: 10px; font-weight: bold;">Tienda Virtual en Línea - Piura</p>
+    <p style="margin: 2px 0; font-size: 9px;">https://kim0alberca.github.io/kimsropa/</p>
+    <p style="margin: 2px 0; font-size: 11px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
   </div>
   
-  <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
+  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
   
-  <div style="font-size: 13px; font-weight: bold; line-height: 1.3;">
-    <p style="margin: 3px 0; font-size: 15px; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
-    <p style="margin: 3px 0;" id="ticket-date">Fecha: --/--/----</p>
-    <p style="margin: 3px 0;" id="ticket-client">Cliente: --</p>
-    <p style="margin: 3px 0;" id="ticket-phone">Teléfono: --</p>
-    <p style="margin: 3px 0;" id="ticket-delivery">Entrega: --</p>
+  <div style="font-size: 11px; font-weight: bold; line-height: 1.2;">
+    <p style="margin: 2px 0; font-size: 13px; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
+    <p style="margin: 2px 0;" id="ticket-date">Fecha: --/--/----</p>
+    <p style="margin: 2px 0;" id="ticket-client">Cliente: --</p>
+    <p style="margin: 2px 0;" id="ticket-phone">Teléfono: --</p>
+    <p style="margin: 2px 0;" id="ticket-delivery">Entrega: --</p>
   </div>
   
-  <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
+  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
   
-  <table style="width: 100%; text-align: left; font-size: 13px; font-weight: bold; border-collapse: collapse;">
+  <table style="width: 100%; text-align: left; font-size: 11px; font-weight: bold; border-collapse: collapse;">
     <thead>
       <tr style="border-bottom: 1px solid #000;">
-        <th style="width: 15%; text-align: center; padding-bottom: 4px;">CANT</th>
-        <th style="width: 55%; padding-bottom: 4px;">PRODUCTO</th>
-        <th style="width: 30%; text-align: right; padding-bottom: 4px;">TOTAL</th>
+        <th style="width: 15%; text-align: center; padding-bottom: 3px;">CANT</th>
+        <th style="width: 55%; padding-bottom: 3px;">PRODUCTO</th>
+        <th style="width: 30%; text-align: right; padding-bottom: 3px;">TOTAL</th>
       </tr>
     </thead>
     <tbody id="ticket-items"></tbody>
   </table>
   
-  <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
+  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
   
-  <div style="text-align: right; font-size: 14px; font-weight: bold; line-height: 1.4;">
-    <p style="margin: 3px 0;" id="ticket-discount"></p>
-    <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold;">TOTAL: S/ <span id="ticket-total">0.00</span></p>
+  <div style="text-align: right; font-size: 12px; font-weight: bold; line-height: 1.3;">
+    <p style="margin: 2px 0;" id="ticket-discount"></p>
+    <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: bold;">TOTAL: S/ <span id="ticket-total">0.00</span></p>
   </div>
   
-  <div style="border-bottom: 2px dashed #000; margin: 8px 0;"></div>
+  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
   
-  <div style="text-align: center; font-size: 12px; font-weight: bold; margin-top: 10px;">
-    <p style="margin: 3px 0;" id="ticket-promo-code">CÓDIGO PROMOCIONAL DE REGALO: --</p>
-    <p style="margin: 3px 0; font-size: 13px;">¡Gracias por tu compra!</p>
-    <p style="margin: 3px 0;">Visítanos de nuevo</p>
+  <div style="text-align: center; font-size: 10px; font-weight: bold; margin-top: 8px;">
+    <p style="margin: 2px 0;" id="ticket-promo-code">CÓDIGO PROMOCIONAL DE REGALO: --</p>
+    <p style="margin: 2px 0; font-size: 11px;">¡Gracias por tu compra!</p>
+    <p style="margin: 2px 0;">Visítanos de nuevo</p>
   </div>
 </div>
 
@@ -1264,7 +1265,7 @@
                   class="color-dot ${idx === 0 ? 'active' : ''}" 
                   style="background-color: ${colorMap[v.color] || '#888888'};" 
                   title="${v.color}"
-                  onclick="selectColor(${p.id}, '${v.color}', ${idx}, this)"
+                  onclick="selectColor(${p.id}, '${v.color}',${idx}, this)"
                 ></span>
               `).join('')}
             </div>
@@ -1946,12 +1947,12 @@
 
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td style="text-align: center; vertical-align: top; font-size: 14px; font-weight: bold; padding: 4px 0;">${item.qty}</td>
-        <td style="font-size: 13px; font-weight: bold; padding: 4px 0; text-transform: uppercase;">
+        <td style="text-align: center; vertical-align: top; font-size: 11px; font-weight: bold; padding: 3px 0;">${item.qty}</td>
+        <td style="font-size: 11px; font-weight: bold; padding: 3px 0; text-transform: uppercase;">
           ${item.nombre}<br>
-          <span style="font-size: 11px;">Talla: ${item.size} | Color: ${item.color}</span>
+          <span style="font-size: 9px;">Talla: ${item.size} | Color: ${item.color}</span>
         </td>
-        <td style="text-align: right; vertical-align: top; font-size: 14px; font-weight: bold; padding: 4px 0;">S/ ${subtotal.toFixed(2)}</td>
+        <td style="text-align: right; vertical-align: top; font-size: 11px; font-weight: bold; padding: 3px 0;">S/ ${subtotal.toFixed(2)}</td>
       `;
       tbody.appendChild(row);
     });
