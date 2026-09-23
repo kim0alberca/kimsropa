@@ -735,58 +735,11 @@
       overflow: hidden;
     }
 
-    /* ESTILOS DE IMPRESIÓN TÉRMICA CORREGIDOS PARA 58MM */
-    <style>
-  /* Ocultar el ticket en la pantalla normal */
-  #printable-ticket {
-    display: none;
-  }
-
-  @media print {
-    /* 1. Limpiar la página para que no imprima encabezados ni pies de página del navegador */
-    @page {
-      margin: 0;
-      size: 58mm auto;
-    }
-
-    /* 2. Resetear el cuerpo y la página para eliminar espacios y fondos extraños */
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      width: 58mm !important;
-      background-color: #fff !important;
-    }
-
-    /* 3. Ocultar absolutamente todo lo que esté fuera del ticket */
-    body * {
-      display: none !important;
-    }
-
-    /* 4. Mostrar únicamente el contenedor del ticket y sus hijos */
-    #printable-ticket, #printable-ticket * {
-      display: block !important;
-      visibility: visible !important;
-    }
-
-    /* 5. Estilos estrictos para el contenedor de 58mm sin position: absolute */
+    /* OCULTAR TICKET HTML ANTIGUO */
     #printable-ticket {
-      display: block !important;
-      position: static !important; /* Cambiado de absolute a static para evitar saltos de página extraños */
-      width: 58mm !important;
-      max-width: 58mm !important;
-      min-width: 58mm !important;
-      margin: 0 auto !important;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 11px; /* Reducido ligeramente a 11px para evitar que las palabras largas se corten */
-      font-weight: bold;
-      color: #000 !important;
-      background: #fff !important;
-      padding: 2mm !important;
-      box-sizing: border-box !important;
-      overflow: hidden !important;
+      display: none;
     }
-  }
-</style>
+  </style>
 </head>
 
 <body>
@@ -960,60 +913,12 @@
     
     <a id="safe-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer" class="action-btn-main btn-checkout" style="padding: 10px; font-size: 0.8rem; text-align: center;">💬 ABRIR EN WHATSAPP</a>
 
-    <!-- BOTÓN DE IMPRESIÓN SOLO PARA EL ADMINISTRADOR -->
+    <!-- BOTÓN DE IMPRESIÓN DIRECTA BLUETOOTH ESC/POS -->
     <button type="button" class="action-btn-main" style="background:#ccff00; color:#000; padding:10px; font-weight:bold;" onclick="printAdminTicket()">
-      🖨️ IMPRIMIR TICKET (SOLO ADMIN)
+      🖨️ IMPRIMIR TICKET DIRECTO (BLUETOOTH)
     </button>
     
     <button type="button" class="action-btn-main btn-keep-buying" onclick="closeSuccessModal()">Cerrar / Volver</button>
-  </div>
-</div>
-
-<!-- PLANTILLA DEL TICKET TÉRMICO UNIFICADA -->
-<div id="printable-ticket" style="width: 100%; max-width: 58mm; margin: 0 auto;">
-  <div style="text-align: center;">
-    <h2 style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase;">KIM'S ROPA</h2>
-    <p style="margin: 2px 0; font-size: 10px; font-weight: bold;">Tienda Virtual en Línea - Piura</p>
-    <p style="margin: 2px 0; font-size: 9px;">https://kim0alberca.github.io/kimsropa/</p>
-    <p style="margin: 2px 0; font-size: 11px; font-weight: bold;">WhatsApp: +51 968 495 402</p>
-  </div>
-  
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-  
-  <div style="font-size: 11px; font-weight: bold; line-height: 1.2;">
-    <p style="margin: 2px 0; font-size: 13px; text-align: center; text-transform: uppercase;">*** TICKET DE VENTA ***</p>
-    <p style="margin: 2px 0;" id="ticket-date">Fecha: --/--/----</p>
-    <p style="margin: 2px 0;" id="ticket-client">Cliente: --</p>
-    <p style="margin: 2px 0;" id="ticket-phone">Teléfono: --</p>
-    <p style="margin: 2px 0;" id="ticket-delivery">Entrega: --</p>
-  </div>
-  
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-  
-  <table style="width: 100%; text-align: left; font-size: 11px; font-weight: bold; border-collapse: collapse;">
-    <thead>
-      <tr style="border-bottom: 1px solid #000;">
-        <th style="width: 15%; text-align: center; padding-bottom: 3px;">CANT</th>
-        <th style="width: 55%; padding-bottom: 3px;">PRODUCTO</th>
-        <th style="width: 30%; text-align: right; padding-bottom: 3px;">TOTAL</th>
-      </tr>
-    </thead>
-    <tbody id="ticket-items"></tbody>
-  </table>
-  
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-  
-  <div style="text-align: right; font-size: 12px; font-weight: bold; line-height: 1.3;">
-    <p style="margin: 2px 0;" id="ticket-discount"></p>
-    <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: bold;">TOTAL: S/ <span id="ticket-total">0.00</span></p>
-  </div>
-  
-  <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-  
-  <div style="text-align: center; font-size: 10px; font-weight: bold; margin-top: 8px;">
-    <p style="margin: 2px 0;" id="ticket-promo-code">CÓDIGO PROMOCIONAL DE REGALO: --</p>
-    <p style="margin: 2px 0; font-size: 11px;">¡Gracias por tu compra!</p>
-    <p style="margin: 2px 0;">Visítanos de nuevo</p>
   </div>
 </div>
 
@@ -1947,15 +1852,6 @@
     const dateStr = lastOrderDateStr || new Date().toLocaleString('es-PE');
     const promoCodeToPrint = lastOrderGiftCode || "XPONLg";
 
-    document.getElementById('ticket-date').innerText = "Fecha: " + dateStr;
-    document.getElementById('ticket-client').innerText = "Cliente: " + name;
-    document.getElementById('ticket-phone').innerText = "Tel: " + phone;
-    document.getElementById('ticket-delivery').innerText = "Entrega: " + delivery;
-    document.getElementById('ticket-promo-code').innerText = "CÓDIGO PROMOCIONAL DE REGALO: " + promoCodeToPrint;
-
-    const tbody = document.getElementById('ticket-items');
-    tbody.innerHTML = '';
-
     let total = 0;
     const itemsToPrint = lastOrderCart.length > 0 ? lastOrderCart : cart;
     const discToPrint = lastOrderCart.length > 0 ? lastOrderDiscount : couponDiscount;
@@ -1963,31 +1859,12 @@
     itemsToPrint.forEach(item => {
       const subtotal = Number(item.price) * Number(item.qty);
       total += subtotal;
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td style="text-align: center; vertical-align: top; font-size: 11px; font-weight: bold; padding: 3px 0;">${item.qty}</td>
-        <td style="font-size: 11px; font-weight: bold; padding: 3px 0; text-transform: uppercase;">
-          ${item.nombre}<br>
-          <span style="font-size: 9px;">Talla: ${item.size} | Color: ${item.color}</span>
-        </td>
-        <td style="text-align: right; vertical-align: top; font-size: 11px; font-weight: bold; padding: 3px 0;">S/ ${subtotal.toFixed(2)}</td>
-      `;
-      tbody.appendChild(row);
     });
 
     const discountAmount = total * discToPrint;
     const finalTotal = total - discountAmount;
 
-    if (discToPrint > 0) {
-      document.getElementById('ticket-discount').innerText = `Desc. (${Math.round(discToPrint*100)}%): -S/ ${discountAmount.toFixed(2)}`;
-    } else {
-      document.getElementById('ticket-discount').innerText = "";
-    }
-
-    document.getElementById('ticket-total').innerText = finalTotal.toFixed(2);
-
-    // Impresión con Web Bluetooth API ESC/POS (58mm)
+    // Impresión directa Bluetooth ESC/POS (58mm) sin diálogos de PDF
     if ('bluetooth' in navigator) {
       try {
         showToast("🔍 Buscando impresora Bluetooth...");
@@ -2031,14 +1908,12 @@
 
           let data = reset;
           
-          // Encabezado
           data += center + doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
           data += "Tienda Virtual en Linea - Piura\n";
           data += "https://kim0alberca.github.io/kimsropa/\n";
           data += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
           data += "--------------------------------\n";
           
-          // Datos del Ticket
           data += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
           data += left;
           data += "Fecha: " + dateStr + "\n";
@@ -2055,11 +1930,9 @@
           data += "Pago: " + payment + "\n";
           data += "--------------------------------\n";
           
-          // Encabezados de Tabla
           data += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
           data += "--------------------------------\n";
           
-          // Ítems (32 Caracteres de ancho para 58mm)
           itemsToPrint.forEach(item => {
             let cantStr = (item.qty + " ").padEnd(6, ' ');
             let subtotalStr = ("S/" + (item.price * item.qty).toFixed(2)).padStart(8, ' ');
@@ -2072,7 +1945,6 @@
           
           data += "--------------------------------\n";
           
-          // Totales
           data += right;
           if (discToPrint > 0) {
             data += "Desc. (" + Math.round(discToPrint*100) + "%): -S/ " + discountAmount.toFixed(2) + "\n";
@@ -2080,7 +1952,6 @@
           data += doubleSize + boldOn + "TOTAL: S/ " + finalTotal.toFixed(2) + "\n" + normalSize + boldOff;
           data += "--------------------------------\n";
           
-          // Pie de Página
           data += center;
           data += boldOn + "CODIGO PROMO DE REGALO:\n" + promoCodeToPrint + "\n\n" + boldOff;
           data += boldOn + "¡Gracias por tu compra!\n" + boldOff;
@@ -2103,11 +1974,12 @@
           return;
         }
       } catch (err) {
-        console.warn("Error/Cancelado Bluetooth, usando impresión nativa del sistema:", err);
+        console.warn("Error Bluetooth:", err);
+        showToast("⚠️ No se pudo conectar por Bluetooth.");
       }
+    } else {
+      showToast("⚠️ Bluetooth no soportado en este navegador.");
     }
-
-    window.print();
   }
 </script>
 
