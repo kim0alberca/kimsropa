@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "type": "comprobante-examen-neuropsicologia",
+  "name": "JASSIRA BERILA GUTIERREZ ARRUNATEGUI",
+  "code": "48190859",
+  "createdAt": "2026-11-08T01:48:10.296Z",
+  "finishedAt": "2026-11-08T02:03:23.437Z",
+  "status": "finalizado",
+  "reason": "Entregado",
+  "hits": 10,
+  "grade": 20,
+  "incidents": [],
+  "answers": [
+    {
+      "id": 0,
+      "choice": 1
+    },
+    {
+      "id": 4,
+      "choice": 4
+    },
+    {
+      "id": 3,
+      "choice": 0
+    },
+    {
+      "id": 2,
+      "choice": 3
+    },
+    {
+      "id": 7,
+      "choice": 0
+    },
+    {
+      "id": 6,
+      "choice": 2
+    },
+    {
+      "id": 1,
+      "choice": 2
+    },
+    {
+      "id": 5,
+      "choice": 1
+    },
+    {
+      "id": 8,
+      "choice": 3
+    },
+    {
+      "id": 9,
+      "choice": 4
+    }
+  ]
+}
