@@ -911,10 +911,10 @@
 <!-- MODAL ÉXITO -->
 <div id="success-modal">
   <div class="success-content">
-    <h3>🛍️ ¡PEDIDO GENERADO! PENDIENTE DE PAGO</h3>
+    <h3>🎉 ¡PEDIDO GENERADO CON ÉXITO!</h3>
     
     <div style="background: #111; border: 1px dashed #ccff00; padding: 10px; border-radius: 6px; text-align: center;">
-      <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 4px 0;">🎟️ TU CUPÓN SE ENTREGARÁ AL CONFIRMAR EL PAGO:</p>
+      <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 4px 0;">🎟️ TU CÓDIGO DE DESCUENTO PARA TU PRÓXIMA COMPRA:</p>
       <strong id="assigned-promo-code" style="font-size: 1.2rem; color: #ccff00; letter-spacing: 2px;">Cargando...</strong>
     </div>
 
@@ -1025,11 +1025,13 @@
             listadoCuponesHoja[codigo] = descuento;
           }
         }
-
+        if(Object.keys(listadoCuponesHoja).length === 0) {
+          listadoCuponesHoja["XPONLg"] = 0.10;
+        }
       })
       .catch(err => {
         console.error("Error al cargar cupones:", err);
-
+        listadoCuponesHoja["XPONLg"] = 0.10;
       });
   }
 
@@ -1146,6 +1148,37 @@
       document.getElementById('catalog-grid').innerHTML = '<div class="no-results">Error al cargar productos.</div>';
     });
 
+  // Promociones exclusivas para la categoría SCRUNCHIES.
+  const SCRUNCHIES_PACKS = {1: 3, 2: 5, 4: 10};
+  function isScrunchie(product) {
+    return product && String(product.categoria).trim().toUpperCase() === 'SCRUNCHIES';
+  }
+  function selectedPack(productId) {
+    const el = document.getElementById(`scrunchies-pack-${productId}`);
+    return el ? Number(el.value) : 1;
+  }
+
+  // Un selector de color por cada scrunchie incluido en el paquete.
+  function renderScrunchieColors(prodId) {
+    const product = allProducts.find(p => p.id === prodId);
+    const container = document.getElementById(`scrunchies-colors-${prodId}`);
+    if (!product || !container || !isScrunchie(product)) return;
+    const count = selectedPack(prodId);
+    const oldSelections = Array.from(container.querySelectorAll('select')).map(el => el.value);
+    const options = product.variants.map(v => `<option value="${escapeHtml(v.color)}">${escapeHtml(v.color)}</option>`).join('');
+    container.innerHTML = `<label style="display:block;margin:8px 0 5px;">Elige el color de cada scrunchie:</label>` +
+      Array.from({length: count}, (_, i) => `<label style="display:block;margin:5px 0;font-size:0.75rem;">Unidad ${i+1}
+        <select class="size-select scrunchie-unit-color" aria-label="Color de scrunchie ${i+1}" style="margin-top:3px;">${options}</select>
+      </label>`).join('');
+    container.querySelectorAll('select').forEach((el, i) => {
+      if (oldSelections[i] && product.variants.some(v => v.color === oldSelections[i])) el.value = oldSelections[i];
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
   function renderProducts() {
     const grid = document.getElementById('catalog-grid');
     const paginationContainer = document.getElementById('pagination-controls');
@@ -1171,7 +1204,7 @@
 
       const availableSizes = Object.keys(p.prices).filter(s => p.prices[s] > 0);
       const defaultSize = availableSizes[0] || 'M';
-      const defaultPrice = p.prices[defaultSize] || 0;
+      const defaultPrice = isScrunchie(p) ? SCRUNCHIES_PACKS[1] : (p.prices[defaultSize] || 0);
       const initialColor = p.variants[0].color;
 
       card.innerHTML = `
@@ -1210,8 +1243,13 @@
           <p style="color: #888; font-size: 0.75rem; margin-bottom: 8px; font-style: italic;">${p.caracteristicas}</p>
 
           <div class="selector-group">
-            <label>Talla:</label>
-            <select class="size-select" id="size-${p.id}" onchange="updateCardPrice(${p.id})">
+            ${isScrunchie(p) ? `<label>Elige tu promoción:</label>
+              <select class="size-select" id="scrunchies-pack-${p.id}" onchange="updateCardPrice(${p.id}); renderScrunchieColors(${p.id})">
+                <option value="1">1 scrunchie — S/ 3.00</option>
+                <option value="2">2 scrunchies — S/ 5.00</option>
+                <option value="4">4 scrunchies — S/ 10.00</option>
+              </select><div id="scrunchies-colors-${p.id}"></div>` : `<label>Talla:</label>`}
+            <select class="size-select" id="size-${p.id}" onchange="updateCardPrice(${p.id})" ${isScrunchie(p) ? 'style="display:none"' : ''}>
               ${Object.keys(p.prices).map(size => `
                 <option value="${size}" ${size === defaultSize ? 'selected' : ''} ${p.prices[size] <= 0 ? 'disabled' : ''}>Talla ${size}${p.prices[size] <= 0 ? ' (no disponible)' : ''}</option>
               `).join('')}
@@ -1219,7 +1257,7 @@
 
             <div class="price-tag" id="price-${p.id}">S/ ${defaultPrice.toFixed(2)}</div>
 
-            <label style="text-align:center; margin-bottom:4px;">Cantidad:</label>
+            <label style="text-align:center; margin-bottom:4px;">${isScrunchie(p) ? 'Cantidad de paquetes:' : 'Cantidad:'}</label>
             <div class="qty-controls">
               <button class="qty-btn" type="button" onclick="changeQty(${p.id}, -1)">-</button>
               <input type="text" class="qty-input" id="qty-${p.id}" value="1" readonly>
@@ -1231,6 +1269,7 @@
         <button class="add-btn" type="button" id="btn-add-${p.id}" onclick="addToCart(${p.id})">AÑADIR AL CARRITO</button>
       `;
       grid.appendChild(card);
+      if (isScrunchie(p)) renderScrunchieColors(p.id);
     });
 
     if (totalPages > 1) {
@@ -1298,7 +1337,7 @@
     const product = allProducts.find(p => p.id === prodId);
     if(!product) return;
     const selectedSize = document.getElementById(`size-${prodId}`).value;
-    const price = product.prices[selectedSize] || 0;
+    const price = isScrunchie(product) ? SCRUNCHIES_PACKS[selectedPack(prodId)] : (product.prices[selectedSize] || 0);
     document.getElementById(`price-${prodId}`).innerText = `S/ ${price.toFixed(2)}`;
   }
 
@@ -1319,9 +1358,12 @@
     const btnAdd = document.getElementById(`btn-add-${prodId}`);
     const selectedColorInput = document.getElementById(`selected-color-${prodId}`);
 
-    const size = sizeSelect.value;
-    const color = selectedColorInput ? selectedColorInput.value : 'ÚNICO';
-    const price = product.prices[size] || 0;
+    const pack = isScrunchie(product) ? selectedPack(prodId) : null;
+    const size = pack ? `PACK DE ${pack} UNIDAD${pack > 1 ? 'ES' : ''}` : sizeSelect.value;
+    const unitColors = pack ? Array.from(document.querySelectorAll(`#scrunchies-colors-${prodId} select`)).map(el => el.value) : [];
+    if (pack && unitColors.length !== pack) { showToast('Selecciona los colores de tu paquete.'); return; }
+    const color = pack ? unitColors.map((c, i) => `${i + 1}: ${c}`).join(', ') : (selectedColorInput ? selectedColorInput.value : 'ÚNICO');
+    const price = pack ? SCRUNCHIES_PACKS[pack] : (product.prices[size] || 0);
     const qty = parseInt(qtyInput.value) || 1;
     if (price <= 0) { showToast("Selecciona una talla disponible."); return; }
 
@@ -1500,7 +1542,7 @@
             <img src="${item.imgUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.src='https://via.placeholder.com/50?text=Foto'">
             <div class="order-item-info">
               <h4>${item.nombre}</h4>
-              <p>Talla: <strong>${item.size}</strong> | Color: <strong>${item.color}</strong> · PU: S/ ${Number(item.price).toFixed(2)}</p>
+              <p>${String(item.size).startsWith('PACK DE') ? 'Promoción: ' : 'Talla: '}<strong>${item.size}</strong> | ${String(item.size).startsWith('PACK DE') ? 'Colores por unidad: ' : 'Color: '}<strong>${item.color}</strong> · PU: S/ ${Number(item.price).toFixed(2)}</p>
               <div class="qty-controls" style="justify-content: flex-start;">
                 <button class="qty-btn" type="button" onclick="updateCartItemQty(${index}, -1)">-</button>
                 <input type="text" class="qty-input" value="${item.qty}" readonly>
@@ -1659,8 +1701,7 @@
       metodo: metodoPago,
       cliente: textoCliente,
       cupon: appliedCoupon || "-", 
-      cuponGenerado: "-",
-      descuentoSolicitado: appliedCoupon ? couponDiscount : 0, 
+      cuponGenerado: codigoRegalo || "-", 
       items: listaItems
     };
 
@@ -1722,10 +1763,24 @@
       return;
     }
 
-    // El cupón usado se valida y consume en Apps Script, no en localStorage.
+    if (appliedCoupon) {
+      try {
+        let cuponesUsados = [];
+        const rawUsados = localStorage.getItem('used_coupons');
+        if (rawUsados) cuponesUsados = JSON.parse(rawUsados);
+        if (!cuponesUsados.includes(appliedCoupon)) {
+          cuponesUsados.push(appliedCoupon);
+          localStorage.setItem('used_coupons', JSON.stringify(cuponesUsados));
+        }
+      } catch(e) {}
+    }
 
-    // El cupón de regalo se asigna ÚNICAMENTE después de confirmar el pago.
-    let codigoRegalo = "PENDIENTE DE PAGO";
+    let codigosHoja = Object.keys(listadoCuponesHoja);
+    let codigoRegalo = "XPONLg";
+    if (codigosHoja.length > 0) {
+      let randomIndex = Math.floor(Math.random() * codigosHoja.length);
+      codigoRegalo = codigosHoja[randomIndex];
+    }
 
     let text = "[ NUEVO PEDIDO DE LA WEB ]\n\n";
     text += "NOMBRES Y APELLIDOS: " + name + "\n";
@@ -1754,8 +1809,8 @@
       const subtotal = Number(item.price) * Number(item.qty);
       total += subtotal;
       text += "\n" + (index + 1) + ". " + item.nombre + "\n";
-      text += "   - Talla: " + item.size + "\n";
-      text += "   - Color: " + item.color + "\n";
+      text += (String(item.size).startsWith('PACK DE') ? "   - Promoción: " : "   - Talla: ") + item.size + "\n";
+      text += (String(item.size).startsWith('PACK DE') ? "   - Colores por unidad: " : "   - Color: ") + item.color + "\n";
       text += "   - Cantidad: " + item.qty + "\n";
       text += "   - Subtotal: S/ " + subtotal.toFixed(2) + "\n";
 
@@ -1781,7 +1836,7 @@
     }
     text += "TOTAL A PAGAR: S/ " + finalTotal.toFixed(2) + "\n\n";
     
-    text += "PEDIDO PENDIENTE DE PAGO. Envíanos tu comprobante de Yape/Plin por WhatsApp. Tras verificar el abono, recibirás un cupón para tu próxima compra.";
+    text += "¡GRACIAS POR TU COMPRA! Tu código de descuento para tu próxima compra es: *" + codigoRegalo + "*.";
 
     closeCheckoutModal();
 
@@ -1807,10 +1862,7 @@
     const encodedText = encodeURIComponent(text);
     const whatsappUrl = "https://api.whatsapp.com/send?phone=" + MY_WHATSAPP_NUMBER + "&text=" + encodedText;
 
-    const pedidoId = "PED-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
-    text += "\nNÚMERO DE PEDIDO: " + pedidoId + "\n";
-    if (finalOrderText) finalOrderText.value = text;
-    const whatsappUrlFinal = "https://api.whatsapp.com/send?phone=" + MY_WHATSAPP_NUMBER + "&text=" + encodeURIComponent(text);
+    const pedidoId = "PED-" + Date.now().toString().slice(-4);
     registrarVentaEnSheets(pedidoId, finalTotal, payment, resumenProductos, codigoRegalo);
 
     cart = [];
@@ -1823,8 +1875,11 @@
     }
     updateCartUI();
 
-    // REDIRECCIÓN AUTOMÁTICA A WHATSAPP
-    window.location.href = whatsappUrlFinal;
+    // Abrir WhatsApp en otra pestaña para mantener KIMSROPA disponible.
+    // Si el navegador bloquea la pestaña nueva, conservar la redirección original.
+    const whatsappTab = window.open(whatsappUrl, '_blank');
+    if (whatsappTab) whatsappTab.opener = null;
+    else window.location.href = whatsappUrl;
   }
 
   async function printAdminTicket() {
