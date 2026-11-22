@@ -468,20 +468,39 @@
       kimsFiltrarPedidos();
     }
 
-    // Obtiene YYYY-MM sin modificar la fecha original que aparece en el ticket.
-    // Acepta formatos de Sheets y Apps Script: YYYY-MM-DD, DD/MM/YYYY,
-    // DD-MM-YYYY, YYYY/MM/DD y fecha ISO con hora.
+    // Lee el mes sin cambiar la fecha que se muestra ni la fecha del ticket.
+    // Google Apps Script puede enviar fechas como:
+    // "Thu Sep 10 2026 11:11:17 GMT-0500 (hora estándar de Perú)".
+    // También acepta fechas ISO y DD/MM/AAAA, DD-MM-AAAA.
     function kimsMesDeFecha(valor) {
       const s = String(valor == null ? '' : valor).trim();
-      let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(?:[T\s,]|$)/);
+      if (!s || s === '-') return '';
+      const valido = (anio, mes, dia) => {
+        const y = Number(anio), m = Number(mes), d = Number(dia);
+        if (!Number.isInteger(y) || y < 1900 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31) return '';
+        const fecha = new Date(Date.UTC(y, m - 1, d));
+        return fecha.getUTCFullYear() === y && fecha.getUTCMonth() === m - 1 && fecha.getUTCDate() === d
+          ? `${y}-${String(m).padStart(2, '0')}` : '';
+      };
+
+      let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(?=[T\s,]|$)/);
+      if (m) return valido(m[1], m[2], m[3]);
+
+      m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})(?=[T\s,]|$)/);
+      if (m) return valido(m[3], m[2], m[1]);
+
+      // Formato Date.toString() de Apps Script: "Sat Nov 21 2026 ... GMT-0500 (...)".
+      // Se extrae la fecha textual para evitar cambios de mes por zona horaria.
+      m = s.match(/^(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+)?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{4})(?=\s|$)/i);
       if (m) {
-        const mes = Number(m[2]);
-        return mes >= 1 && mes <= 12 ? `${m[1]}-${String(mes).padStart(2, '0')}` : '';
+        const meses = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+        return valido(m[3], meses.indexOf(m[1].toLowerCase()) + 1, m[2]);
       }
-      m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})(?:[T\s,]|$)/);
-      if (m) {
-        const mes = Number(m[2]);
-        return mes >= 1 && mes <= 12 ? `${m[3]}-${String(mes).padStart(2, '0')}` : '';
+
+      // Respaldo para otras fechas reconocibles por el navegador.
+      const fecha = new Date(s);
+      if (!Number.isNaN(fecha.getTime())) {
+        return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
       }
       return '';
     }
