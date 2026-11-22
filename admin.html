@@ -305,6 +305,7 @@
     
     let pedidosAgrupadosGlobal = {};
     let pedidoActualParaImprimir = null;
+    const kimsConfirmacionesEnCurso = new Set();
     const kimsEsc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;", "\"":"&quot;", "'":"&#39;"}[c]));
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -318,13 +319,15 @@
         </tr>
       `;
 
-      fetch(WEB_APP_URL)
+      return fetch(WEB_APP_URL + (WEB_APP_URL.includes("?") ? "&" : "?") + "_kims=" + Date.now(), {cache:"no-store"})
         .then(response => {
           if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
           return response.json();
         })
         .then(datos => {
+          if (datos && datos.status === "error") throw new Error(datos.message || "Error de Apps Script");
           procesarYRenderizar(datos);
+          return datos;
         })
         .catch(error => {
           console.error("Error al obtener datos:", error);
@@ -335,6 +338,7 @@
               </td>
             </tr>
           `;
+          throw error;
         });
     }
 
@@ -411,8 +415,10 @@
           const color = fila.color || fila.Color || fila.colour || "-";
           const variante = fila.variante || fila.Variante || "";
           const cantidad = Number(fila.cantidad || fila.Cantidad || 1);
-          const subtotalItem = parseFloat(fila.subtotal || fila.Subtotal || fila.monto || fila.Monto || 0);
-          const precioUnitario = cantidad > 0 ? (subtotalItem / cantidad) : subtotalItem;
+          // Apps Script devuelve monto como PRECIO UNITARIO, no subtotal.
+          const subtotalExplicito = fila.subtotal ?? fila.Subtotal;
+          const precioUnitario = Number(fila.monto ?? fila.Monto ?? (subtotalExplicito != null && cantidad > 0 ? Number(subtotalExplicito)/cantidad : 0)) || 0;
+          const subtotalItem = subtotalExplicito != null ? Number(subtotalExplicito) || 0 : precioUnitario * cantidad;
 
           pedidosAgrupadosGlobal[idPedido].items.push({
             nombre: nombre,
@@ -485,18 +491,52 @@
     // "Thu Sep 10 2026 11:11:17 GMT-0500 (hora estándar de Perú)".
     // También acepta fechas ISO y DD/MM/AAAA, DD-MM-AAAA.
 
-    // CONFIRMACIÓN MANUAL: la clave se valida en el servidor y nunca se guarda en el HTML.
+    // Confirma una sola vez; luego consulta GET para verificar el estado REAL en Sheets.
+    // No se reenvía POST automáticamente para evitar solicitudes duplicadas.
     async function kimsConfirmarPago(idPedido) {
       const ped = pedidosAgrupadosGlobal[idPedido];
-      if (!ped || ped.estado === "PAGADO") return;
+      if (!ped || ped.estado === "PAGADO" || kimsConfirmacionesEnCurso.has(idPedido)) return;
       if (!confirm(`¿Ya verificaste en Yape/Plin o en efectivo el pago de S/ ${ped.totalPedido.toFixed(2)} del pedido ${idPedido}?\n\nNo confirmes solo con la captura.`)) return;
       const clave = prompt("Ingresa la clave privada de confirmación de pagos:");
       if (!clave) return;
+      kimsConfirmacionesEnCurso.add(idPedido);
       try {
-        await fetch(WEB_APP_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain"}, body:JSON.stringify({accion:"confirmarPago",pedidoId:idPedido,clave:clave})});
-        alert("Solicitud enviada. Actualizaremos el panel para comprobar el estado real. Si sigue PENDIENTE, no se confirmó.");
-        setTimeout(cargarDatosVentas, 1600);
-      } catch (e) { alert("No se pudo enviar la confirmación. Comprueba tu conexión."); }
+        // Apps Script suele requerir no-cors desde GitHub Pages.
+        // La respuesta POST no es legible: la confirmación se verifica con GET.
+        await fetch(WEB_APP_URL, {
+          method:"POST", mode:"no-cors",
+          headers:{"Content-Type":"text/plain;charset=utf-8"},
+          body:JSON.stringify({accion:"confirmarPago",pedidoId:idPedido,clave})
+        });
+        let verificado = false;
+        let errorLectura = null;
+        for (let intento = 0; intento < 5; intento++) {
+          await new Promise(resolve => setTimeout(resolve, intento === 0 ? 1700 : 2200));
+          try {
+            await cargarDatosVentas();
+            if (pedidosAgrupadosGlobal[idPedido]?.estado === "PAGADO") {
+              verificado = true;
+              break;
+            }
+          } catch (err) { errorLectura = err; }
+        }
+        if (verificado) {
+          const confirmado = pedidosAgrupadosGlobal[idPedido];
+          alert(`✅ Pago confirmado en Google Sheets para ${idPedido}.` +
+            (confirmado.cuponGenerado && confirmado.cuponGenerado !== "-"
+              ? `\n\nCupón asignado: ${confirmado.cuponGenerado}\nAhora puedes enviarlo por WhatsApp desde el botón «Enviar cupón».`
+              : "\n\nNo hay un cupón disponible asignado; revisa Hoja 2."));
+        } else {
+          alert(`⚠️ No se pudo verificar la confirmación de ${idPedido}.` +
+            (errorLectura ? "\nHubo un problema al consultar Google Sheets." : "\nEl pedido sigue PENDIENTE en la última consulta.") +
+            "\n\nNO vuelvas a confirmar inmediatamente. Revisa primero la columna K de la hoja Ventas y actualiza el panel. Si sigue pendiente, revisaremos el código de Apps Script.");
+        }
+      } catch (err) {
+        console.error("Error al enviar confirmación:", err);
+        alert("⚠️ No se pudo enviar la solicitud. Revisa tu conexión y la columna K de Ventas antes de volver a intentarlo.");
+      } finally {
+        kimsConfirmacionesEnCurso.delete(idPedido);
+      }
     }
 
     function kimsEnviarCupon(idPedido) {
