@@ -10,6 +10,8 @@
   <!-- CONFIGURACIÓN PWA -->
   <link rel="manifest" href="manifest.json?v=2">
   <meta name="theme-color" content="#0d0d0d">
+  <meta name="description" content="KIMSROPA: polos y moda urbana. Explora modelos, tallas y colores, arma tu pedido y coordina tu compra por WhatsApp.">
+  <meta property="og:url" content="https://kim0alberca.github.io/kimsropa/">
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -106,6 +108,11 @@
       border: none;
     }
     
+    .trust-strip { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:10px 12px; background:#191919; color:#e8e8e8; font-size:12px; }
+    .trust-strip span { white-space:nowrap; }
+    .product-gallery img { background:#222; }
+    @media(max-width:520px){.trust-strip{font-size:11px; gap:7px;} .catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;} .product-card{padding:8px;} .product-gallery{height:175px;} .bottom-floating-cart{padding:9px;} }
+
     /* PANEL SUPERIOR FIJO */
     .header-fixed-panel {
       position: -webkit-sticky;
@@ -751,6 +758,10 @@
     <img src="https://raw.githubusercontent.com/kim0alberca/kimsropa/main/banner-bienvenida.jpg" alt="Bienvenida a Kimsropa">
   </div>
 
+  <section class="trust-strip" aria-label="Información de compra">
+    <span>🛍️ Elige talla y color</span><span>💬 Coordina por WhatsApp</span><span>🚚 Consulta tu entrega</span>
+  </section>
+
   <!-- AVISO DINÁMICO DE ENVÍO GRATIS -->
   <div id="shipping-banner">
     🚚 ¡Envío GRATIS en pedidos mayores a S/ 100!
@@ -1166,7 +1177,7 @@
       const initialColor = p.variants[0].color;
 
       card.innerHTML = `
-        <span class="fomo-badge">🔥 ¡ÚLTIMAS UNIDADES!</span>
+        <!-- No anunciar escasez sin datos de inventario reales -->
 
         <div>
           <div class="product-gallery" id="gallery-${p.id}">
@@ -1175,7 +1186,7 @@
                 src="${v.url}" 
                 id="img-${p.id}-${idx}" 
                 data-color="${v.color}" 
-                loading="${idx === 0 ? 'eager' : 'lazy'}" 
+                loading="lazy" decoding="async" 
                 onerror="this.src='https://via.placeholder.com/300x300?text=Producto'"
               >
             `).join('')}
@@ -1204,7 +1215,7 @@
             <label>Talla:</label>
             <select class="size-select" id="size-${p.id}" onchange="updateCardPrice(${p.id})">
               ${Object.keys(p.prices).map(size => `
-                <option value="${size}" ${size === defaultSize ? 'selected' : ''}>Talla ${size}</option>
+                <option value="${size}" ${size === defaultSize ? 'selected' : ''} ${p.prices[size] <= 0 ? 'disabled' : ''}>Talla ${size}${p.prices[size] <= 0 ? ' (no disponible)' : ''}</option>
               `).join('')}
             </select>
 
@@ -1314,6 +1325,7 @@
     const color = selectedColorInput ? selectedColorInput.value : 'ÚNICO';
     const price = product.prices[size] || 0;
     const qty = parseInt(qtyInput.value) || 1;
+    if (price <= 0) { showToast("Selecciona una talla disponible."); return; }
 
     const variantObj = product.variants.find(v => v.color === color) || product.variants[0];
     const imgUrl = variantObj ? variantObj.url : '';
@@ -1659,7 +1671,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datosVenta)
     })
-    .then(() => console.log("Venta enviada correctamente a Google Sheets"))
+    .then(() => console.log("Solicitud de registro enviada; confirmar en Google Sheets (no-cors no permite verificar la respuesta)."))
     .catch(err => console.error("Error al registrar venta:", err));
   }
   
