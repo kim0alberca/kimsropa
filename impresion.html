@@ -1,0 +1,343 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>KIMSROPA | Impresión</title><style>body{font:16px system-ui;background:#101010;color:white;margin:16px}main{max-width:420px;margin:auto}h1{color:#d9ff00;font-size:23px}#ticket-preview-box{background:white;color:black;padding:14px;border-radius:8px}button{width:100%;padding:15px;margin-top:12px;background:#1769df;color:white;border:0;border-radius:8px;font-weight:bold}button:disabled{opacity:.5}#estado{overflow-wrap:anywhere}</style></head><body><main><h1>KIMSROPA · Impresión</h1><p id="estado" role="status">Esperando ticket del panel privado…</p><div id="ticket-modal" style="display:none"><div id="ticket-preview-box"></div><button class="btn-modal-print" onclick="imprimir()">🖨️ Imprimir Bluetooth Directo</button></div></main><script>let pedidoActualParaImprimir=null;
+    const kimsEsc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;", "\"":"&quot;", "'":"&#39;"}[c]));
+    function kimsDatosCliente(clienteRaw, telefonoRaw, dniRaw) {
+      let nombre = String(clienteRaw ?? '').trim();
+      let telefono = String(telefonoRaw ?? '').replace(/\D/g, '');
+      let dni = String(dniRaw ?? '').replace(/\D/g, '');
+
+      // Pedidos web anteriores: "NOMBRE - CELULAR" o "NOMBRE - CELULAR - DNI".
+      // Eliminar los números del nombre INCLUSO SI el servidor ya entregó
+      // teléfono y DNI por separado. Así no se repiten en el ticket.
+      const piezas = nombre.split(/\s+[-–—|]\s+/).map(x => x.trim()).filter(Boolean);
+      if (piezas.length > 1) {
+        const resto = [piezas[0]];
+        for (let i = 1; i < piezas.length; i++) {
+          const parte = piezas[i];
+          const telMatch = parte.match(/^(?:\+?51[\s-]*)?(9\d{8})$/);
+          const dniMatch = parte.match(/^DNI\s*[:#-]?\s*(\d{8})$/i);
+          if (telMatch) {
+            if (!telefono) telefono = telMatch[1];
+          } else if (dniMatch) {
+            if (!dni) dni = dniMatch[1];
+          } else {
+            resto.push(parte);
+          }
+        }
+        nombre = resto.join(' - ');
+      }
+
+      // También admite etiquetas escritas dentro del campo Cliente.
+      nombre = nombre.replace(/(?:^|[;,\s])DNI\s*[:#-]?\s*(\d{8})(?=$|[;,\s])/gi, (texto, numero) => {
+        if (!dni) dni = numero;
+        return ' ';
+      });
+      nombre = nombre.replace(/(?:^|[;,\s])(?:Celular|Tel[eé]fono|WhatsApp)\s*[:#-]?\s*(?:\+?51\s*)?(9\d{8})(?=$|[;,\s])/gi, (texto, numero) => {
+        if (!telefono) telefono = numero;
+        return ' ';
+      });
+
+      // Respaldo para registros que terminan en "NOMBRE - 9XXXXXXXX".
+      nombre = nombre.replace(/\s*[-–—|]\s*(?:\+?51\s*)?(9\d{8})\s*$/g, (texto, numero) => {
+        if (!telefono) telefono = numero;
+        return '';
+      });
+      nombre = nombre.replace(/\s+/g, ' ').replace(/^[\s,;|–—-]+|[\s,;|–—-]+$/g, '').trim();
+      return { nombre: nombre || 'No registrado', telefono: telefono || '', dni: dni || '' };
+    }
+
+    function kimsTieneCupon(ped) {
+      const codigo = String(ped?.cuponGenerado ?? "").trim();
+      return !!ped && ped.estado === "PAGADO" && !!codigo && codigo !== "-" && codigo.toLowerCase() !== "null" && codigo.toLowerCase() !== "undefined";
+    }
+
+    function verTicket(idPedido) {
+      const ped = pedidoActualParaImprimir;
+      if (!ped) return;
+      
+      const clienteTicket = kimsDatosCliente(ped.cliente, ped.telefono, ped.dni);
+      pedidoActualParaImprimir = { ...ped, cliente: clienteTicket.nombre, telefono: clienteTicket.telefono, dni: clienteTicket.dni };
+
+      let itemsHtml = "";
+      ped.items.forEach(it => {
+        let detalleVar = it.variante ? it.variante : `Talla: ${it.talla} | Color: ${it.color}`;
+        itemsHtml += `
+          <tr>
+            <td style="text-align: center; padding: 3px 0; vertical-align: top;">${it.cantidad}</td>
+            <td style="padding: 3px 0;">${kimsEsc(it.nombre)}<br><span style="font-size: 10px; color: #555;">${kimsEsc(detalleVar)}</span></td>
+            <td style="text-align: right; padding: 3px 0; vertical-align: top;">S/ ${it.subtotal.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      const previewBox = document.getElementById("ticket-preview-box");
+      previewBox.innerHTML = `
+        <div style="text-align: center; margin-bottom: 6px;">
+          <img src="https://kim0alberca.github.io/kimsropa/logo.png" alt="Logo Tienda" style="width: 80px; height: auto; display: inline-block;" />
+          <h3 style="margin: 2px 0 0 0; font-size: 14px;">KIM'S ROPA</h3>
+          <p style="font-size: 10px; margin: 2px 0;">Piura, Perú</p>
+        </div>
+        <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>ID:</strong> ${kimsEsc(ped.idPedido)}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Fecha:</strong> ${kimsEsc(ped.fecha)}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Cliente:</strong> ${kimsEsc(clienteTicket.nombre)}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Celular:</strong> ${kimsEsc(clienteTicket.telefono || 'No registrado')}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>DNI:</strong> ${kimsEsc(clienteTicket.dni || 'No registrado')}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Pago:</strong> ${kimsEsc(ped.pago)}</p>
+        <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+        <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 1px solid #000;">
+              <th style="width: 15%; text-align: center;">CANT</th>
+              <th style="width: 55%;">PRODUCTO</th>
+              <th style="width: 30%; text-align: right;">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+        <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+        ${ped.descuento > 0 ? `<p style="text-align:right;font-size:11px">Descuento aplicado: ${Math.round(ped.descuento*100)}%</p>` : ''}
+        <div style="text-align: right; font-size: 13px; font-weight: bold;">
+          TOTAL: S/ ${ped.totalPedido.toFixed(2)}
+        </div>
+        <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+        <div style="text-align: center; font-size: 10px; margin-top: 8px;">
+          ${kimsTieneCupon(ped) ? `<p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO:</strong> ${kimsEsc(ped.cuponGenerado)}</p>` : ""}
+          <p style="margin: 6px 0 4px 0;"><strong>¡ESCANEA PARA VISITAR LA TIENDA!</strong></p>
+          <div style="display: inline-block; background: #fff; padding: 4px; margin: 4px 0;">
+            <img src="https://kim0alberca.github.io/kimsropa/qr-tienda.png" alt="QR Tienda" style="width: 110px; height: 110px; display: block;" />
+          </div>
+          <p style="margin: 4px 0 2px 0;">¡Gracias por tu compra!</p>
+          <p style="margin: 2px 0;">Visítanos de nuevo</p>
+        </div>
+      `;
+
+      const imprimirBtn = document.querySelector('#ticket-modal .btn-modal-print');
+      if (imprimirBtn) { imprimirBtn.disabled = ped.estado !== "PAGADO"; imprimirBtn.title = ped.estado !== "PAGADO" ? "Confirma el pago antes de imprimir" : ""; }
+      document.getElementById("ticket-modal").style.display = "flex";
+    }
+
+    function cerrarModal() {
+      document.getElementById("estado").textContent = "Ticket enviado. Puedes cerrar esta pestaña.";
+    }
+
+    // Función auxiliar para convertir imagen local ('logo.png' o 'qr-tienda.png') en comandos raster ESC/POS
+    async function obtenerComandosImagen(nombreArchivo) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        
+        
+        img.crossOrigin = "Anonymous";
+        img.onload = function() {
+          const targetWidth = (nombreArchivo === "logo.png") ? 160 : 240; 
+          const scale = targetWidth / img.width;
+          const targetHeight = Math.round(img.height * scale);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext('2d');
+          
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, targetWidth, targetHeight);
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+          const imgData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+          const pixels = imgData.data;
+
+          const bytesPerRow = Math.ceil(targetWidth / 8);
+          let rasterData = [];
+
+          for (let y = 0; y < targetHeight; y++) {
+            let rowBytes = new Array(bytesPerRow).fill(0);
+            for (let x = 0; x < targetWidth; x++) {
+              const offset = (y * targetWidth + x) * 4;
+              const r = pixels[offset];
+              const g = pixels[offset + 1];
+              const b = pixels[offset + 2];
+              const avg = (r + g + b) / 3;
+              
+              if (avg < 128) {
+                const byteIndex = Math.floor(x / 8);
+                const bitIndex = 7 - (x % 8);
+                rowBytes[byteIndex] |= (1 << bitIndex);
+              }
+            }
+            rasterData.push(...rowBytes);
+          }
+
+          let command = [];
+          command.push(0x1D, 0x76, 0x30, 0x00);
+          command.push(bytesPerRow & 0xFF, (bytesPerRow >> 8) & 0xFF);
+          command.push(targetHeight & 0xFF, (targetHeight >> 8) & 0xFF);
+          command.push(...rasterData);
+
+          let centerAlign = [0x1B, 0x61, 0x01];
+          resolve(new Uint8Array([...centerAlign, ...command]));
+        };
+        img.onerror = function() {
+          resolve(null);
+        };
+        img.src = "https://kim0alberca.github.io/kimsropa/" + nombreArchivo;
+      });
+    }
+
+    // IMPRESIÓN BLUETOOTH DIRECTA CON LOGO Y QR INCLUIDOS
+    async function ejecutarImpresionBluetooth() {
+      if (pedidoActualParaImprimir && pedidoActualParaImprimir.estado !== "PAGADO") { alert("Primero confirma el pago antes de imprimir el ticket de venta."); return; }
+      if (!pedidoActualParaImprimir) return;
+      const ped = pedidoActualParaImprimir;
+
+      if (!('bluetooth' in navigator)) {
+        alert("⚠️ Tu navegador no soporta Web Bluetooth. Usa Google Chrome en Android.");
+        return;
+      }
+
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [
+            '000018f0-0000-1000-8000-00805f9b34fb',
+            '00001101-0000-1000-8000-00805f9b34fb',
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+            '0000ff00-0000-1000-8000-00805f9b34fb',
+            '0000fee7-0000-1000-8000-00805f9b34fb',
+            '0000ffe0-0000-1000-8000-00805f9b34fb'
+          ]
+        });
+
+        const server = await device.gatt.connect();
+        const services = await server.getPrimaryServices();
+        let targetCharacteristic = null;
+
+        for (const service of services) {
+          const characteristics = await service.getCharacteristics();
+          for (const char of characteristics) {
+            if (char.properties.write || char.properties.writeWithoutResponse) {
+              targetCharacteristic = char;
+              break;
+            }
+          }
+          if (targetCharacteristic) break;
+        }
+
+        if (!targetCharacteristic) {
+          throw new Error("No se encontró una característica de escritura válida en la impresora.");
+        }
+
+        let esc = '\x1B';
+        let gs = '\x1D';
+        let reset = esc + '@';
+        let center = esc + 'a' + '\x01';
+        let left = esc + 'a' + '\x00';
+        let right = esc + 'a' + '\x02';
+        let boldOn = esc + 'E' + '\x01';
+        let boldOff = esc + 'E' + '\x00';
+        let doubleSize = gs + '!' + '\x11'; 
+        let normalSize = gs + '!' + '\x00';
+
+        // 1. Obtener imagen del logo en binario
+        let logoBytes = await obtenerComandosImagen("logo.png");
+
+        // 2. Texto de encabezado y datos
+        let dataHeader = reset + center;
+        dataHeader += doubleSize + boldOn + "KIM'S ROPA\n" + normalSize;
+        dataHeader += "Piura, Peru\n";
+        dataHeader += boldOn + "WhatsApp: +51 968 495 402\n" + boldOff;
+        dataHeader += "--------------------------------\n";
+        
+        dataHeader += center + boldOn + "*** TICKET DE VENTA ***\n" + boldOff;
+        dataHeader += left;
+        dataHeader += "ID Pedido: " + ped.idPedido + "\n";
+        dataHeader += "Fecha: " + ped.fecha + "\n";
+        dataHeader += "Cliente: " + ped.cliente + "\n";
+        dataHeader += "Celular: " + (ped.telefono || "No registrado") + "\n";
+        dataHeader += "DNI: " + (ped.dni || "No registrado") + "\n";
+        dataHeader += "Pago: " + ped.pago + "\n";
+        dataHeader += "--------------------------------\n";
+        
+        dataHeader += boldOn + "CANT  PRODUCTO           TOTAL\n" + boldOff;
+        dataHeader += "--------------------------------\n";
+        
+        ped.items.forEach(item => {
+          let cantStr = (item.cantidad + " ").padEnd(6, ' ');
+          let subtotalStr = ("S/" + item.subtotal.toFixed(2)).padStart(8, ' ');
+          let maxNombreLen = 32 - cantStr.length - subtotalStr.length;
+          let prodNombre = item.nombre.substring(0, maxNombreLen).padEnd(maxNombreLen, ' ');
+          
+          dataHeader += boldOn + cantStr + prodNombre + subtotalStr + "\n";
+          let detalleVar = item.variante ? item.variante : `Talla: ${item.talla} | Color: ${item.color}`;
+          dataHeader += "      " + detalleVar + "\n" + boldOff;
+        });
+        
+        dataHeader += "--------------------------------\n";
+        dataHeader += right;
+        dataHeader += doubleSize + boldOn + "TOTAL: S/ " + ped.totalPedido.toFixed(2) + "\n" + normalSize + boldOff;
+        dataHeader += "--------------------------------\n";
+        
+        dataHeader += center;
+        if (kimsTieneCupon(ped)) {
+          dataHeader += boldOn + "CODIGO DE DESCUENTO:\n" + boldOff;
+          dataHeader += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
+        }
+        dataHeader += "--------------------------------\n";
+        dataHeader += "VISITA NUESTRA TIENDA VIRTUAL:\n";
+        dataHeader += "--------------------------------\n";
+
+        let encoder = new TextEncoder();
+        let headerBytes = encoder.encode(dataHeader.replace(/[^\x00-\x7F]/g, c => c.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x00-\x7F]/g, "?")));
+
+        // 3. Obtener imagen del QR en binario
+        let qrBytes = await obtenerComandosImagen("qr-tienda.png");
+
+        // 4. Pie de página final
+        let footerText = center + "Gracias por tu compra!\nVisitanos de nuevo\n\n\n";
+        let footerBytes = encoder.encode(footerText);
+
+        // Calcular tamaño total y unir todos los bloques de bytes en orden correcto: [Logo] -> [Cabecera/Productos] -> [QR] -> [Pie]
+        let totalLength = (logoBytes ? logoBytes.length : 0) + headerBytes.length + (qrBytes ? qrBytes.length : 0) + footerBytes.length;
+        let finalBytes = new Uint8Array(totalLength);
+        
+        let offset = 0;
+        if (logoBytes) {
+          finalBytes.set(logoBytes, offset);
+          offset += logoBytes.length;
+        }
+        finalBytes.set(headerBytes, offset);
+        offset += headerBytes.length;
+
+        if (qrBytes) {
+          finalBytes.set(qrBytes, offset);
+          offset += qrBytes.length;
+        }
+
+        finalBytes.set(footerBytes, offset);
+
+        // Enviar por lotes a la impresora Bluetooth
+        let chunkSize = 20;
+        for (let i = 0; i < finalBytes.length; i += chunkSize) {
+          let chunk = finalBytes.slice(i, i + chunkSize);
+          if (targetCharacteristic.properties.writeWithoutResponse) {
+            await targetCharacteristic.writeValueWithoutResponse(chunk);
+            await new Promise(r => setTimeout(r, 15));
+          } else {
+            await targetCharacteristic.writeValue(chunk);
+          }
+        }
+
+        alert("✅ ¡Ticket con Logo y QR enviado directamente a la impresora térmica con éxito!");
+        cerrarModal();
+
+      } catch (err) {
+        console.warn("Error Bluetooth Admin:", err);
+        document.getElementById("estado").textContent = "Error Bluetooth: " + err.name + ": " + err.message;
+      }
+    }
+
+
+async function imprimir(){const btn=document.querySelector('.btn-modal-print');btn.disabled=true;try{await ejecutarImpresionBluetooth();}finally{btn.disabled=false;}}
+const openerRef=window.opener;
+function recibir(e){if(e.source!==openerRef || !/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(e.origin) || e.data?.tipo!=='KIMS_PRINT_TICKET')return;const p=e.data.pedido;if(!p||p.estado!=='PAGADO'||!Array.isArray(p.items)||!Number.isFinite(p.totalPedido))return;window.removeEventListener('message',recibir);clearInterval(reintento);pedidoActualParaImprimir=p;window.opener=null;verTicket(p.idPedido);document.getElementById('estado').textContent='Ticket recibido. Enciende tu impresora y pulsa Imprimir.';}
+window.addEventListener('message',recibir);
+function listo(){if(openerRef)openerRef.postMessage({tipo:'KIMS_PRINT_READY'},'*');}
+const reintento=setInterval(listo,500);listo();setTimeout(()=>{clearInterval(reintento);if(!pedidoActualParaImprimir)document.getElementById('estado').textContent='Abre este módulo desde Ver / Imprimir en tu panel privado.';},19000);
+</script></body></html>
