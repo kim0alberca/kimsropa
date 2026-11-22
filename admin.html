@@ -220,7 +220,11 @@
       <h1>📊 PANEL DE VENTAS</h1>
       <p>Monitoreo general de Kim's Ropa</p>
     </div>
-    <button class="btn-reload" onclick="cargarDatosVentas()">🔄 Actualizar Datos</button>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span id="kims-auto-status" style="font-size:12px;color:#475569" aria-live="polite">🔄 Conectando...</span>
+      <span id="kims-auto-time" style="font-size:11px;color:#64748b"></span>
+      <button class="btn-reload" onclick="cargarDatosVentas()">🔄 Actualizar Datos</button>
+    </div>
   </div>
 
   <div class="kpi-container">
@@ -229,7 +233,7 @@
       <div class="kpi-value" id="kpi-recaudado">S/ 0.00</div>
     </div>
     <div class="kpi-card green">
-      <div class="kpi-title">Pedidos Únicos</div>
+      <div class="kpi-title">Pedidos Pagados</div>
       <div class="kpi-value" id="kpi-pedidos">0</div>
     </div>
     <div class="kpi-card teal">
@@ -305,15 +309,24 @@
     
     let pedidosAgrupadosGlobal = {};
     let pedidoActualParaImprimir = null;
+    const KIMS_AUTO_MS = 10000;
+    let kimsCargaEnCurso = false;
+    let kimsUltimoSnapshot = '';
+    let kimsPrimeraCarga = true;
     const kimsConfirmacionesEnCurso = new Set();
     const kimsEsc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;", "\"":"&quot;", "'":"&#39;"}[c]));
 
     document.addEventListener("DOMContentLoaded", () => {
       cargarDatosVentas();
+      setInterval(() => {
+        if (!document.hidden && !kimsCargaEnCurso && !kimsConfirmacionesEnCurso.size) cargarDatosVentas(true);
+      }, KIMS_AUTO_MS);
     });
 
-    function cargarDatosVentas() {
-      document.getElementById("tabla-ventas-body").innerHTML = `
+    function cargarDatosVentas(silencioso = false) {
+      if (kimsCargaEnCurso && silencioso) return Promise.resolve(null);
+      kimsCargaEnCurso = true;
+      if (!silencioso) document.getElementById("tabla-ventas-body").innerHTML = `
         <tr>
           <td colspan="8" class="status-msg">Cargando y agrupando ventas desde Google Sheets...</td>
         </tr>
@@ -326,20 +339,34 @@
         })
         .then(datos => {
           if (datos && datos.status === "error") throw new Error(datos.message || "Error de Apps Script");
-          procesarYRenderizar(datos);
+          const snapshot = JSON.stringify(datos.ventas || datos.data || datos);
+          if (snapshot !== kimsUltimoSnapshot || kimsPrimeraCarga) {
+            const antes = new Set(Object.keys(pedidosAgrupadosGlobal));
+            procesarYRenderizar(datos);
+            if (!kimsPrimeraCarga && Object.keys(pedidosAgrupadosGlobal).some(id => !antes.has(id))) {
+              document.getElementById('kims-auto-status').textContent = '🟢 ¡Nuevo pedido recibido!';
+            } else {
+              document.getElementById('kims-auto-status').textContent = '🟢 Actualizado automáticamente';
+            }
+            kimsUltimoSnapshot = snapshot;
+            kimsPrimeraCarga = false;
+          }
+          document.getElementById('kims-auto-time').textContent = new Date().toLocaleTimeString('es-PE');
           return datos;
         })
         .catch(error => {
           console.error("Error al obtener datos:", error);
-          document.getElementById("tabla-ventas-body").innerHTML = `
+          document.getElementById('kims-auto-status').textContent = '🟠 Sin conexión: reintentando';
+          if (!silencioso) document.getElementById("tabla-ventas-body").innerHTML = `
             <tr>
               <td colspan="8" class="status-msg" style="color: #d93025;">
                 Error al cargar datos. Verifique la conexión con Google Sheets.
               </td>
             </tr>
           `;
-          throw error;
-        });
+          if (!silencioso) throw error;
+          return null;
+        }).finally(() => { kimsCargaEnCurso = false; });
     }
 
     function procesarYRenderizar(datos) {
@@ -464,7 +491,7 @@
         ped.items.forEach(it => {
           totalCantidadItems += it.cantidad;
           let varTexto = it.variante ? ` (${it.variante})` : ` (${it.talla} / ${it.color})`;
-          listaNombresHtml += `• ${it.cantidad}x ${it.nombre}${varTexto}<br>`;
+          listaNombresHtml += `• ${it.cantidad}x ${kimsEsc(it.nombre)}${kimsEsc(varTexto)}<br>`;
         });
 
         const esUltimo = (index === keysPedidos.length - 1);
@@ -475,12 +502,12 @@
         htmlTabla += `
           <tr class="${claseFila}">
             <td>${ped.fecha}<br><strong style="color:${ped.estado === "PAGADO" ? "#14833b" : "#b76b00"}">${ped.estado === "PAGADO" ? "PAGADO" : "PENDIENTE"}</strong></td>
-            <td><strong>${ped.idPedido}</strong></td>
-            <td>${ped.cliente}</td>
+            <td><strong>${kimsEsc(ped.idPedido)}</strong></td>
+            <td>${kimsEsc(ped.cliente)}</td>
             <td>${listaNombresHtml}</td>
             <td class="text-center"><span class="badge-qty">${totalCantidadItems}</span></td>
             <td class="text-right"><strong>S/ ${ped.totalPedido.toFixed(2)}</strong></td>
-            <td>${ped.pago}</td>
+            <td>${kimsEsc(ped.pago)}</td>
             <td class="text-center">
               ${badgeHtml}
               <button class="${btnClase}" onclick="verTicket('${ped.idPedido}')">🖨️ Ver / Imprimir</button>
@@ -689,7 +716,7 @@
         itemsHtml += `
           <tr>
             <td style="text-align: center; padding: 3px 0; vertical-align: top;">${it.cantidad}</td>
-            <td style="padding: 3px 0;">${it.nombre}<br><span style="font-size: 10px; color: #555;">${detalleVar}</span></td>
+            <td style="padding: 3px 0;">${kimsEsc(it.nombre)}<br><span style="font-size: 10px; color: #555;">${kimsEsc(detalleVar)}</span></td>
             <td style="text-align: right; padding: 3px 0; vertical-align: top;">S/ ${it.subtotal.toFixed(2)}</td>
           </tr>
         `;
@@ -703,10 +730,10 @@
           <p style="font-size: 10px; margin: 2px 0;">Piura, Perú</p>
         </div>
         <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-        <p style="font-size: 11px; margin: 2px 0;"><strong>ID:</strong> ${ped.idPedido}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>ID:</strong> ${kimsEsc(ped.idPedido)}</p>
         <p style="font-size: 11px; margin: 2px 0;"><strong>Fecha:</strong> ${ped.fecha}</p>
-        <p style="font-size: 11px; margin: 2px 0;"><strong>Cliente:</strong> ${ped.cliente}</p>
-        <p style="font-size: 11px; margin: 2px 0;"><strong>Pago:</strong> ${ped.pago}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Cliente:</strong> ${kimsEsc(ped.cliente)}</p>
+        <p style="font-size: 11px; margin: 2px 0;"><strong>Pago:</strong> ${kimsEsc(ped.pago)}</p>
         <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
         <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
           <thead>
@@ -719,12 +746,13 @@
           <tbody>${itemsHtml}</tbody>
         </table>
         <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+        ${ped.descuento > 0 ? `<p style="text-align:right;font-size:11px">Descuento aplicado: ${Math.round(ped.descuento*100)}%</p>` : ''}
         <div style="text-align: right; font-size: 13px; font-weight: bold;">
           TOTAL: S/ ${ped.totalPedido.toFixed(2)}
         </div>
         <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
         <div style="text-align: center; font-size: 10px; margin-top: 8px;">
-          <p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO:</strong> ${ped.estado === "PAGADO" ? ped.cuponGenerado : "Se entrega tras confirmar pago"}</p>
+          <p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO:</strong> ${ped.estado === "PAGADO" ? kimsEsc(ped.cuponGenerado) : "Se entrega tras confirmar pago"}</p>
           <p style="margin: 6px 0 4px 0;"><strong>¡ESCANEA PARA VISITAR LA TIENDA!</strong></p>
           <div style="display: inline-block; background: #fff; padding: 4px; margin: 4px 0;">
             <img src="qr-tienda.png" alt="QR Tienda" style="width: 110px; height: 110px; display: block;" />
