@@ -911,10 +911,10 @@
 <!-- MODAL ÉXITO -->
 <div id="success-modal">
   <div class="success-content">
-    <h3>🎉 ¡PEDIDO GENERADO CON ÉXITO!</h3>
+    <h3>🛍️ ¡PEDIDO GENERADO! PENDIENTE DE PAGO</h3>
     
     <div style="background: #111; border: 1px dashed #ccff00; padding: 10px; border-radius: 6px; text-align: center;">
-      <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 4px 0;">🎟️ TU CÓDIGO DE DESCUENTO PARA TU PRÓXIMA COMPRA:</p>
+      <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 4px 0;">🎟️ TU CUPÓN SE ENTREGARÁ AL CONFIRMAR EL PAGO:</p>
       <strong id="assigned-promo-code" style="font-size: 1.2rem; color: #ccff00; letter-spacing: 2px;">Cargando...</strong>
     </div>
 
@@ -1025,13 +1025,11 @@
             listadoCuponesHoja[codigo] = descuento;
           }
         }
-        if(Object.keys(listadoCuponesHoja).length === 0) {
-          listadoCuponesHoja["XPONLg"] = 0.10;
-        }
+
       })
       .catch(err => {
         console.error("Error al cargar cupones:", err);
-        listadoCuponesHoja["XPONLg"] = 0.10;
+
       });
   }
 
@@ -1661,7 +1659,8 @@
       metodo: metodoPago,
       cliente: textoCliente,
       cupon: appliedCoupon || "-", 
-      cuponGenerado: codigoRegalo || "-", 
+      cuponGenerado: "-",
+      descuentoSolicitado: appliedCoupon ? couponDiscount : 0, 
       items: listaItems
     };
 
@@ -1723,24 +1722,10 @@
       return;
     }
 
-    if (appliedCoupon) {
-      try {
-        let cuponesUsados = [];
-        const rawUsados = localStorage.getItem('used_coupons');
-        if (rawUsados) cuponesUsados = JSON.parse(rawUsados);
-        if (!cuponesUsados.includes(appliedCoupon)) {
-          cuponesUsados.push(appliedCoupon);
-          localStorage.setItem('used_coupons', JSON.stringify(cuponesUsados));
-        }
-      } catch(e) {}
-    }
+    // El cupón usado se valida y consume en Apps Script, no en localStorage.
 
-    let codigosHoja = Object.keys(listadoCuponesHoja);
-    let codigoRegalo = "XPONLg";
-    if (codigosHoja.length > 0) {
-      let randomIndex = Math.floor(Math.random() * codigosHoja.length);
-      codigoRegalo = codigosHoja[randomIndex];
-    }
+    // El cupón de regalo se asigna ÚNICAMENTE después de confirmar el pago.
+    let codigoRegalo = "PENDIENTE DE PAGO";
 
     let text = "[ NUEVO PEDIDO DE LA WEB ]\n\n";
     text += "NOMBRES Y APELLIDOS: " + name + "\n";
@@ -1796,7 +1781,7 @@
     }
     text += "TOTAL A PAGAR: S/ " + finalTotal.toFixed(2) + "\n\n";
     
-    text += "¡GRACIAS POR TU COMPRA! Tu código de descuento para tu próxima compra es: *" + codigoRegalo + "*.";
+    text += "PEDIDO PENDIENTE DE PAGO. Envíanos tu comprobante de Yape/Plin por WhatsApp. Tras verificar el abono, recibirás un cupón para tu próxima compra.";
 
     closeCheckoutModal();
 
@@ -1822,7 +1807,10 @@
     const encodedText = encodeURIComponent(text);
     const whatsappUrl = "https://api.whatsapp.com/send?phone=" + MY_WHATSAPP_NUMBER + "&text=" + encodedText;
 
-    const pedidoId = "PED-" + Date.now().toString().slice(-4);
+    const pedidoId = "PED-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+    text += "\nNÚMERO DE PEDIDO: " + pedidoId + "\n";
+    if (finalOrderText) finalOrderText.value = text;
+    const whatsappUrlFinal = "https://api.whatsapp.com/send?phone=" + MY_WHATSAPP_NUMBER + "&text=" + encodeURIComponent(text);
     registrarVentaEnSheets(pedidoId, finalTotal, payment, resumenProductos, codigoRegalo);
 
     cart = [];
@@ -1836,7 +1824,7 @@
     updateCartUI();
 
     // REDIRECCIÓN AUTOMÁTICA A WHATSAPP
-    window.location.href = whatsappUrl;
+    window.location.href = whatsappUrlFinal;
   }
 
   async function printAdminTicket() {
