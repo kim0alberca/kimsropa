@@ -333,8 +333,9 @@
     
     let pedidosAgrupadosGlobal = {};
     let pedidoActualParaImprimir = null;
-    const KIMS_AUTO_MS = 10000;
+    const KIMS_AUTO_MS = 5000;
     let kimsCargaEnCurso = false;
+    let kimsCargaPromesa = null;
     let kimsUltimoSnapshot = '';
     let kimsPrimeraCarga = true;
     const kimsConfirmacionesEnCurso = new Set();
@@ -348,15 +349,14 @@
     });
 
     function cargarDatosVentas(silencioso = false) {
-      if (kimsCargaEnCurso && silencioso) return Promise.resolve(null);
+      // Una sola lectura a la vez. No borrar pedidos ya visibles al actualizar.
+      if (kimsCargaEnCurso) return kimsCargaPromesa || Promise.resolve(null);
       kimsCargaEnCurso = true;
-      if (!silencioso) document.getElementById("tabla-ventas-body").innerHTML = `
-        <tr>
-          <td colspan="8" class="status-msg">Cargando y agrupando ventas desde Google Sheets...</td>
-        </tr>
-      `;
+      if (kimsPrimeraCarga && !Object.keys(pedidosAgrupadosGlobal).length) {
+        document.getElementById('kims-auto-status').textContent = '🔄 Cargando pedidos...';
+      }
 
-      return fetch(WEB_APP_URL + (WEB_APP_URL.includes("?") ? "&" : "?") + "_kims=" + Date.now(), {cache:"no-store"})
+      kimsCargaPromesa = fetch(WEB_APP_URL + (WEB_APP_URL.includes("?") ? "&" : "?") + "_kims=" + Date.now(), {cache:"no-store"})
         .then(response => {
           if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
           return response.json();
@@ -381,16 +381,12 @@
         .catch(error => {
           console.error("Error al obtener datos:", error);
           document.getElementById('kims-auto-status').textContent = '🟠 Sin conexión: reintentando';
-          if (!silencioso) document.getElementById("tabla-ventas-body").innerHTML = `
-            <tr>
-              <td colspan="8" class="status-msg" style="color: #d93025;">
-                Error al cargar datos. Verifique la conexión con Google Sheets.
-              </td>
-            </tr>
-          `;
+          // Mantener la tabla anterior incluso si falla una consulta.
+          // Así no desaparecen los botones ni los pedidos por una caída temporal.
           if (!silencioso) throw error;
           return null;
-        }).finally(() => { kimsCargaEnCurso = false; });
+        }).finally(() => { kimsCargaEnCurso = false; kimsCargaPromesa = null; });
+      return kimsCargaPromesa;
     }
 
     function procesarYRenderizar(datos) {
@@ -621,7 +617,7 @@
         for (let intento = 0; intento < 5; intento++) {
           await new Promise(resolve => setTimeout(resolve, intento === 0 ? 1700 : 2200));
           try {
-            await cargarDatosVentas();
+            await cargarDatosVentas(true);
             if (pedidosAgrupadosGlobal[idPedido]?.estado === "PAGADO") {
               verificado = true;
               break;
@@ -635,6 +631,7 @@
               ? `\n\nCupón asignado: ${confirmado.cuponGenerado}\nAhora puedes enviarlo por WhatsApp desde el botón «Enviar cupón».`
               : "\n\nNo hay un cupón disponible asignado; revisa Hoja 2."));
         } else {
+          await cargarDatosVentas(true);
           alert(`⚠️ No se pudo verificar la confirmación de ${idPedido}.` +
             (errorLectura ? "\nHubo un problema al consultar Google Sheets." : "\nEl pedido sigue PENDIENTE en la última consulta.") +
             "\n\nNO vuelvas a confirmar inmediatamente. Revisa primero la columna K de la hoja Ventas y actualiza el panel. Si sigue pendiente, revisaremos el código de Apps Script.");
@@ -644,6 +641,8 @@
         alert("⚠️ No se pudo enviar la solicitud. Revisa tu conexión y la columna K de Ventas antes de volver a intentarlo.");
       } finally {
         kimsConfirmacionesEnCurso.delete(idPedido);
+        // Consulta final sin vaciar la tabla, incluso si el diálogo fue cerrado.
+        cargarDatosVentas(true).catch(() => {});
       }
     }
 
