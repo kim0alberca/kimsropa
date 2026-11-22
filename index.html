@@ -913,10 +913,7 @@
   <div class="success-content">
     <h3>🎉 ¡PEDIDO GENERADO CON ÉXITO!</h3>
     
-    <div style="background: #111; border: 1px dashed #ccff00; padding: 10px; border-radius: 6px; text-align: center;">
-      <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 4px 0;">🎟️ TU CÓDIGO DE DESCUENTO PARA TU PRÓXIMA COMPRA:</p>
-      <strong id="assigned-promo-code" style="font-size: 1.2rem; color: #ccff00; letter-spacing: 2px;">Cargando...</strong>
-    </div>
+    <!-- Los cupones se entregan únicamente después de confirmar el pago en el panel de ventas. -->
 
     <textarea id="final-order-text" class="order-textarea" readonly></textarea>
     
@@ -1025,13 +1022,11 @@
             listadoCuponesHoja[codigo] = descuento;
           }
         }
-        if(Object.keys(listadoCuponesHoja).length === 0) {
-          listadoCuponesHoja["XPONLg"] = 0.10;
-        }
+        // Sin códigos publicados, no inventar un código de respaldo.
       })
       .catch(err => {
         console.error("Error al cargar cupones:", err);
-        listadoCuponesHoja["XPONLg"] = 0.10;
+        listadoCuponesHoja = {};
       });
   }
 
@@ -1087,8 +1082,13 @@
             let entries = rawImgStr.split(',');
             entries.forEach(entry => {
               let parts = entry.split(':');
+              // Solo para SCRUNCHIES: una URL sola no es un color.
+              // Formato esperado en la hoja: VERDE LIMA: https://drive.google.com/...
+              // Se ignoran las entradas sin nombre de color para evitar "HTTPS".
+              if (catClean === 'SCRUNCHIES' && /^\s*https?:\/\//i.test(entry)) return;
               if (parts.length >= 2) {
                 let colorName = parts[0].trim().toUpperCase();
+                if (catClean === 'SCRUNCHIES' && (!colorName || colorName === 'HTTP' || colorName === 'HTTPS')) return;
                 let rawUrl = parts.slice(1).join(':').trim();
                 let imgUrl = rawUrl;
                 if(rawUrl.includes("drive.google.com")) {
@@ -1165,7 +1165,9 @@
     if (!product || !container || !isScrunchie(product)) return;
     const count = selectedPack(prodId);
     const oldSelections = Array.from(container.querySelectorAll('select')).map(el => el.value);
-    const options = product.variants.map(v => `<option value="${escapeHtml(v.color)}">${escapeHtml(v.color)}</option>`).join('');
+    const validColors = product.variants.filter(v => v.color && !/^(HTTPS?|ÚNICO)$/i.test(v.color));
+    const options = validColors.map(v => `<option value="${escapeHtml(v.color)}">${escapeHtml(v.color)}</option>`).join('');
+    if (!options) { container.innerHTML = '<small>Configura los colores en la columna URL IMAGEN como COLOR: enlace.</small>'; return; }
     container.innerHTML = `<label style="display:block;margin:8px 0 5px;">Elige el color de cada scrunchie:</label>` +
       Array.from({length: count}, (_, i) => `<label style="display:block;margin:5px 0;font-size:0.75rem;">Unidad ${i+1}
         <select class="size-select scrunchie-unit-color" aria-label="Color de scrunchie ${i+1}" style="margin-top:3px;">${options}</select>
@@ -1361,7 +1363,7 @@
     const pack = isScrunchie(product) ? selectedPack(prodId) : null;
     const size = pack ? `PACK DE ${pack} UNIDAD${pack > 1 ? 'ES' : ''}` : sizeSelect.value;
     const unitColors = pack ? Array.from(document.querySelectorAll(`#scrunchies-colors-${prodId} select`)).map(el => el.value) : [];
-    if (pack && unitColors.length !== pack) { showToast('Selecciona los colores de tu paquete.'); return; }
+    if (pack && (unitColors.length !== pack || unitColors.some(c => !c || /^(HTTPS?|ÚNICO)$/i.test(c)))) { showToast('Selecciona los colores de tu paquete.'); return; }
     const color = pack ? unitColors.map((c, i) => `${i + 1}: ${c}`).join(', ') : (selectedColorInput ? selectedColorInput.value : 'ÚNICO');
     const price = pack ? SCRUNCHIES_PACKS[pack] : (product.prices[size] || 0);
     const qty = parseInt(qtyInput.value) || 1;
@@ -1775,12 +1777,9 @@
       } catch(e) {}
     }
 
-    let codigosHoja = Object.keys(listadoCuponesHoja);
-    let codigoRegalo = "XPONLg";
-    if (codigosHoja.length > 0) {
-      let randomIndex = Math.floor(Math.random() * codigosHoja.length);
-      codigoRegalo = codigosHoja[randomIndex];
-    }
+    // Nunca asignar cupones desde la web: no se puede garantizar su disponibilidad.
+    // El panel de ventas / Apps Script asigna el cupón real al confirmar el pago.
+    const codigoRegalo = "";
 
     let text = "[ NUEVO PEDIDO DE LA WEB ]\n\n";
     text += "NOMBRES Y APELLIDOS: " + name + "\n";
@@ -1817,7 +1816,7 @@
       resumenProductos += `${item.qty}x ${item.nombre} (${item.size}/${item.color}); `;
 
       const fotoUrl = item.driveUrl || item.imgUrl;
-      if (fotoUrl) {
+      if (fotoUrl && !String(item.size || '').startsWith('PACK DE')) {
         text += "   - Ver Foto: " + fotoUrl + "\n";
       }
     });
@@ -1836,12 +1835,10 @@
     }
     text += "TOTAL A PAGAR: S/ " + finalTotal.toFixed(2) + "\n\n";
     
-    text += "¡GRACIAS POR TU COMPRA! Tu código de descuento para tu próxima compra es: *" + codigoRegalo + "*.";
+    text += "¡GRACIAS POR TU COMPRA!";
 
     closeCheckoutModal();
 
-    const promoCodeBox = document.getElementById('assigned-promo-code');
-    if (promoCodeBox) promoCodeBox.innerText = codigoRegalo;
 
     // FECHA EXACTA Y CAPTURA DE DATOS DEL PEDIDO
     const now = new Date();
@@ -1880,6 +1877,8 @@
     const whatsappTab = window.open(whatsappUrl, '_blank');
     if (whatsappTab) whatsappTab.opener = null;
     else window.location.href = whatsappUrl;
+    // Al abrir WhatsApp en otra pestaña, regresar a la tienda limpia.
+    if (whatsappTab) closeSuccessModal();
   }
 
   async function printAdminTicket() {
@@ -1905,7 +1904,7 @@
     const payment = document.getElementById('client-payment').value || "-";
 
     const dateStr = lastOrderDateStr || new Date().toLocaleString('es-PE');
-    const promoCodeToPrint = lastOrderGiftCode || "XPONLg";
+    const promoCodeToPrint = lastOrderGiftCode || "";
 
     let total = 0;
     const itemsToPrint = lastOrderCart.length > 0 ? lastOrderCart : cart;
@@ -2008,7 +2007,7 @@
           data += "--------------------------------\n";
           
           data += center;
-          data += boldOn + "CODIGO PROMO DE REGALO:\n" + promoCodeToPrint + "\n\n" + boldOff;
+          if (promoCodeToPrint) data += boldOn + "CODIGO PROMO DE REGALO:\n" + promoCodeToPrint + "\n\n" + boldOff;
           data += boldOn + "¡Gracias por tu compra!\n" + boldOff;
           data += "Visitanos de nuevo\n\n\n\n";
 
