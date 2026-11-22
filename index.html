@@ -1666,6 +1666,8 @@
     
     const nombreCliente = inputNombre ? inputNombre.value.trim() : "";
     const celularCliente = inputCelular ? inputCelular.value.trim() : "";
+    const inputDni = document.getElementById('client-dni');
+    const dniCliente = inputDni ? inputDni.value.trim() : "";
     
     let textoCliente = "Cliente Web";
     if (nombreCliente && celularCliente) {
@@ -1702,6 +1704,9 @@
       monto: montoTotal,
       metodo: metodoPago,
       cliente: textoCliente,
+      nombre: nombreCliente,
+      telefono: celularCliente,
+      dni: dniCliente,
       cupon: appliedCoupon || "-", 
       cuponGenerado: codigoRegalo || "-", 
       items: listaItems
@@ -1796,7 +1801,7 @@
       text += "REFERENCIA ADICIONAL: " + address + "\n";
     }
 
-    text += "DNI DE QUIEN RECIBE: " + dni + "\n";
+    text += "DNI: " + dni + "\n";
     text += "METODO DE PAGO: " + payment + "\n\n";
     text += "-----------------------------------\n";
     text += "DETALLE DE LOS POLOS:\n";
