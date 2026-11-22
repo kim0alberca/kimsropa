@@ -204,6 +204,10 @@
     }
     .btn-modal-close { background: #666; color: #fff; }
     .btn-modal-print { background: #1a73e8; color: #fff; }
+    .kims-filters { display:flex; flex-wrap:wrap; align-items:end; gap:12px; }
+    .kims-filters label { display:flex; flex:1 1 230px; flex-direction:column; gap:6px; font-size:13px; font-weight:600; }
+    .kims-filters input { width:100%; min-height:42px; border:1px solid #cbd5e1; border-radius:7px; padding:9px 12px; font-size:14px; background:#fff; color:#222; }
+    .kims-filter-info { margin-top:10px; color:#64748b; font-size:12px; }
   </style>
 </head>
 <body>
@@ -236,6 +240,21 @@
     <div id="metodos-pago-container">
       <p style="color: #888; font-size: 13px;">Cargando métodos de pago...</p>
     </div>
+  </div>
+
+  <!-- FILTROS LOCALES: NO MODIFICAN SHEETS NI EL REGISTRO DE PEDIDOS -->
+  <div class="panel" id="filtros-pedidos-panel">
+    <div class="panel-title">Buscar pedidos</div>
+    <div class="kims-filters">
+      <label for="kims-search">Buscar por pedido, cliente, teléfono o producto
+        <input id="kims-search" type="search" placeholder="Ej. PED-5742, nombre o polo" autocomplete="off" oninput="kimsFiltrarPedidos()">
+      </label>
+      <label for="kims-month">Filtrar por mes
+        <input id="kims-month" type="month" onchange="kimsFiltrarPedidos()">
+      </label>
+      <button type="button" class="btn-reload" onclick="kimsLimpiarFiltros()">Limpiar filtros</button>
+    </div>
+    <p id="kims-filter-info" class="kims-filter-info" aria-live="polite">Los filtros no alteran tus ventas ni tus tickets.</p>
   </div>
 
   <div class="panel">
@@ -440,6 +459,41 @@
       document.getElementById("tabla-ventas-body").innerHTML = htmlTabla;
       actualizarKPIs(totalRecaudadoGral, keysPedidos.length);
       renderizarMetodosPago(conteoMetodos);
+      kimsFiltrarPedidos();
+    }
+
+    // Filtra únicamente las filas ya renderizadas. No altera totales históricos,
+    // Google Sheets, las referencias de tickets ni la impresión Bluetooth.
+    function kimsFiltrarPedidos() {
+      const searchEl = document.getElementById('kims-search');
+      const monthEl = document.getElementById('kims-month');
+      const body = document.getElementById('tabla-ventas-body');
+      if (!searchEl || !monthEl || !body) return;
+      const query = searchEl.value.trim().toLocaleLowerCase('es');
+      const month = monthEl.value;
+      const rows = Array.from(body.querySelectorAll('tr')).filter(tr => tr.cells.length === 8 && tr.querySelector('button[onclick^="verTicket"]'));
+      let visible = 0;
+      rows.forEach(tr => {
+        const text = tr.textContent.toLocaleLowerCase('es');
+        const fecha = tr.cells[0].textContent.trim();
+        // Apps Script entrega fechas yyyy-MM-dd HH:mm:ss.
+        // Si un registro antiguo tiene otro formato, no se muestra con filtro mensual.
+        const matchesMonth = !month || fecha.startsWith(month + '-');
+        const matchesSearch = !query || text.includes(query);
+        const show = matchesMonth && matchesSearch;
+        tr.hidden = !show;
+        tr.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      document.getElementById('kims-filter-info').textContent = rows.length
+        ? `Mostrando ${visible} de ${rows.length} pedidos. Los indicadores superiores muestran el historial completo.`
+        : 'Todavía no hay pedidos para filtrar.';
+    }
+
+    function kimsLimpiarFiltros() {
+      document.getElementById('kims-search').value = '';
+      document.getElementById('kims-month').value = '';
+      kimsFiltrarPedidos();
     }
 
     function actualizarKPIs(recaudado, numPedidos) {
