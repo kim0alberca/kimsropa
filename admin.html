@@ -305,6 +305,7 @@
     
     let pedidosAgrupadosGlobal = {};
     let pedidoActualParaImprimir = null;
+    const kimsEsc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;", "\"":"&quot;", "'":"&#39;"}[c]));
 
     document.addEventListener("DOMContentLoaded", () => {
       cargarDatosVentas();
@@ -365,7 +366,10 @@
         const fecha = formatearFecha(fila.fecha || fila.Fecha || "-");
         const cliente = fila.cliente || fila.Cliente || fila.celular || "Cliente General";
         const pago = fila.metodo || fila.pago || fila["Método de Pago"] || fila.metodoPago || "Efectivo/Yape";
-        const cuponGenerado = fila.cuponGenerado || fila.cupon || "-";
+        const cuponGenerado = fila.cuponGenerado || "-";
+        const estado = String(fila.estado || "PENDIENTE").toUpperCase();
+        const descuento = Number(fila.descuento || 0);
+        const totalPedidoConfirmado = Number(fila.totalPedido || 0);
 
         if (!pedidosAgrupadosGlobal[idPedido]) {
           pedidosAgrupadosGlobal[idPedido] = {
@@ -374,6 +378,10 @@
             cliente: cliente,
             pago: pago,
             cuponGenerado: cuponGenerado,
+            estado: estado,
+            descuento: descuento,
+            porcentajeRegalo: Number(fila.porcentajeRegalo || 0),
+            totalPedidoConfirmado: totalPedidoConfirmado,
             totalPedido: 0,
             items: []
           };
@@ -420,6 +428,9 @@
         }
       });
 
+      Object.values(pedidosAgrupadosGlobal).forEach(p => {
+        if (p.totalPedidoConfirmado > 0) p.totalPedido = p.totalPedidoConfirmado;
+      });
       const keysPedidos = Object.keys(pedidosAgrupadosGlobal);
       let totalRecaudadoGral = 0;
       let conteoMetodos = {};
@@ -427,10 +438,10 @@
 
       keysPedidos.forEach((idKey, index) => {
         const ped = pedidosAgrupadosGlobal[idKey];
-        totalRecaudadoGral += ped.totalPedido;
+        if (ped.estado === "PAGADO") totalRecaudadoGral += ped.totalPedido;
 
         const metClean = ped.pago.toUpperCase().trim();
-        conteoMetodos[metClean] = (conteoMetodos[metClean] || 0) + ped.totalPedido;
+        if (ped.estado === "PAGADO") conteoMetodos[metClean] = (conteoMetodos[metClean] || 0) + ped.totalPedido;
 
         let totalCantidadItems = 0;
         let listaNombresHtml = "";
@@ -447,7 +458,7 @@
 
         htmlTabla += `
           <tr class="${claseFila}">
-            <td>${ped.fecha}</td>
+            <td>${ped.fecha}<br><strong style="color:${ped.estado === "PAGADO" ? "#14833b" : "#b76b00"}">${ped.estado === "PAGADO" ? "PAGADO" : "PENDIENTE"}</strong></td>
             <td><strong>${ped.idPedido}</strong></td>
             <td>${ped.cliente}</td>
             <td>${listaNombresHtml}</td>
@@ -457,13 +468,14 @@
             <td class="text-center">
               ${badgeHtml}
               <button class="${btnClase}" onclick="verTicket('${ped.idPedido}')">🖨️ Ver / Imprimir</button>
+              ${ped.estado !== "PAGADO" ? `<button class="btn-action" style="background:#1a73e8;margin-top:5px" onclick="kimsConfirmarPago('${ped.idPedido}')">✓ Confirmar pago</button>` : `<button class="btn-action" style="background:#0b8660;margin-top:5px" onclick="kimsEnviarCupon('${ped.idPedido}')">💬 Enviar cupón</button>`}
             </td>
           </tr>
         `;
       });
 
       document.getElementById("tabla-ventas-body").innerHTML = htmlTabla;
-      actualizarKPIs(totalRecaudadoGral, keysPedidos.length);
+      actualizarKPIs(totalRecaudadoGral, keysPedidos.filter(k => pedidosAgrupadosGlobal[k].estado === "PAGADO").length);
       renderizarMetodosPago(conteoMetodos);
       kimsFiltrarPedidos();
     }
@@ -472,6 +484,34 @@
     // Google Apps Script puede enviar fechas como:
     // "Thu Sep 10 2026 11:11:17 GMT-0500 (hora estándar de Perú)".
     // También acepta fechas ISO y DD/MM/AAAA, DD-MM-AAAA.
+
+    // CONFIRMACIÓN MANUAL: la clave se valida en el servidor y nunca se guarda en el HTML.
+    async function kimsConfirmarPago(idPedido) {
+      const ped = pedidosAgrupadosGlobal[idPedido];
+      if (!ped || ped.estado === "PAGADO") return;
+      if (!confirm(`¿Ya verificaste en Yape/Plin o en efectivo el pago de S/ ${ped.totalPedido.toFixed(2)} del pedido ${idPedido}?\n\nNo confirmes solo con la captura.`)) return;
+      const clave = prompt("Ingresa la clave privada de confirmación de pagos:");
+      if (!clave) return;
+      try {
+        await fetch(WEB_APP_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain"}, body:JSON.stringify({accion:"confirmarPago",pedidoId:idPedido,clave:clave})});
+        alert("Solicitud enviada. Actualizaremos el panel para comprobar el estado real. Si sigue PENDIENTE, no se confirmó.");
+        setTimeout(cargarDatosVentas, 1600);
+      } catch (e) { alert("No se pudo enviar la confirmación. Comprueba tu conexión."); }
+    }
+
+    function kimsEnviarCupon(idPedido) {
+      const ped = pedidosAgrupadosGlobal[idPedido];
+      if (!ped || ped.estado !== "PAGADO" || !ped.cuponGenerado || ped.cuponGenerado === "-") {
+        alert("Este pedido todavía no tiene un cupón asignado."); return;
+      }
+      const codigo = ped.cuponGenerado;
+      const porcentaje = Math.round(Number(ped.porcentajeRegalo || 0) * 100);
+      const mensaje = `🛍️ ¡Gracias por tu compra en KIMSROPA!\n\n🎁 Aquí tienes tu cupón para la próxima compra.\n🎟️ Código: ${codigo}\n✨ Descuento: ${porcentaje}%\n\nIngresa este código al hacer tu próximo pedido. ¡Te esperamos!`;
+      const telefono = (ped.cliente.match(/9\d{8}/) || [])[0] || "";
+      const url = telefono ? `https://wa.me/51${telefono}?text=${encodeURIComponent(mensaje)}` : `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, "_blank", "noopener");
+    }
+
     function kimsMesDeFecha(valor) {
       const s = String(valor == null ? '' : valor).trim();
       if (!s || s === '-') return '';
@@ -621,7 +661,7 @@
         </div>
         <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
         <div style="text-align: center; font-size: 10px; margin-top: 8px;">
-          <p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO:</strong> ${ped.cuponGenerado}</p>
+          <p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO:</strong> ${ped.estado === "PAGADO" ? ped.cuponGenerado : "Se entrega tras confirmar pago"}</p>
           <p style="margin: 6px 0 4px 0;"><strong>¡ESCANEA PARA VISITAR LA TIENDA!</strong></p>
           <div style="display: inline-block; background: #fff; padding: 4px; margin: 4px 0;">
             <img src="qr-tienda.png" alt="QR Tienda" style="width: 110px; height: 110px; display: block;" />
@@ -631,6 +671,8 @@
         </div>
       `;
 
+      const imprimirBtn = document.querySelector(".btn-modal-print");
+      if (imprimirBtn) { imprimirBtn.disabled = ped.estado !== "PAGADO"; imprimirBtn.title = ped.estado !== "PAGADO" ? "Confirma el pago antes de imprimir" : ""; }
       document.getElementById("ticket-modal").style.display = "flex";
     }
 
@@ -699,6 +741,7 @@
 
     // IMPRESIÓN BLUETOOTH DIRECTA CON LOGO Y QR INCLUIDOS
     async function ejecutarImpresionBluetooth() {
+      if (pedidoActualParaImprimir && pedidoActualParaImprimir.estado !== "PAGADO") { alert("Primero confirma el pago antes de imprimir el ticket de venta."); return; }
       if (!pedidoActualParaImprimir) return;
       const ped = pedidoActualParaImprimir;
 
