@@ -551,7 +551,7 @@
             <td class="text-center">
               ${badgeHtml}
               <button class="${btnClase}" onclick="verTicket('${ped.idPedido}')">🖨️ Ver / Imprimir</button>
-              ${ped.estado !== "PAGADO" ? `<button class="btn-action" style="background:#1a73e8;margin-top:5px" onclick="kimsConfirmarPago('${ped.idPedido}')">✓ Confirmar pago</button>` : `<button class="btn-action" style="background:#0b8660;margin-top:5px" onclick="kimsEnviarCupon('${ped.idPedido}')">💬 Enviar cupón</button>`}
+              ${ped.estado !== "PAGADO" ? `<button class="btn-action" style="background:#1a73e8;margin-top:5px" onclick="kimsConfirmarPago('${ped.idPedido}')">✓ Confirmar pago</button>` : (kimsTieneCupon(ped) ? `<button class="btn-action" style="background:#0b8660;margin-top:5px" onclick="kimsEnviarCupon('${ped.idPedido}')">💬 Enviar cupón</button>` : "")}
             </td>
           </tr>
         `;
@@ -648,9 +648,9 @@
         if (verificado) {
           const confirmado = pedidosAgrupadosGlobal[idPedido];
           alert(`✅ Pago confirmado en Google Sheets para ${idPedido}.` +
-            (confirmado.cuponGenerado && confirmado.cuponGenerado !== "-"
+            (kimsTieneCupon(confirmado)
               ? `\n\nCupón asignado: ${confirmado.cuponGenerado}\nAhora puedes enviarlo por WhatsApp desde el botón «Enviar cupón».`
-              : "\n\nNo hay un cupón disponible asignado; revisa Hoja 2."));
+              : ""));
         } else {
           await cargarDatosVentas(true);
           alert(`⚠️ No se pudo verificar la confirmación de ${idPedido}.` +
@@ -667,9 +667,15 @@
       }
     }
 
+    // Solo se anuncia un cupón cuando Sheets ya lo asignó a un pedido pagado.
+    function kimsTieneCupon(ped) {
+      const codigo = String(ped?.cuponGenerado ?? "").trim();
+      return !!ped && ped.estado === "PAGADO" && !!codigo && codigo !== "-" && codigo.toLowerCase() !== "null" && codigo.toLowerCase() !== "undefined";
+    }
+
     function kimsEnviarCupon(idPedido) {
       const ped = pedidosAgrupadosGlobal[idPedido];
-      if (!ped || ped.estado !== "PAGADO" || !ped.cuponGenerado || ped.cuponGenerado === "-") {
+      if (!ped || !kimsTieneCupon(ped)) {
         alert("Este pedido todavía no tiene un cupón asignado."); return;
       }
       const codigo = ped.cuponGenerado;
@@ -852,7 +858,7 @@
         </div>
         <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
         <div style="text-align: center; font-size: 10px; margin-top: 8px;">
-          <p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO:</strong> ${ped.estado === "PAGADO" ? kimsEsc(ped.cuponGenerado) : "Se entrega tras confirmar pago"}</p>
+          ${kimsTieneCupon(ped) ? `<p style="margin: 2px 0;"><strong>CÓDIGO DE DESCUENTO:</strong> ${kimsEsc(ped.cuponGenerado)}</p>` : ""}
           <p style="margin: 6px 0 4px 0;"><strong>¡ESCANEA PARA VISITAR LA TIENDA!</strong></p>
           <div style="display: inline-block; background: #fff; padding: 4px; margin: 4px 0;">
             <img src="qr-tienda.png" alt="QR Tienda" style="width: 110px; height: 110px; display: block;" />
@@ -1022,8 +1028,10 @@
         dataHeader += "--------------------------------\n";
         
         dataHeader += center;
-        dataHeader += boldOn + "CODIGO DE DESCUENTO:\n" + boldOff;
-        dataHeader += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
+        if (kimsTieneCupon(ped)) {
+          dataHeader += boldOn + "CODIGO DE DESCUENTO:\n" + boldOff;
+          dataHeader += boldOn + ped.cuponGenerado + "\n\n" + boldOff;
+        }
         dataHeader += "--------------------------------\n";
         dataHeader += "VISITA NUESTRA TIENDA VIRTUAL:\n";
         dataHeader += "--------------------------------\n";
