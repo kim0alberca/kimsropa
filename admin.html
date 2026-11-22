@@ -410,6 +410,16 @@
             pedidosAgrupadosGlobal[idPedido].totalPedido += subt;
           });
         } else {
+          // No mostrar filas de relleno antiguas sin valor económico.
+          // Solo es una corrección visual: no elimina ni modifica Google Sheets.
+          const nombreCrudo = String(fila.producto || fila.Producto || fila.prenda || "").trim();
+          const precioCrudo = Number(fila.monto ?? fila.Monto ?? fila.precioUnit ?? 0);
+          const subtotalCrudo = fila.subtotal ?? fila.Subtotal;
+          if (nombreCrudo.toLowerCase() === "compra web general" &&
+              precioCrudo === 0 &&
+              (subtotalCrudo == null || Number(subtotalCrudo) === 0)) {
+            return;
+          }
           const nombre = fila.producto || fila.Producto || fila.prenda || "Prenda";
           const talla = fila.talla || fila.Talla || fila.size || "-";
           const color = fila.color || fila.Color || fila.colour || "-";
@@ -651,7 +661,18 @@
 
     function formatearFecha(fechaStr) {
       if (!fechaStr || fechaStr === "-") return "-";
-      return fechaStr;
+      const texto = String(fechaStr).trim();
+      // Conserva la fecha y hora originales, sin convertir zonas horarias.
+      let m = texto.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+      if (m) return `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}${m[6] ? ':' + m[6] : ''}`;
+      // Fechas textuales históricas de Apps Script: Thu Sep 10 2026 11:11:17 GMT-0500...
+      m = texto.match(/^[A-Za-z]{3}\s+([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})\s+(\d{2}:\d{2}(?::\d{2})?)/);
+      if (m) {
+        const meses = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+        const mes = meses[m[1]];
+        if (mes) return `${String(m[2]).padStart(2,'0')}/${mes}/${m[3]} ${m[4]}`;
+      }
+      return texto;
     }
 
     function verTicket(idPedido) {
