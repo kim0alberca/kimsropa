@@ -556,7 +556,9 @@
       }
       const codigo = ped.cuponGenerado;
       const porcentaje = Math.round(Number(ped.porcentajeRegalo || 0) * 100);
-      const mensaje = `🛍️ ¡Gracias por tu compra en KIMSROPA!\n\n🎁 Aquí tienes tu cupón para la próxima compra.\n🎟️ Código: ${codigo}\n✨ Descuento: ${porcentaje}%\n\nIngresa este código al hacer tu próximo pedido. ¡Te esperamos!`;
+      // Mensaje sin emojis: evita caracteres de reemplazo en WhatsApp.
+      // El codigo y el porcentaje siguen siendo dinamicos desde Google Sheets.
+      const mensaje = `¡Gracias por tu compra en KIMSROPA!\n\nTenemos un regalo para ti: un cupón para tu próxima compra.\n\nCódigo: ${codigo}\nDescuento: ${porcentaje}%\n\nIngresa este código al realizar tu próximo pedido.\n\n¡Gracias por confiar en KIMSROPA! ¡Te esperamos pronto!`;
       const telefono = (ped.cliente.match(/9\d{8}/) || [])[0] || "";
       const url = telefono ? `https://wa.me/51${telefono}?text=${encodeURIComponent(mensaje)}` : `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank", "noopener");
