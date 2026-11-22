@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>KIMSROPA | Impresión</title><style>body{font:16px system-ui;background:#101010;color:white;margin:16px}main{max-width:420px;margin:auto}h1{color:#d9ff00;font-size:23px}#ticket-preview-box{background:white;color:black;padding:14px;border-radius:8px}button{width:100%;padding:15px;margin-top:12px;background:#1769df;color:white;border:0;border-radius:8px;font-weight:bold}button:disabled{opacity:.5}#estado{overflow-wrap:anywhere}</style></head><body><main><h1>KIMSROPA · Impresión</h1><p id="estado" role="status">Esperando ticket del panel privado…</p><div id="ticket-modal" style="display:none"><div id="ticket-preview-box"></div><button class="btn-modal-print" onclick="imprimir()">🖨️ Imprimir Bluetooth Directo</button></div></main><script>let pedidoActualParaImprimir=null;
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>KIMSROPA | Impresión</title><style>body{font:16px system-ui;background:#101010;color:white;margin:16px}main{max-width:420px;margin:auto}h1{color:#d9ff00;font-size:23px}#ticket-preview-box{background:white;color:black;padding:14px;border-radius:8px}button{width:100%;padding:15px;margin-top:12px;background:#1769df;color:white;border:0;border-radius:8px;font-weight:bold}button:disabled{opacity:.5}#estado{overflow-wrap:anywhere}</style></head><body><main><h1>KIMSROPA · Impresión</h1><p id="estado" role="status">Esperando ticket del panel privado…</p><section id="manual"><p>Si el ticket no llega automáticamente, copia el ticket desde el panel privado y pégalo aquí.</p><textarea id="manual-data" rows="4" style="width:100%;box-sizing:border-box" aria-label="Pegar datos del ticket"></textarea><button onclick="cargarManual()">Cargar ticket copiado</button></section><div id="ticket-modal" style="display:none"><div id="ticket-preview-box"></div><button class="btn-modal-print" onclick="imprimir()">🖨️ Imprimir Bluetooth Directo</button></div></main><script>let pedidoActualParaImprimir=null;
     const kimsEsc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;", "\"":"&quot;", "'":"&#39;"}[c]));
     function kimsDatosCliente(clienteRaw, telefonoRaw, dniRaw) {
       let nombre = String(clienteRaw ?? '').trim();
@@ -336,8 +336,17 @@
 
 async function imprimir(){const btn=document.querySelector('.btn-modal-print');btn.disabled=true;try{await ejecutarImpresionBluetooth();}finally{btn.disabled=false;}}
 const openerRef=window.opener;
-function recibir(e){if(e.source!==openerRef || !/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(e.origin) || e.data?.tipo!=='KIMS_PRINT_TICKET')return;const p=e.data.pedido;if(!p||p.estado!=='PAGADO'||!Array.isArray(p.items)||!Number.isFinite(p.totalPedido))return;window.removeEventListener('message',recibir);clearInterval(reintento);pedidoActualParaImprimir=p;window.opener=null;verTicket(p.idPedido);document.getElementById('estado').textContent='Ticket recibido. Enciende tu impresora y pulsa Imprimir.';}
+function cargarTicket(p){
+ if(!p || p.estado!=='PAGADO' || !Array.isArray(p.items) || !Number.isFinite(p.totalPedido) || !p.items.every(i=>i && Number.isFinite(i.subtotal) && Number.isFinite(i.cantidad))) throw Error('Ticket inválido o no pagado.');
+ pedidoActualParaImprimir=p;
+ try{verTicket(p.idPedido);}catch(e){pedidoActualParaImprimir=null;throw e;}
+ clearInterval(reintento);window.removeEventListener('message',recibir);
+ document.getElementById('manual-data').value='';document.getElementById('manual').hidden=true;
+ document.getElementById('estado').textContent='Ticket recibido. Enciende tu impresora y pulsa Imprimir.';
+}
+function cargarManual(){try{cargarTicket(JSON.parse(document.getElementById('manual-data').value));}catch(e){document.getElementById('estado').textContent='No se pudo cargar: '+e.message;}}
+function recibir(e){if(!openerRef || e.source!==openerRef || !/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(e.origin) || e.data?.tipo!=='KIMS_PRINT_TICKET')return;try{cargarTicket(e.data.pedido);window.opener=null;}catch(err){document.getElementById('estado').textContent=err.message;}}
 window.addEventListener('message',recibir);
 function listo(){if(openerRef)openerRef.postMessage({tipo:'KIMS_PRINT_READY'},'*');}
-const reintento=setInterval(listo,500);listo();setTimeout(()=>{clearInterval(reintento);if(!pedidoActualParaImprimir)document.getElementById('estado').textContent='Abre este módulo desde Ver / Imprimir en tu panel privado.';},19000);
+const reintento=setInterval(listo,500);listo();setTimeout(()=>{clearInterval(reintento);if(!pedidoActualParaImprimir)document.getElementById('estado').textContent='No llegó el ticket automáticamente. Usa la opción Copiar ticket para impresión del panel privado.';},19000);
 </script></body></html>
