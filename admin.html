@@ -207,6 +207,9 @@
     .kims-filters { display:flex; flex-wrap:wrap; align-items:end; gap:12px; }
     .kims-filters label { display:flex; flex:1 1 230px; flex-direction:column; gap:6px; font-size:13px; font-weight:600; }
     .kims-filters input { width:100%; min-height:42px; border:1px solid #cbd5e1; border-radius:7px; padding:9px 12px; font-size:14px; background:#fff; color:#222; }
+    .kims-search-wrap { display:flex; gap:6px; align-items:stretch; }
+    .kims-search-wrap input { flex:1; min-width:0; }
+    .kims-search-button { min-width:44px; border:0; border-radius:7px; background:#1a73e8; color:#fff; font-size:19px; cursor:pointer; }
     .kims-filter-info { margin-top:10px; color:#64748b; font-size:12px; }
   </style>
 </head>
@@ -247,10 +250,13 @@
     <div class="panel-title">Buscar pedidos</div>
     <div class="kims-filters">
       <label for="kims-search">Buscar por pedido, cliente, teléfono o producto
-        <input id="kims-search" type="search" placeholder="Ej. PED-5742, nombre o polo" autocomplete="off" oninput="kimsFiltrarPedidos()">
+        <span class="kims-search-wrap">
+          <input id="kims-search" type="search" placeholder="Ej. PED-5742, nombre o polo" autocomplete="off" oninput="kimsFiltrarPedidos()" onsearch="kimsFiltrarPedidos()" onkeydown="if(event.key==='Enter'){event.preventDefault();kimsFiltrarPedidos();}">
+          <button type="button" class="kims-search-button" aria-label="Buscar pedidos" title="Buscar pedidos" onclick="kimsFiltrarPedidos()">🔍</button>
+        </span>
       </label>
       <label for="kims-month">Filtrar por mes
-        <input id="kims-month" type="month" onchange="kimsFiltrarPedidos()">
+        <input id="kims-month" type="month" oninput="kimsFiltrarPedidos()" onchange="kimsFiltrarPedidos()">
       </label>
       <button type="button" class="btn-reload" onclick="kimsLimpiarFiltros()">Limpiar filtros</button>
     </div>
@@ -462,6 +468,24 @@
       kimsFiltrarPedidos();
     }
 
+    // Obtiene YYYY-MM sin modificar la fecha original que aparece en el ticket.
+    // Acepta formatos de Sheets y Apps Script: YYYY-MM-DD, DD/MM/YYYY,
+    // DD-MM-YYYY, YYYY/MM/DD y fecha ISO con hora.
+    function kimsMesDeFecha(valor) {
+      const s = String(valor == null ? '' : valor).trim();
+      let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(?:[T\s,]|$)/);
+      if (m) {
+        const mes = Number(m[2]);
+        return mes >= 1 && mes <= 12 ? `${m[1]}-${String(mes).padStart(2, '0')}` : '';
+      }
+      m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})(?:[T\s,]|$)/);
+      if (m) {
+        const mes = Number(m[2]);
+        return mes >= 1 && mes <= 12 ? `${m[3]}-${String(mes).padStart(2, '0')}` : '';
+      }
+      return '';
+    }
+
     // Filtra únicamente las filas ya renderizadas. No altera totales históricos,
     // Google Sheets, las referencias de tickets ni la impresión Bluetooth.
     function kimsFiltrarPedidos() {
@@ -473,12 +497,13 @@
       const month = monthEl.value;
       const rows = Array.from(body.querySelectorAll('tr')).filter(tr => tr.cells.length === 8 && tr.querySelector('button[onclick^="verTicket"]'));
       let visible = 0;
+      let fechasSinFormato = 0;
       rows.forEach(tr => {
         const text = tr.textContent.toLocaleLowerCase('es');
         const fecha = tr.cells[0].textContent.trim();
-        // Apps Script entrega fechas yyyy-MM-dd HH:mm:ss.
-        // Si un registro antiguo tiene otro formato, no se muestra con filtro mensual.
-        const matchesMonth = !month || fecha.startsWith(month + '-');
+        const mesPedido = kimsMesDeFecha(fecha);
+        if (month && !mesPedido) fechasSinFormato++;
+        const matchesMonth = !month || mesPedido === month;
         const matchesSearch = !query || text.includes(query);
         const show = matchesMonth && matchesSearch;
         tr.hidden = !show;
@@ -486,7 +511,9 @@
         if (show) visible++;
       });
       document.getElementById('kims-filter-info').textContent = rows.length
-        ? `Mostrando ${visible} de ${rows.length} pedidos. Los indicadores superiores muestran el historial completo.`
+        ? `Mostrando ${visible} de ${rows.length} pedidos. Los indicadores superiores muestran el historial completo.` +
+          (month && fechasSinFormato ? ` ${fechasSinFormato} pedido(s) tienen una fecha no reconocida.` : '') +
+          (month && !visible ? ' Prueba otro mes o limpia los filtros.' : '')
         : 'Todavía no hay pedidos para filtrar.';
     }
 
